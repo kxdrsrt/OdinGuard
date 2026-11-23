@@ -31,5 +31,9 @@ the Windows VM "Tiny 11 Pro" (ARM64, x86 emulation), host reachable as 10.211.55
 | Resource rule | loose `data\sprite\nodelay.act` reported |
 | Real client start with loader chain | starts, renders, logs in, plays |
 
+Live (2026-11-23, after deploy with `ODINGUARD_ENABLE=yes`, `REQUIRED=no`, `LOG_ONLY=yes`):
+plain client and OdinGuard client both reach the HR (6900) and M-LR (6901) login servers; the OdinGuard
+client completes the handshake with the pinned key and receives the policy (22 signatures).
+
 Not tested yet: input filter (needs a desktop session with synthetic input), RCX, Warsaw, alive timeout
 kick, machine limit with two accounts, `@ogban` in game.
