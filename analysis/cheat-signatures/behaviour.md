@@ -1,6 +1,6 @@
 # Serverseitige Verhaltenssignaturen
 
-Stand: 2026-11-23. Ergänzt `signatures.toml` dort, wo clientseitige Merkmale fehlen oder umgangen
+Stand: 2026-11-23, erweitert 2026-11-24 (B1-Hinweis, B4.5-Hinweis, B8, B9). Ergänzt `signatures.toml` dort, wo clientseitige Merkmale fehlen oder umgangen
 werden können (siehe `inventory.md`, Abschnitt Restlücken). Alles auf hoher Ebene; die Schwellwerte
 sind **Startwerte** [vermutet] und müssen mit Daten ehrlicher Spieler kalibriert werden
 (zuerst nur `log`, nach 2–4 Wochen Verteilung ansehen, dann `flag`).
@@ -34,6 +34,13 @@ sehr schnelle und sehr gleichmäßige Item-Benutzung nach einem HP/SP-Abfall unt
 | B1.3 Feste Auslöseschwelle | HP-% beim Auslösen über alle Ereignisse | Standardabweichung < 2 Prozentpunkte bei ≥ 30 Ereignissen, obwohl die Schadenshöhe stark schwankt (CV Schaden > 0,3) | medium | flag |
 | B1.4 Status-Heilung | Zeit von Status-Start (Gift, Fluch, Stille, Blindheit) bis Heil-Item/-Skill | Median < 150 ms, IQR < 40 ms bei ≥ 15 Ereignissen | medium | flag |
 | B1.5 Heilen ohne Fokus-Pausen | Anteil der HP-Abfälle unter Schwelle, auf die *keine* Benutzung folgt | < 1 % über ≥ 200 Abfälle in Kämpfen > 30 min | low-medium | log |
+
+Ergänzung 2026-11-24 [gelesen/gemessen]: Autopot Fresh pollt alle `interval` + 10 ms (Standard 110 ms) und
+schickt **pro Durchlauf** erneut die Taste, solange der Wert unter der Schwelle liegt; RoMedic reagiert über
+gepostete Fensternachrichten. Folge: Serien von `CZ_USE_ITEM` im Abstand von ≈ 110 ms (± Jitter), die genau
+enden, sobald `ZC_PAR_CHANGE` die Schwelle überschreitet. Zusatzsignal B1.6: Abstand aufeinanderfolgender
+Heil-Benutzungen innerhalb einer Serie mit Median 100–130 ms und IQR < 15 ms bei ≥ 20 Serien → flag
+(Konfidenz medium; Intervall ist konfigurierbar, daher nur zusammen mit B1.1/B1.3 werten).
 
 Menschliche Referenz [vermutet, Literaturwerte]: einfache Reaktionszeit ~200–300 ms mit deutlich
 größerer Streuung; Ermüdung erhöht Median und Streuung über die Zeit – ein über Stunden konstanter
@@ -80,6 +87,7 @@ Muster: Pakete, die der Original-Client so nicht erzeugt.
 | B4.3 Unmögliche Sequenzen | Item-Benutzung ohne Item im Inventar, NPC-Antwort ohne offenen Dialog, Lager-/Handelsaktion ohne offenes Fenster, Skill ohne gelernten Skill, Ziel außerhalb der Sicht | ≥ 3 in 10 min (Lag/Bugs erzeugen Einzelfälle) | high | flag; kick ab 10 |
 | B4.4 Bewegungsplausibilität | Positionssprünge > Laufgeschwindigkeit × Zeit (+ Toleranz 1 Zelle) | ≥ 3 in 5 min | high | flag |
 | B4.5 Zeitstempelfelder | Client-Tick in Paketen nicht monoton oder Drift > 2 % gegen Serverzeit | über ≥ 60 s | medium | flag (Speedhack-Indiz) |
+| B4.7 Heartbeat-Uhr | OdinGuard-Heartbeat meldet Client-Zeit (`GetTickCount`/`QueryPerformanceCounter`/`timeGetTime`); Speedhacks (CE `speedhack-i386.dll`, SpeedGear) hooken genau diese Funktionen | Verhältnis Client-Δt / Server-Δt außerhalb 0,98–1,02 über ≥ 60 s **oder** die drei Uhren weichen untereinander > 2 % ab | medium-high | flag; kick zusammen mit `OG-CE-006`/`OG-SPEED-*` |
 | B4.6 Heartbeat-Bruch | Fehlende/doppelte OdinGuard-Heartbeat-Sequenzen bei sonst aktiver Verbindung | ≥ 2 in 10 min | high | kick |
 
 ## B5 – Paket-Mitleser und Overlays (RCX)
@@ -106,6 +114,33 @@ Transparente Bäume, veränderte Karten und entfernte Effekte verschaffen Inform
 die serverseitig **nicht belastbar messbar** sind [vermutet]. Schwache Indizien wie „Klick auf
 Ziele, die für den Original-Client verdeckt sind“ sind wegen Kamera, Zoom und Minimap nicht
 fehlalarmarm. Konfidenz: low → nur clientseitige GRF-Prüfung verwenden.
+
+## B8 – Bots ohne Client (OpenKore xKore 0/2/3) und Relais
+
+Muster [vermutet, öffentliches Wissen]: OpenKore spricht das Protokoll selbst (xKore 0) oder sitzt als Proxy
+zwischen Client und Server (xKore 2/3). Clientseitige Signaturen greifen dann nicht; der OdinGuard-Heartbeat
+muss entweder fehlen (→ B4.6) oder von einem echten Client weitergereicht werden („Poseidon“-artiges Relais).
+
+| Signal | Messung | Startschwelle | Konfidenz | Aktion |
+|---|---|---|---|---|
+| B8.1 Heartbeat-Herkunft | IP/Port der Heartbeat-Antworten vs. Spielverbindung; Hardware-ID, die gleichzeitig für mehrere Charaktere antwortet | abweichende IP **oder** eine HWID beantwortet Challenges für > Policy-Anzahl Sitzungen | high | kick der betroffenen Sitzungen |
+| B8.2 Heartbeat-Latenz | RTT der OdinGuard-Challenge minus RTT der Spielpakete (Relais addiert eine Strecke) | Differenz > 30 ms stabil über ≥ 50 Challenges | medium | flag |
+| B8.3 Dauerbetrieb | Sitzungsdauer mit Kampf-/Bewegungsaktivität ohne Pause | > 8 h am Stück bzw. > 20 h/Tag an ≥ 3 Tagen | medium | flag + GM-Review |
+| B8.4 Routen-Wiederholung | identische Zellfolgen (Laufwege) zwischen gleichen Karten/Spawns | ≥ 10 Wiederholungen mit Hamming-Abstand < 5 % | medium | flag |
+| B8.5 Reaktion auf Ansprache | Antwort/Positionswechsel nach GM-Whisper oder Chat in Sichtweite | keine Reaktion bei ≥ 3 Ansprachen in 30 min bei weiterlaufender Aktivität | low-medium | Review |
+| B8.6 Sofort-Aufheben | Zeit vom Erscheinen eines Drops (`ZC_ITEM_FALL_ENTRY`) bis `CZ_ITEM_PICKUP` | Median < 150 ms, IQR < 40 ms bei ≥ 50 Drops | medium | flag |
+
+## B9 – Automatisierte Abläufe von Hilfsprogrammen (RCX)
+
+Muster [gelesen, `RCX.ini`/`history.txt`]: RCX kann Login-Daten automatisch eingeben (`AccountCollector`) und
+beim Einloggen vordefinierte Chat-Befehle senden (`SendCommands\bootup.txt` bzw. `<Server>.txt`).
+
+| Signal | Messung | Startschwelle | Konfidenz | Aktion |
+|---|---|---|---|---|
+| B9.1 Login-Befehlsserie | Chat-/@-Befehle direkt nach `CZ_ENTER` (Map-Eintritt) | ≥ 3 Befehle innerhalb von 500 ms nach Map-Eintritt, bei ≥ 3 Logins identische Folge | low | log |
+| B9.2 Login-Eingabezeit | Zeit vom Erscheinen des Login-Fensters bis zum Login-Paket (nur mit Client-Telemetrie) | < 200 ms bei ≥ 3 Logins | low | log |
+
+Beides ist kein Vorteil im Kampf; nur als Kontext für ein RCX-Signal (`OG-RCX-*`) verwenden.
 
 ## Datenerhebung (Vorschlag)
 

@@ -1,9 +1,10 @@
-# 07 – LGP-Zellkacheln und darkworld-Fairness
+# 07 – LGP-Zellkacheln und darkworld-Kategorien
 
-Stand: 2026-11-23. Werkzeuge: ausschließlich RustyGRF (`rgrf` 0.x CLI und MCP `rustygrf`) für alle
+Stand: 2026-11-24 (Teil 2 neu: Kategorien des Competitive-Packs). Werkzeuge: ausschließlich RustyGRF (`rgrf` 0.x CLI und MCP `rustygrf`) für alle
 GRF-Zugriffe, Python + Pillow nur für extrahierte Dateien (Bildstatistik, STR/GND/GAT/RSW-Parser,
 Kacheln zeichnen). Keine Quelldatei wurde verändert; alles Extrahierte liegt unter
-`analysis/_work/{lgp,dark}/` (per `.gitignore` nicht versioniert).
+`analysis/_work/{lgp,dark,competitive}/` (per `.gitignore` nicht versioniert); die Staging-Ordner des
+Competitive-Packs unter `~/Dev/OdinGuard-assets/competitive/` (außerhalb des Repos).
 
 Kennzeichnung: **[gemessen]** = mit RustyGRF/Python an den Dateien gemessen · **[gelesen]** = aus
 Quelltext/Konfiguration gelesen (roBrowserLegacy, xAthena, Client-Strings) · **[vermutet]** =
@@ -91,13 +92,13 @@ Beobachtungen:
 | `aaa copy.bmp` | woerol, dark2 (gleich) | 128×128 BMP24, weißer Rauten-Rahmen auf Schwarz | Land Protector als Zellumriss |
 | `ring_yellow.tga` | dark2 | 64×64 TGA32, 98,9 % Alpha 0 | Violent Gale fast unsichtbar |
 | `hanmoon1-7.tga`, `ring_line(r).tga` | dark2, woerol | 1×1 Magenta | Mild-Wind-Symbole entfernt |
-| `spiderweb.tga` | woerol: 128×128 rotes Achteck; dark2/woe: 1024×1024 blauer Kreis | Fiber Lock stark hervorgehoben (Sichtvorteil) |
+| `spiderweb.tga` | woerol: 128×128 rotes Achteck; dark2/woe: 1024×1024 blauer Kreis | Fiber Lock stark hervorgehoben (Kategorie `effects`) |
 | `stormgust.str`, `lord.str`, `meteor1-4.str` | `Thoth.grf` | SG: 2 Ebenen mit `21.bmp` (64×64 grau), 192×96 Bildschirm-Raute; LoV/MS auf `0lordbl.bmp` reduziert | vereinfachte Bildschirmeffekte, **keine** Zellkacheln |
-| `Pneuma01-10.bmp` + `pneuma1-3.str` | dark.grf, woe.grf | 32×32 Ziffern 10…1 | Pneuma-Restzeit-Countdown → **Informationsvorteil**, nicht übernehmen |
+| `Pneuma01-10.bmp` + `pneuma1-3.str` | dark.grf, dark2.grf, woe.grf | 32×32 Ziffern 10…1 | Pneuma-Restzeit-Countdown → Kategorie `pneuma` |
 
 Kopiert nach `analysis/_work/lgp/found/` (25 Dateien, Präfix = Quelle) mit
-`found/PROVENANCE.tsv` (Quell-GRF, GRF-Pfad, MD5, Größe, Messung). Diese Dateien sind
-Analysematerial und werden **nicht** ausgeliefert.
+`found/PROVENANCE.tsv` (Quell-GRF, GRF-Pfad, MD5, Größe, Messung). Diese Kopien sind
+Analysematerial; ausgeliefert wird nur, was ein Betreiber über die Kategorien in Teil 2 wählt.
 
 ### 1.4 Bewertung der Kandidaten
 
@@ -161,9 +162,23 @@ Fremd-Assets, frei verwendbar):
 
 ---
 
-## Teil 2 – darkworld-Fairness
+## Teil 2 – darkworld-Kategorien (Competitive-Pack)
+
+**Entscheidung des Eigentümers (2026-11-24) [gelesen]:** Alle darkworld-Änderungen dürfen
+ausgeliefert werden, wenn der Betreiber sie auswählt – jeder Spieler erhält dasselbe Pack
+(`odin-dark.grf`), also einen gleichen Standard wie auf WoE RO / EstlandRO. Das schließt flache
+Maps, durchsichtige Bäume/Objekte, verkleinerte WoE-Objekte, den Pneuma-Countdown, nodelay-ACTs und
+dunkle Bodenkacheln ein. Lizenz der darkworld-Dateien laut Eigentümer: frei (mit GRF Editor erstellt).
+Jede Kategorie ist **einzeln wählbar**; die Befunde unten beschreiben, was eine Kategorie ändert,
+damit der Betreiber bewusst wählt.
 
 ### 2.1 Diff-Statistik **[gemessen]**
+
+Erneut geprüft am 2026-11-24 mit `rgrf diff` gegen `client-dev/ragnarok/data.grf` (Pfade ohne
+Groß/Klein-Unterschied): dark 2552 geändert / 736 neu / 28 gleich; dark2 2871 / 785 / 33;
+woe 257 / 63 / 21; woebg 229 / 36 / 20; nodelay 56 / 7 / 0; Thoth 372 / 110 / 9;
+WOERO/woero 1095 / 2893 / 1861; WOERO/woerol 673 / 52 / 14 **[gemessen]**. Die Tabelle unten ist der
+ältere Inhaltsvergleich (MD5) gegen data.grf ∪ kRO ∪ official_data.
 
 `dark.grf` 78 113 579 B, 3316 Einträge; `dark2.grf` 78 907 885 B, 3689 Einträge. Inhaltsvergleich
 gegen data.grf (2018) ∪ kRO ∪ official_data:
@@ -207,95 +222,160 @@ GAT-Zelltypen (816 Maps gegen data.grf): 661 identisch, 100 nicht in Vanilla, 12
 Abweichungen (meist alte Kartenversionen, z. B. morocc, yuno, airplane) **[gemessen]**. WoE/BG/PvP:
 aldeg_cas01 129 Zellen 1→0 (nur Randspalte x=238 von 240), te_prt_gld 88 Zellen 1→0, arug_cas03 2
 Zellen 0→1; alle anderen identisch. Höhen sind überall 0. Der Server nutzt seinen eigenen mapcache,
-Begehbarkeit ändert sich dadurch serverseitig nicht; clientseitig drohen Klick-/Pfad-Desyncs.
+Begehbarkeit ändert sich dadurch serverseitig nicht; wo die dark-GAT von der Client-GAT abweicht,
+können Klick-/Pfadanzeige und Server auseinanderlaufen. Die OdinGuard-Flachmaps (2.5) behalten
+deshalb die GAT-Typen des Clients.
 
-### 2.3 Klassifikation
+### 2.3 Zuordnung jeder Änderung zu einer Kategorie
 
-| Gruppe | Befund [gemessen] | Klasse |
+Neu klassifiziert für alle Einträge von dark, dark2, woe, woebg, nodelay, Thoth, WOERO/woero,
+woerol, woerop (Inhalts-MD5 aus `rgrf --names cp949 --json hash`; Ergebnis je Eintrag:
+`analysis/_work/competitive/entries.tsv`, Werkzeug `analysis/_work/competitive/tools/classify.py`)
+**[gemessen]**:
+
+| Gruppe | Befund [gemessen] | Kategorie |
 |---|---|---|
-| Maps `.rsw` (0 Modelle) | Wände, Bäume, Säulen, Burgteile unsichtbar | **UNFAIR** (Sicht durch Wände/Objekte) |
-| Maps `.gnd` (flach, ohne Wände) | Gelände eben, keine Wandflächen | **UNFAIR** |
-| Maps `.gat` (Höhe 0, einzelne Typänderungen) | s. o. | unfair/riskant, verworfen |
-| `.extra` (60) | XML `<models /><lights />` (Begleitdaten der flachen Maps) | verworfen |
-| Bodenkacheln `c*.bmp`, `points\*`, `woe\*`, `NSA` (286+34+15+1) | 64×64 BMP24, 2–3 Farben, dunkel, Zellraster | **kosmetisch** (nur statische GAT-/Karteninfo) |
-| Modelltexturen `나무잡초꽃` (101), `기타마을` (36), `내부소품` (7), `모로코` (2), `게페니아` (1) | 117 zu ≥98 % Magenta/transparent, 9 deutlich transparenter, Rest kleiner/dunkler | **UNFAIR** (Bäume/Objekte weg) |
-| Effekt-Texturen dark2 (287) | 139 voll transparent, 152 transparenter, 163 einfarbig, 129 verkleinert | grau: Effekt-Reduktion (≈ clientseitige LGP für *alle* Skills); einzelne unfair |
-| Effekt-STR dark2 (99) | vereinfachte Skill-Effekte (z. B. `stormgust.str` 8 Ebenen statt 41 in kRO) | grau |
-| `Pneuma01-10` + `pneuma*.str` | Countdown 10…1 über Pneuma | **UNFAIR** (Restzeit-Info) |
-| `tarot01-14.tga` (dark) | Karten als Textlabel | grau (Info-Aufbereitung) |
-| `lockon128.tga` 600×600, `magic_target.tga` Fadenkreuz | größere Ziel-/AoE-Marker | grau (UX) |
-| `foot_l/r*.tga` | Fußspuren grün eingefärbt | [vermutet] Sichtvorteil → verworfen |
-| `spiderweb.tga` | Fiber Lock knallig/riesig | unfair-grau |
-| Sprites Pflanzen (flora, geographer, hydra, mandragora, parasite) | Sprite 19×24 statt bis 109×139 | **UNFAIR** (Bio-Cannibalize-Blocker kaum sichtbar) |
-| Sprite `barricade` | 23 kleine Bilder statt 52×126 | **UNFAIR** (WoE-SE-Barrikade) |
-| MVP-/Boss-ACTs (22 Dateien) | Ebenen umskaliert (Faktor 0,5 bis 3,0 gegenüber Vanilla, z. B. Eddga 1,0→2,0, Dark Illusion 1,0→0,5) | PvM, nicht relevant, verworfen |
-| `s_empel_1/2.act` | 96 statt 176 Frames | grau |
-| `status-stun/sleep.spr`, `얼음땡.spr` | Status-Grafik vergrößert (45×45 statt 17×17; 163×200 statt 104×121) | grau (Statuserkennung) |
-| `status-curse.spr` | 1×1 (entfernt) | kosmetisch |
-| `숫자`, `msg`, `bluemsg`, `sight`, `smoke`, `cursors` | andere Schrift, kleiner | kosmetisch, nicht map-bezogen |
-| UI (214) | 8 voll transparent, 36 verkleinert, Skin/Branding | kosmetisch, nicht map-bezogen, verworfen |
-| `indoorrswtable.txt` | leer (Vanilla: 149 Einträge, u. a. bat_room) | Kamera-Freiheit in Innenmaps, verworfen |
-| `viewpointtable.txt` (dark2) | alle Einträge auskommentiert | Kamera, verworfen |
-| `ba_frostjoke.txt`, `dc_scream.txt` | Texte durch `@dance`-Befehle ersetzt | serverspezifisch, verworfen |
+| Maps `.rsw` (0 Modelle), `.gnd` (flach, ohne Wände), `.gat` (Höhe 0), `.extra` | Wände, Bäume, Säulen, Burgteile weg; Gelände eben | `flat-maps` (ausgeliefert wird die RustyGRF-Erzeugung, 2.5) |
+| Bodenkacheln `c*.bmp`, `points\*`, `woe\*`, `NSA` (336) | 64×64 BMP24, 2–3 Farben, Zellraster nach GAT-Typ | `floor` |
+| Modelltexturen `나무잡초꽃`, `기타마을`, `내부소품`, `모로코`, `게페니아` | 126 zu ≥ 98 % transparent oder deutlich transparenter, 17 kleiner/dunkler | `trees` |
+| Sprites `barricade`, `flora`, `geographer`, `hydra`, `mandragora`, `parasite`, `s_empel_1/2.act` | 19×24-Bilder statt bis 109×139; Emperium 96 statt 176 Frames | `barricades` |
+| `Pneuma01-10.bmp` + `pneuma1-3.str` (Effekt 141) | Countdown 10…1 über Pneuma | `pneuma` |
+| nodelay.grf: 29 Körper-ACTs + 27 SPR | gleiche Intervalle, weniger Frames (Stalker 456 → 280) | `nodelay` |
+| Effekt-Texturen/STR dark2 (175 BMP, 111 TGA, 96 STR, 3 EZV; 42 STR stehen in GRF Editors Effekttabelle, z. B. stormgust = 89) | transparent, einfarbig, verkleinert; `ring_*` = WoE-RO-Bodenband; `lockon128`/`magic_target` größer; `spiderweb` 1024×1024 | `effects` |
+| UI `texture\유저인터페이스` (194) | Skin, 8 voll transparent, 36 verkleinert | `ui` |
+| Status-Sprites (stun, sleep, `얼음땡`, curse), `숫자`, `msg`, `bluemsg`, `sight`, `smoke`, `cursors` | größer/andere Schrift | `other` |
+| MVP-/Boss-ACTs (22), `dragon_fly` | Ebenen umskaliert (0,5–3,0) | `other` |
+| `indoorrswtable.txt`, `viewpointtable.txt`, `PetTalkTable.xml`, `data\asura*.tga` | Kamera-Tabellen geändert/leer u. a. | `other` |
+| `ba_frostjoke.txt`, `dc_scream.txt` | Texte durch `@`-Befehle eines anderen Servers ersetzt | nicht ausgeliefert |
+| `Thumbs.db`, Ordner-Platzhalter (nodelay 7, Thoth 16 DES-Einträge), Readmes, `data\_lua\*` (Thoth) | keine Client-Daten | nicht ausgeliefert |
 
-Weitere GRFs (nur Analyse) **[gemessen]**: `nodelay.grf` – 29 Job-ACTs mit gleichen Intervallen,
-aber weniger Frames (z. B. Stalker 456 → 280) → kürzere Animationssperre (**UNFAIR**, „nodelay“).
-`desu.grf` – Edit-Log nennt „Removed Blindness“, „Removed Auras“, vergrößerte MVPs, „tiled maps“
-**[gelesen]**.
+Weitere GRFs (eingeordnet, aber **nicht** Quelle der Staging-Ordner – je Pfad gibt es genau eine
+Quelle; die anderen Fassungen stehen als Alternative in `entries.tsv`) **[gemessen]**: `woe.grf`
+(barricades 10, pneuma 13, effects 48, ui 234, other 34; dazu, wie in woebg und Thoth, 9 geänderte
+Lied-Sounds `wav\effect\*.wav`, die dark/dark2 nicht haben), `woebg.grf` (effects 19, ui 234, other 30), `Thoth.grf` (36 vereinfachte
+WoE/BG-Maps mit 1 Textur und Rest-Modellen, z. B. prtg_cas01 18 Modelle; effects 74, ui 201,
+barricades 9), `WOERO/woerol.grf` (effects 319, trees 176, ui 203), `WOERO/woero.grf` (vollständige
+Client-Daten, 5849 Einträge), `WOERO/woerop.grf` (38 986 Paletten). `desu.grf` – Edit-Log nennt
+„Removed Blindness“, „Removed Auras“, vergrößerte MVPs, „tiled maps“ **[gelesen]**.
 
-### 2.4 Übernehmbar / verworfen
+Quelle je Pfad: `dark2.grf`, nur wo dark2 den Pfad nicht hat `dark.grf` (14 Tarot-Karten,
+`dragon_fly`); nodelay aus `nodelay.grf`. Einträge, die dem Client gleichen, entfallen. Listen mit
+Quell-GRF, Archivpfad, Zielpfad, MD5, Größe: `assets/competitive/manifests/<kategorie>.tsv`.
 
-* Eindeutige Pfade in dark ∪ dark2: **3705**. **Übernehmbar: 135** (97 `c*.bmp`, 24 `points\*`,
-  14 `woe\*`), alle aus `dark.grf`, in `dark2.grf` identisch. **Verworfen: 3570.**
-* Liste übernehmbar mit Original- und Zielpfad: `analysis/_work/dark/uebernehmbar.tsv`
-  (Original `data\Texture\<name>` in dark.grf → Ziel `data\texture\<name>`).
-* Jede Datei beider GRFs mit Gruppe, Vergleich zu Vanilla, Entscheidung, Begründung, MD5:
-  `analysis/_work/dark/klassifikation_dark_dark2.tsv`.
-* Verworfen (dark, 3181): 2448 Map-Dateien (flach, unfair), 214 UI, 204 ungenutzte Dark-Kacheln,
-  117 + 9 transparente Modelltexturen, 60 `.extra`, 57 Sprites, 40 Effekte, 27 sonstige Modelltexturen,
-  5 Texte/Sonstiges. dark2 zusätzlich 390 Effekt-Dateien.
+### 2.4 Kategorien, Staging-Ordner und Größen **[gemessen]**
 
-### 2.5 Kandidat `odin-dark-candidate.grf` **[gemessen]** / **[Vorschlag]**
+Staging: `~/Dev/OdinGuard-assets/competitive/<ordner>/data/...` (außerhalb des Repos), Rezept:
+`assets/competitive/recipe.toml`, Erzeugung: `tools/pack/build_categories.sh`. Test-GRFs:
+`<rgrf-out>/odin-dark-<ordner>.grf` (RustyGRF `grf_build`, zlib 9, 0x200; `grf_verify`
+jeweils 0 Fehler, 0 Warnungen). MB = 10⁶ Byte.
 
-Die Dark-Kacheln wirken nur über eine `.gnd`. Statt der flachen dark-GND wurde je Map eine **faire
-GND** erzeugt (`analysis/_work/dark/tools/build_fair_gnd.py`): Vanilla-GND aus data.grf (2018) mit
-allen Höhen, Wänden und Lightmaps; nur die Bodenflächen (Top-Surfaces) zeigen die Dark-Kachel der
-Zelle (UV und Farbe aus dark, Lightmap/Schatten aus Vanilla). Kacheln, deren 4 GAT-Zellen in dark
-anders sind als in Vanilla, werden aus der Vanilla-GAT neu berechnet. `.rsw` (alle Modelle) und
-`.gat` bleiben Vanilla und werden nicht mitgeliefert.
+| Kategorie | Ordner | Dateien | entpackt | GRF | Standard | Quelle (sha256) |
+|---|---|---|---|---|---|---|
+| floor | `floor` (Original-Geometrie, WoE/BG/PvP) | 178 (68 GND + 110 Kacheln) | 236,4 MB | 34,94 MB | **an** | dark2.grf `045c71de…a748` + Client-GND/GAT |
+| floor (mit flat-maps) | `floor-flat-woe-bg-pvp` | 178 | 135,9 MB | 4,93 MB | **an** (statt `floor`) | wie oben, auf den Flachmaps |
+| floor (mit flat-maps all) | `floor-flat-all` | 1161 (1027 GND + 134 Kacheln) | 2353,1 MB | 91,29 MB | – | wie oben |
+| flat-maps | `flat-maps-woe-bg-pvp` (79 Maps) | 215 | 184,3 MB | 5,15 MB | **an** | rustygrf flat_maps from client data |
+| flat-maps | `flat-maps-all` (1054 Maps) | 3110 | 3298,3 MB | 105,61 MB | – | rustygrf flat_maps from client data |
+| trees | `trees` | 143 | 4,17 MB | 1,08 MB | **an** | dark2.grf |
+| barricades | `barricades` | 14 | 0,12 MB | 0,016 MB | aus | dark2.grf |
+| pneuma | `pneuma` | 13 | 0,28 MB | 0,014 MB | **an** | dark2.grf |
+| nodelay | `nodelay` | 56 | 7,41 MB | 2,52 MB | aus | nodelay.grf `0dba7a75…8f11` |
+| effects | `effects` | 385 | 13,79 MB | 0,82 MB | aus | dark2.grf (+ dark.grf `f7baefcd…06ae`) |
+| ui | `ui` | 194 | 68,06 MB | 10,54 MB | aus | dark2.grf |
+| other | `other` | 60 | 3,08 MB | 0,49 MB | aus | dark2.grf (+ dark.grf) |
 
-* Inhalt: 59 `.gnd` (aldeg_cas01–05, arug_cas01–03, bat_a01, bat_b01, bat_c01, bat_room,
-  gefg_cas01–05, gld2_ald/gef/pay/prt, guild_vs1–5, payg_cas01–05, prtg_cas01–05, pvp_2vs2,
-  pvp_room, pvp_y_1-2…8-2, schg_cas01–03, te_aldecas1–5, te_prtcas01–05) + 135 Texturen.
-* Prüfung: Höhen, Wandflächen und Lightmaps aller 59 GND byte-gleich zu Vanilla (eigener Parser);
-  `rgrf map check` mit DATA.INI (Kandidat, cdata, core, cpal, data): **59 Maps, 11 959 Dateien,
-  0 Probleme**; `rgrf verify`: **194 Einträge, 0 Fehler, 0 Warnungen**.
-* Größe: `analysis/_work/dark/odin-dark-candidate.grf` **23 008 687 B** (zlib 9; entpackt
-  171,9 MB; davon GND 22,95 MB gepackt, Texturen 60 KB).
+Kombinationen: Standardauswahl (flat-maps-woe-bg-pvp + floor-flat-woe-bg-pvp + trees + pneuma)
+**481 Dateien, 7,71 MB**; dieselbe mit Bereich `all` **3400 Dateien, 119,16 MB** (`rgrf merge`,
+verify ok). `rgrf map check` mit DATA.INI (Pack zuerst, dann cdata, core, cpal, data): Standard 79
+Maps / 4162 Dateien, `floor` 79 / 13 913, `all` 1056 Maps / 45 409 Dateien – 0 neue Probleme (die 3
+gemeldeten – `air_evt`, `soccer3` ohne GND/GAT – bestehen schon im Client). Optional
+`rgrf image reduce` (8-bit-BMP): ui 10,54 → 9,63 MB, trees 1,08 → 0,74 MB.
 
-| Variante | Größe | Änderung | Hinweis |
-|---|---|---|---|
-| zlib (Build) | 23 008 687 B | – | jeder Client |
-| `rgrf image reduce` (8-bit-BMP, 135 Bilder verlustfrei) | 22 983 146 B | −0,11 % | jeder Client |
-| reduce + zopfli neu komprimiert | 21 082 887 B | −8,4 % | jeder Client, 73 s |
-| reduce + LZMA | 14 397 277 B | −37,4 % | nur mit LZMA-fähiger `cps.dll` |
+Bereich `woe-bg-pvp` (Regex in `tools/pack/competitive.py`): aldeg/gefg/payg/prtg/arug/schg_cas*,
+arug/schg_dun01, te_aldecas1–5, te_prtcas01–05, te_alde_gld, te_prt_gld, n_castle, rush_cas01–04,
+gld_dun01–04, gld2_*, guild_vs1–5, bat_a01, bat_b01, bat_c01–08, bat_room, pvp_2vs2, pvp_room,
+pvp_y_1-2…8-2 (79 Maps im Dev-Client; rush_cas*/bat_c02–08 nutzen die GND/GAT einer anderen Map,
+z. B. rush_cas01 → prtg_cas02). `valkyrie` ist nicht mehr enthalten (keine WoE-Map).
 
-Alle Varianten `rgrf verify` 0 Fehler. Die GND-Größe kommt fast nur von den Vanilla-Lightmaps.
+Kombinationsregel: Sind `floor` und `flat-maps` gewählt, wird `floor-flat-<bereich>` **nach**
+`flat-maps-<bereich>` kopiert (ersetzt deren `.gnd`); `floor` allein (Original-Geometrie) entfällt
+dann. Reihenfolge: `copy_order` in `recipe.toml` (Studio kopiert in der Reihenfolge der Profilliste,
+spätere Ordner überschreiben).
 
-Fairness des Kandidaten **[Vorschlag]**: Wände, Modelle, Höhen und Schatten bleiben; geändert ist nur
-die Bodenfarbe mit GAT-Raster (Information, die der Client ohnehin hat) und statische Markierungen
-der WoE-SE-Burgen. Vor Auslieferung im Client prüfen (Optik, Wasser, Performance) und über
-OdinGuard-Ressourcenregeln für alle gleich ausliefern.
+### 2.5 Flache Maps aus RustyGRF statt aus darkworld **[gemessen]**
 
-### 2.6 Offene Punkte
+`rgrf map flat --flatten --remove-light --remove-shadow <Client-Ordner> [Maps]` liest die Maps über
+die DATA.INI des Clients (das Skript legt dafür eine DATA.INI ohne `odin*.grf` an) und schreibt nur
+die geänderten `.rsw/.gnd/.gat`. Damit ist das Ergebnis für jeden Client reproduzierbar. Vergleich mit
+dark2 für die 72 WoE/BG/PvP-Maps, die beide haben (`analysis/_work/competitive/cmp_flat.json`):
+
+| Merkmal | RustyGRF flat | darkworld dark2 |
+|---|---|---|
+| Modelle/Lichter/Sounds/Effekte in `.rsw` | 0 (72/72) | 0 (72/72) |
+| Wasserhöhe | 100 (unter dem Boden) | 100 |
+| Höhen GND/GAT | 0 (72/72) | 0 (72/72) |
+| Wandflächen | 0 | 0 |
+| Lightmaps | 1 | 1 |
+| GAT-Zelltypen | = Client | 69/72 gleich; aldeg_cas01 (129 Zellen), te_prt_gld (88), arug_cas03 (2) weichen ab |
+| Bodentexturen | Originaltexturen, leere Zellen bleiben leer (z. B. prtg_cas01 4291 von 12 100 Zellen mit Boden) | jede Zelle eine Kachel `c*.bmp` (12 100 / 12 100) |
+
+Die Kachel-Optik von darkworld entsteht in OdinGuard durch `competitive.py floor --fill-void` auf den
+RustyGRF-Flachmaps (Kachelname aus den 4 GAT-Zellen, Kachel-UV wie in dark, WoE-Markierungen
+`points\*`/`woe\*` aus der dark2-GND übernommen, wo die 4 GAT-Zellen gleich sind: 31 339 Zellen,
+fast nur SE-Burgen arug/schg_cas*). GND 1.8/1.9 (124 neuere Maps) werden mit unverändertem Wasserteil
+geschrieben; Lesen→Schreiben ist für alle 1028 Flach-GNDs bytegleich. `1@exsr` bleibt ohne Kacheln
+(seine `.gat` ändert `map flat` nicht und schreibt sie daher nicht ins Flach-Archiv).
+
+Der frühere Kandidat `analysis/_work/dark/odin-dark-candidate.grf` (59 Maps, 23 MB) ist durch den
+Ordner `floor` ersetzt (68 Bodendateien, gleiche Methode, zusätzlich rush/bat_c-Grounds,
+UV der Kachel jetzt immer ganz statt teils aus der Original-Fläche).
+
+### 2.6 Ladereihenfolge, Pfade, Kodierung **[gemessen]**
+
+`DATA.INI`: `0=odin.grf`, `1=odin-dark.grf`, danach die GRFs des Clients (Dev-Client: cdata, core,
+cpal, data). Prüfung aller Staging-Pfade gegen den Dev-Client (`analysis/_work/competitive/conflicts.json`):
+
+* **odin.grf vor odin-dark.grf:** `effects` enthält `texture\effect\hanmoon1.tga`/`hanmoon2.tga`
+  (darkworld: 1×1 Magenta), die auch odin.grf (LGP-Kacheln) hat – odin.grf gewinnt, die LGP bleibt.
+  Sonst keine Überschneidung mit odin.grf (`data\odinguard\profile.txt`, hanmoon1/2).
+* **odin-dark.grf vor den Client-GRFs:** überschreibt auch Dateien aus `cdata.grf` (effects 8, other
+  11, flat-maps-all 21) und `cpal.grf` (nodelay: 49 von 56 Körper-Sprites kommen im Dev-Client aus
+  cpal.grf; die nodelay-Sprites ersetzen sie – eigene Färbungen/Paletten prüfen **[vermutet]**).
+* **Groß/Klein:** 22 Pfade unterscheiden sich vom data.grf-Eintrag nur in der Schreibweise
+  (trees 19, z. B. `JA_FF1.bmp`; ui 1 `prt_sewB1.bmp`; flat-maps-all 2 `Tha_t05.gat/.gnd`). Der Client
+  vergleicht ohne Groß/Klein **[gelesen, Teil 1]**; `rgrf build` lehnt Kollisionen ab, im Pack gibt es
+  keine. Alle Zielpfade sind klein geschrieben (Staging auf macOS ist case-insensitiv).
+* **Kodierung:** alle Namen sind cp949-darstellbar; extrahiert mit `--names cp949`, gebaut mit
+  `--names cp949`. Die Rohbytes stimmen mit data.grf überein (z. B. `몬스터` = `b8 f3 bd ba c5 cd`,
+  verglichen mit `rgrf --names raw ls`).
+* **Zwischen Kategorien:** Überschneidungen nur bei den Map-Varianten (gewollt, s. Kombinationsregel)
+  und den Kachel-Texturen (identische Dateien).
+
+### 2.7 Was RustyGRF (noch) nicht kann **[gemessen]**
+
+* `map flat` hat keine Option für GRF Editors Kachel-Texturen (GAT-codierte `c*.bmp`, „custom
+  textures“); deshalb setzt `tools/pack/competitive.py floor` die Kacheln auf die GND (Python).
+* Kein Befehl, um GND-Flächen neu zu texturieren oder leere Zellen zu füllen (dasselbe).
+* `map info` zeigt bei GND keine Zahl der Lightmaps, Flächen, Wände und Höhen; der Vergleich lief über
+  einen eigenen Parser.
+* „Simplify maps“ (Modelle teilweise behalten, wie Thoth) gibt es nur als Ganz-oder-gar-nicht
+  (`--remove-models`/`--remove-objects`), keine Auswahl einzelner Modelle.
+* `extract` nimmt nur ein Muster (keine Liste/Manifest-Datei), `ls`-Muster kennen keine
+  Zeichenklassen (`[an]`); `-q` unterdrückt die Zusammenfassung von `extract` nicht.
+* Kein Bild-/Sprite-Vergleich (Transparenz-Anteil, Größe gegenüber Vanilla) als Befehl; Werte für
+  `trees` stammen aus der früheren Pillow-Messung.
+* `map flat` endet mit Code 3, wenn Maps des Clients Dateien fehlen (air_evt, soccer3), obwohl das
+  Archiv geschrieben ist; das Skript wertet 3 als Erfolg.
+
+### 2.8 Offene Punkte
 
 * Ingame-Test, ob 0xc8/0xc9 im 2018er Client flach pro Zelle gezeichnet werden (Variante A).
 * Ob die Original-Geometrie von Volcano/Deluge/VG vier Seiten (Quadrat) oder rund ist; bestimmt, ob
   Variante B Quadrate oder Ringe zeigt (WoE-RO-Spieler sahen Quadrate).
 * Ob die `cps.dll` des Clients LZMA kann (sonst zlib/zopfli).
-* Ob die WoE-SE-Markierungen (`points\*`, `woe\*`) gewollt sind oder nur das neutrale Raster.
-* Herkunft/Urheberrecht der dark-Kacheln (Autor unbekannt; einfache 2–3-Farben-Raster). Alternative:
-  Kacheln mit `make_tiles.py`-Logik selbst zeichnen und `build_fair_gnd.py` darauf zeigen lassen.
+* Ingame-Test der Kategorien im 2018er Client: Optik `floor`/`floor-flat-*`, nodelay mit den
+  cpal.grf-Sprites, Kamera-Tabellen aus `other`.
+* Studio: `recipe.toml` lesen (Standard, Varianten, Kombinationsregel) statt der freien Ordnerliste.
 
 ---
 
@@ -307,12 +387,16 @@ OdinGuard-Ressourcenregeln für alle gleich ausliefern.
 | `analysis/_work/lgp/own/*` | eigene Zeichnungen (`tools/make_tiles.py`, 2026-11-23) |
 | `analysis/_work/dark/pack/data/texture/**` (135) | `dark.grf`, `data\Texture\…` (MD5 in `uebernehmbar.tsv`; in dark2 identisch) |
 | `analysis/_work/dark/pack/data/*.gnd` (59) | abgeleitet aus `client-dev/ragnarok/data.grf` (Gravity-Original) + Kachelzuordnung aus dark.grf |
+| `~/Dev/OdinGuard-assets/competitive/{trees,barricades,pneuma,effects,ui,other}/` | `dark2.grf` (sha256 `045c71de65804624e28fe0a7c4e8225a6408ead27831911a5f9e1f21daa1a748`), einzelne Pfade `dark.grf` (`f7baefcdcb8475a4c37e268329cefedcb75357165b7cf1f069c662596ba906ae`); Liste je Datei in `assets/competitive/manifests/` |
+| `~/Dev/OdinGuard-assets/competitive/nodelay/` | `nodelay.grf` (`0dba7a75f6a5f48c2588fb64387b6529d594e4c0ab04b27879eb4911508c8f11`) |
+| `~/Dev/OdinGuard-assets/competitive/flat-maps-*/` | `rgrf map flat` aus `client-dev/ragnarok` (data.grf `cc0f830827bf9468316e4c56a727140ebf9034c7be17ee282c6b073c843d5737`, cdata, core, cpal) |
+| `~/Dev/OdinGuard-assets/competitive/floor*/` | GND des Clients bzw. der Flachmaps + Kacheln und WoE-Markierungen aus dark2.grf (`tools/pack/competitive.py floor`) |
 | `analysis/_work/lgp/ref/*.js` | roBrowserLegacy (GitHub MrAntares/roBrowserLegacy, master), nur gelesen |
 | Unit-Nutzung | xAthena `db/pre-re/skill_db.yml`, `db/re/skill_db.yml`, `src/map/skill.hpp` |
 
-Quell-GRFs (unverändert): `/Users/k/Downloads/RANDOM RESOURCES/RO CHEAT SOFTWARE and CHEAT GRFs etc/`
-(`dark.grf`, `dark2.grf`, `woe.grf`, `woebg.grf`, `Thoth.grf`, `nodelay.grf`, `WOERO/woerol.grf`,
-`Desu GRF 3-15-2018/desu.grf`), `/Users/k/Downloads/RANDOM RESOURCES/Burning Legacy/` (`burn.grf`,
+Quell-GRFs (unverändert): `<Sammlung Cheat-Software und Cheat-GRFs>/`
+(`dark.grf`, `dark2.grf`, `woe.grf`, `woebg.grf`, `Thoth.grf`, `nodelay.grf`, `WOERO/woero.grf`, `WOERO/woerol.grf`, `WOERO/woerop.grf`,
+`Desu GRF 3-15-2018/desu.grf`), `<Sammlung Burning Legacy>/` (`burn.grf`,
 `kdom.grf`: keine LGP-/Zellkachel-Funde, nur Listing).
 
 ## Reproduktion
@@ -322,3 +406,8 @@ Skripte unter `analysis/_work/{lgp,dark}/tools/`: `strinfo.py` (STR), `imgstat.p
 `sprcmp.py`, `gatall.py`, `classify.py`, `build_fair_gnd.py`, `make_tiles.py`. Die großen
 Zwischendaten (Hash-JSON der Vanilla-GRFs, extrahierte Maps) wurden gelöscht; neu erzeugen mit
 `rgrf --names cp949 --json hash <grf>` und `rgrf --names cp949 extract <grf> maps/<quelle> 'data\<map>.gnd'`.
+
+Competitive-Pack: `DARK_DIR=<Ordner mit dark.grf, dark2.grf, nodelay.grf> CLIENT_DIR=<Client mit DATA.INI>
+tools/pack/build_categories.sh [ordner …]` (rgrf + Python 3.9, idempotent; zweiter Lauf bytegleich
+geprüft; `TEST_GRF_DIR=…` baut und prüft je Ordner eine Test-GRF). Klassifikation und Prüfungen:
+`analysis/_work/competitive/tools/{classify.py,cmp_flat.py,conflicts.py}`.

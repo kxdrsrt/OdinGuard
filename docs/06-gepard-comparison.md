@@ -47,7 +47,7 @@ xAthena (`05-tests.md`). Gepard facts are from its public feature list; its code
 - Everything configured on the server (signatures, policy, colours, auras, LGP): no client update needed.
 - Own key per deployment, open protocol in `proto/og_proto.h`, reproducible builds (same input, same
   DLL hash).
-- `tools/check_auras.py`: checks which auras a client can draw before they are allowed.
+- Auras moved out of OdinGuard in 1.0 into a separate rAthena feature (rathena-auras, incl. `check_auras.py`).
 
 ## Still open
 

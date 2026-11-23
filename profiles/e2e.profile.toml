@@ -1,7 +1,14 @@
-# OdinGuard Anti Cheat profile (schema 2). Secrets are only referenced by path.
-schema_version = 2
+# OdinGuard Anti Cheat profile (schema 3). Secrets are only referenced by path.
+schema_version = 3
 modules = [
-    "rate-limit", "behaviour", "ch-nonce", "ch-code", "ch-time", "ch-file", "ch-honeypot", "competitive-pack",
+    "rate-limit",
+    "behaviour",
+    "ch-nonce",
+    "ch-code",
+    "ch-time",
+    "ch-file",
+    "ch-honeypot",
+    "competitive-pack",
     "core",
     "hwid",
     "multi-client",
@@ -15,10 +22,8 @@ modules = [
     "colors",
     "branding",
     "lgp",
-    "auras",
     "ban-system",
 ]
-aura_catalog = ""
 output = "../dist/e2e"
 
 [general]
@@ -54,6 +59,14 @@ competitive_pack = "../tests/e2e/fixtures/competitive-test.grf"
 
 [assets.odin_grf]
 lgp = "../assets/odin-grf/lgp"
+
+[grf]
+modified_action = "kick"
+unknown_action = "log"
+missing_action = "log"
+overlays = []
+file = []
+mod = []
 
 [rollout]
 stage = 1

@@ -120,6 +120,7 @@ static int positive(const char *dir)
     PROCESS_INFORMATION pi = { 0 };
     HWND w1 = NULL, w2 = NULL;
     HMODULE mod = NULL;
+    HANDLE mtx = NULL;
     uint16_t pid_sig = 0, mod_sig = 0, cls_sig = 0, title_sig = 0, file_sig = 0;
 
     snprintf(og_client_dir, sizeof og_client_dir, "%s", dir);
@@ -169,6 +170,32 @@ static int positive(const char *dir)
     snprintf(ini, sizeof ini, "%s\\DATA.INI", dir);
     write_file(ini, "[Data]\r\n0=fixture.grf\r\n1=data.grf\r\n");
 
+    /* kernel object, registry key and driver: synthetic signatures over harmless objects */
+    {
+        static char drv[256];
+        SC_HANDLE scm = OpenSCManagerA(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
+        HKEY k;
+        mtx = CreateMutexA(NULL, FALSE, "OdinGuardDetTestMutex");
+        add_sig(65005, OG_KIND_MUTEX, "OdinGuardDetTestMutex");
+        if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\OdinGuardDetTest", 0, NULL, 0, KEY_WRITE, NULL, &k, NULL) == ERROR_SUCCESS) RegCloseKey(k);
+        add_sig(65006, OG_KIND_REGISTRY, "HKCU\\Software\\OdinGuardDetTest");
+        add_sig(65008, OG_KIND_REGISTRY, "HKCU\\Software\\OdinGuardDetTestMissing");
+        if (scm) {
+            DWORD need = 0, count = 0, resume = 0;
+            ENUM_SERVICE_STATUSA *buf;
+            EnumServicesStatusA(scm, SERVICE_DRIVER, SERVICE_ACTIVE, NULL, 0, &need, &count, &resume);
+            if (need && (buf = (ENUM_SERVICE_STATUSA *)HeapAlloc(GetProcessHeap(), 0, need))) {
+                resume = 0;
+                if (EnumServicesStatusA(scm, SERVICE_DRIVER, SERVICE_ACTIVE, buf, need, &need, &count, &resume) && count)
+                    snprintf(drv, sizeof drv, "%s", buf[0].lpServiceName);
+                HeapFree(GetProcessHeap(), 0, buf);
+            }
+            CloseServiceHandle(scm);
+        }
+        if (drv[0]) add_sig(65007, OG_KIND_DRIVER, drv);
+        printf("  driver used for the driver test: %s\n", drv[0] ? drv : "(none)");
+    }
+
     scan();
     {
         int i;
@@ -181,6 +208,10 @@ static int positive(const char *dir)
     if (file_sig) result(hit(file_sig, OG_KIND_FILE_NAME), "file name signature", NULL);
     result(hit(65001, OG_KIND_FILE_SHA256), "file hash signature", NULL);
     result(hit(65002, OG_KIND_GRF_SHA256), "GRF hash signature (DATA.INI)", NULL);
+    result(hit(65005, OG_KIND_MUTEX), "named mutex signature", NULL);
+    result(hit(65006, OG_KIND_REGISTRY), "registry key signature", NULL);
+    result(!hit(65008, OG_KIND_REGISTRY), "missing registry key is not reported", NULL);
+    result(hit(65007, OG_KIND_DRIVER), "driver / service signature", NULL);
     result(!pid_sig + !mod_sig + !cls_sig + !title_sig + !file_sig == 0, "package has a signature of every stub kind", NULL);
 
     /* every hit is reported once per connection */
@@ -209,6 +240,8 @@ static int positive(const char *dir)
     if (mod) FreeLibrary(mod);
     if (w1) DestroyWindow(w1);
     if (w2) DestroyWindow(w2);
+    if (mtx) CloseHandle(mtx);
+    RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\OdinGuardDetTest");
     return g_fail;
 }
 

@@ -117,6 +117,22 @@
 #define OG_KIND_DRIVER       10 /* kernel driver / service name */
 #define OG_KIND_GRF_SHA256   11 /* hex sha256 of a GRF listed in DATA.INI */
 #define OG_KIND_API_HOOK     12 /* report only: API patched, text = function and owning module */
+#define OG_KIND_GRF_MODIFIED 13 /* report only: GRF of the operator list differs (text = name) */
+#define OG_KIND_GRF_UNKNOWN  14 /* report only: GRF in DATA.INI that is neither listed nor an allowed mod */
+#define OG_KIND_GRF_MISSING  15 /* report only: required GRF of the operator list missing */
+#define OG_KIND_MUTEX        16 /* named mutex / event / section exists (exact name, Local or Global) */
+#define OG_KIND_REGISTRY     17 /* registry key exists: "HKCU\\path" or "HKLM\\path" */
+/* GRF manifest of the operator (sent with OG_S_SIGS, id 0, never reported themselves):
+ *   GRF_LIST "name|size|tail-sha256|full-sha256 or -|r or o"  accepted version of a GRF in DATA.INI (r = required);
+ *            several entries with the same name = several accepted versions (patch rollouts)
+ *   GRF_MOD  "tail-sha256|note"   allowed optional GRF under any name (skins, darkworld variants)
+ *   OVERLAY  "data\\folder\\"    allowed loose-file folder (in addition to the built-in overlays)
+ * tail-sha256 = SHA-256 of the 46-byte header followed by the bytes from the file table to the end of the file
+ * (fast: every repack or entry change rewrites the table); full-sha256 = SHA-256 of the whole file, checked in
+ * the background. */
+#define OG_KIND_GRF_LIST     18
+#define OG_KIND_GRF_MOD      19
+#define OG_KIND_OVERLAY      20
 #define OG_KIND_ALLOW_SHA256 64 /* allowlist: never report a file or module with this hash */
 #define OG_KIND_ALLOW_PATH   65 /* allowlist: never report a module whose path contains this text */
 

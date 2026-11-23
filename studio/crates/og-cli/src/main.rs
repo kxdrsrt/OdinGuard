@@ -17,12 +17,22 @@ struct Cli {
 enum Cmd {
     /// Create a profile with fresh salts and its key files (never overwrites keys)
     New { profile: PathBuf, #[arg(long)] id: String, #[arg(long)] operator: String },
+    /// Create the profile's missing key files (never overwrites existing keys)
+    Keys { profile: PathBuf },
     /// Check a profile against the module registry
     Validate { profile: PathBuf },
-    /// Print the module, command and aura registry as JSON
+    /// Print the module and command registry as JSON
     Registry,
     /// Print a profile (migrated) as JSON
     Show { profile: PathBuf },
+    /// Read the GRFs of a client folder (DATA.INI) into the profile's GRF manifest
+    GrfScan { profile: PathBuf, #[arg(long)] client: PathBuf, #[arg(long)] full: bool, #[arg(long, default_value_t = 512)] full_max_mb: u64, #[arg(long)] keep_previous: bool, #[arg(long)] optional: Vec<String> },
+    /// Size, tail hash and full hash of a GRF (the values of an og_grf_file / og_grf_mod line)
+    GrfHash { grf: PathBuf },
+    /// Allow an extra GRF (skin, darkworld variant, ...) by its tail hash, under any name
+    GrfAllow { profile: PathBuf, grf: PathBuf, #[arg(long, default_value = "")] note: String },
+    /// Tool groups of the profile's signature sources (switch off or change the action with signatures.groups)
+    SigGroups { profile: PathBuf },
     /// Migrate an older profile to the current schema (keeps a .bak copy)
     Migrate { profile: PathBuf },
     /// What a build would contain
@@ -81,12 +91,54 @@ fn run(cli: Cli) -> Result<()> {
             p.save(&profile)?;
             println!("profile {} written", profile.display());
         }
+        Cmd::Keys { profile } => {
+            let p = Profile::load(&profile)?;
+            for k in [&p.keys.server_seed, &p.keys.signing_seed, &p.keys.build_secret] {
+                let path = p.resolve(&base(&profile), k);
+                println!("{} {}", if keys::ensure(&path)? { "created" } else { "kept" }, path.display());
+            }
+        }
         Cmd::Validate { profile } => {
             let w = Profile::load(&profile)?.validate(&reg()?)?;
             w.iter().for_each(|w| println!("warning: {w}"));
             println!("ok");
         }
         Cmd::Registry => print(&reg()?),
+        Cmd::GrfScan { profile, client, full, full_max_mb, keep_previous, optional } => {
+            let mut p = Profile::load(&profile)?;
+            let mut scan = og_core::grf::scan_client_limited(&client, full, full_max_mb * 1024 * 1024)?;
+            for f in &mut scan {
+                f.required = !optional.iter().any(|o| o.eq_ignore_ascii_case(&f.name));
+                println!("{} {} bytes tail {}{}{}", f.name, f.size, &f.tail[..16], if f.full.is_empty() { "" } else { " + full hash" }, if f.required { "" } else { " (optional)" });
+            }
+            og_core::grf::merge(&mut p.grf.files, scan, keep_previous);
+            p.save(&profile)?;
+            println!("{} accepted GRF version(s) in the profile; rebuild and deploy the server config before the patch", p.grf.files.len());
+        }
+        Cmd::GrfHash { grf } => {
+            let (size, tail) = og_core::grf::tail_hash(&grf)?;
+            println!("{size} {tail} {}", og_core::manifest::sha256_file(&grf)?.0);
+        }
+        Cmd::GrfAllow { profile, grf, note } => {
+            let mut p = Profile::load(&profile)?;
+            let (_, tail) = og_core::grf::tail_hash(&grf)?;
+            let note = if note.is_empty() { grf.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default() } else { note };
+            if !p.grf.mods.iter().any(|m| m.tail == tail) {
+                p.grf.mods.push(og_core::profile::GrfMod { tail, note: note.replace([',', '|'], " ") });
+            }
+            p.save(&profile)?;
+            println!("allowed: {note}");
+        }
+        Cmd::SigGroups { profile } => {
+            let p = Profile::load(&profile)?;
+            let b = base(&profile);
+            let src: Vec<PathBuf> = p.signatures.sources.iter().map(|s| p.resolve(&b, s)).collect();
+            let al: Vec<PathBuf> = p.signatures.allowlist.iter().map(|s| p.resolve(&b, s)).collect();
+            for g in sigpack::catalog(&src.iter().map(PathBuf::as_path).collect::<Vec<_>>(), &al.iter().map(PathBuf::as_path).collect::<Vec<_>>())? {
+                let set = p.signatures.groups.get(&g.group).cloned().unwrap_or_else(|| "default".into());
+                println!("{:<10} {:<5} {:>4} entries ({:>3} client) kinds {:<40} actions {:<20} profile: {set}", g.group, if g.allow { "allow" } else { "sig" }, g.count, g.active, g.kinds.join(","), g.actions.join(","));
+            }
+        }
         Cmd::Show { profile } => print(&Profile::load(&profile)?),
         Cmd::Migrate { profile } => {
             let text = std::fs::read_to_string(&profile).map_err(|e| og_core::Error::Io(profile.display().to_string(), e))?;

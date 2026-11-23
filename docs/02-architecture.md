@@ -36,14 +36,13 @@ Jedes Modul hat `id`, `version`, `kind` (core, protection, detection, challenge,
 | heartbeat | protection | beide | core | og_guard | og_heartbeat | interval, timeout |
 | integrity | protection | beide | heartbeat | og_integrity | og_integrity | action, tamper_action |
 | cheat-signatures | detection | beide | heartbeat | og_detect | og_signatures | package, inject_action |
-| grf-rules | protection | beide | heartbeat | og_assets | og_grf_rules | strict, action |
+| grf-rules | protection | beide | heartbeat | og_assets | og_grf_rules | strict, action (+ GRF-Manifest aus `[grf]`) |
 | input-filter | protection | beide | heartbeat | og_input | og_input_filter | enabled |
 | crash-report | client-feature | Client | core | og_crash | – | – |
 | client-commands | client-feature | beide | core | og_cmds | og_client_commands | – |
 | colors | gameplay | beide | core | og_text, og_ui | og_colors | – |
 | branding | client-feature | Client | core | og_splash | – | – |
 | lgp | gameplay | Server | core | – | og_lgp_enable | – |
-| auras | gameplay | Server | core | – | og_auras_enable | scope |
 | ban-system | protection | Server | core | – | og_ban_system | wave_hour, ban_score |
 | behaviour | detection | Server | ban-system | – | og_behaviour | nodelay_per_minute, autopot_ms, macro_jitter_ms |
 | ch-nonce | challenge | beide | core | (core) | og_ch_nonce | interval, action |
@@ -73,13 +72,16 @@ Map (`linked_objects`) und bricht ab, wenn ein nicht gewähltes Modulobjekt geli
 Messung 2026-11-23: Minimal-Profil (core + rate-limit) linkt 6 Kern-Objekte, DLL 271 360 Byte, keine Strings
 anderer Module; Default-Profil 1 026 560 Byte.
 
-## 3. Profil (`odinguard.profile.toml`, Schema 2)
+## 3. Profil (`odinguard.profile.toml`, Schema 3)
 
 Abschnitte: `modules`, `[general]` (id, operator, client_build, ports, splash_ms, variation_seed, hwid_salt),
 `[keys]` (Pfade: server_seed, signing_seed, build_secret), `[params.<modul>]`, `[commands.<id>]` (enabled, name,
 group, rate_ms), `[signatures]` (sources, allowlist, max_action, version), `[assets]` (competitive_pack,
-odin_grf-Gruppen), `aura_catalog`, `output`, `[rollout]` (stage 1–4, reviewed_rules).
-Migration: `profile::migrate` hebt Schema 1 → 2 an (Test `schema1_profile_migrates_without_data_loss`),
+odin_grf-Gruppen, competitive_source + competitive = Pack-Kategorien), `[grf]` (GRF-Manifest: `file`, `mod`,
+`overlays`, Aktionen), `[signatures.groups]` (pro Tool-Gruppe `off` oder Aktion), `signatures.disabled`, `output`,
+`[rollout]` (stage 1–4, reviewed_rules).
+Migration: `profile::migrate` hebt Schema 1 → 2 → 3 an (3: Auren raus, sie sind jetzt ein eigenes rAthena-Feature;
+Test `schema1_profile_migrates_without_data_loss`),
 `og migrate` legt eine `.bak`-Kopie an.
 
 Ableitungen (Studio, `pipeline::Derived`):
@@ -125,14 +127,17 @@ Fehlschläge gehen über `og_report` → Flag mit Punkten → Aktion laut Profil
 
 ## 6. Detection-Modul „cheat-signatures“
 
-- **Quellen:** `signatures/signatures.toml` (170 Signaturen aus der statischen Analyse, `analysis/cheat-signatures/`)
-  und `signatures/allowlist.toml` (32 Einträge: ROExt-Standard, dxwrapper, Skins, Overlays, eigene Dateien).
+- **Quellen:** `signatures/signatures.toml` (300 Signaturen in 21 Tool-Gruppen, davon 164 vom Client prüfbar;
+  statische Analyse der Proben plus öffentlich bekannte Tools, `analysis/cheat-signatures/`) und
+  `signatures/allowlist.toml` (ROExt-Standard, dxwrapper, Skins, Overlays, Browser, Hersteller-Software).
+- **Konfiguration:** Gruppe = ID-Präfix (`OG-RCX-001` → RCX). Profil `[signatures.groups]`: `off` oder eine Aktion
+  für die ganze Gruppe; `signatures.disabled` für einzelne IDs; `og sig-groups` / Studio-Tab „Signaturen“.
 - **Paket:** Das Studio kompiliert daraus `odinguard.sigpack` – `"OGSP"`, Version, Einträge
   `{id, kind, action, score, name, pattern}`, EdDSA-Signatur (Signier-Schlüssel des Profils). Der Server lädt es
   nur mit gültiger Signatur und Mindestversion und schickt die client-prüfbaren Arten an den Client.
-- **Arten:** process, window_title, window_class, module, file_name, file_sha256, driver, grf_sha256
-  (Client); grf_entry, import_pattern, string_pattern, registry (nur Analyse/Studio, Client kann sie nicht
-  prüfen); allow_sha256, allow_path (Allowlist).
+- **Arten:** process, window_title, window_class, module, file_name, file_sha256, driver, grf_sha256, mutex
+  (benannte Mutexe/Events/Sections), registry (Schlüssel vorhanden, HKCU/HKLM, 32/64-Bit-Sicht) – vom Client
+  geprüft; grf_entry, import_pattern, string_pattern nur Analysedaten; allow_sha256, allow_path (Allowlist).
 - **Punkte:** Schwere (low 10, medium 30, high 60, critical 100) × Konfidenz (high 1, medium 0,6, low 0,3);
   `max_action` des Profils kappt Aktionen (log < flag < flagban < kick < ban).
 - **Verhalten (Server, echte Sicherheit):** `behaviour` – Skill-Anfragen innerhalb des Delays (nodelay),
@@ -140,9 +145,23 @@ Fehlschläge gehen über `og_report` → Flag mit Punkten → Aktion laut Profil
 - **Fehlalarm-Schutz:** zwei Scans zur Bestätigung (Integrität), Allowlist vor jeder Meldung, Toleranzpfade
   (Warsaw, Treiber-Overlays, Parallels), jede Meldung einmal pro Verbindung [gemessen, `dettest`].
 
+## 6a. GRF-Prüfung (Modul grf-rules, wie Gepard, aber patcher-tauglich)
+
+- Der Server schickt mit dem Signaturpaket das GRF-Manifest des Betreibers (Arten `GRF_LIST`, `GRF_MOD`, `OVERLAY`).
+- Der Guard prüft jede GRF aus `DATA.INI`: Name + Größe + **Tail-Hash** (SHA-256 über den 46-Byte-Header und die
+  Dateitabelle bis Dateiende; jedes Umpacken oder Ändern eines Eintrags ändert die Tabelle) bei jedem Scan, gecacht
+  nach Größe/Änderungszeit; der **Voll-Hash** der Datei läuft einmal im Hintergrund-Thread mit niedriger Priorität.
+- Erlaubte Mods (`grf.mod`) werden über den Tail-Hash unabhängig vom Namen erkannt (Skins, darkworld-Varianten).
+- Meldungen `grf:modified` (Tabelle oder Inhalt), `grf:unknown`, `grf:missing` (nur Pflicht-GRFs) mit eigener Aktion.
+- Patcher: mehrere Versionen pro Name erlaubt (`og grf-scan --keep-previous`): erst Server-Konfig mit alter + neuer
+  Version ausrollen, dann patchen, später alte Version entfernen. `odin.grf`/`odin-dark.grf` trägt jeder Build ein.
+- Lose Dateien (`grf_strict`): außerhalb der Overlay-Ordner (eingebaut + `grf.overlays`) gemeldet.
+- Grenzen: Wer den Guard selbst manipuliert, kann falsche Antworten liefern; serverseitig gegengeprüft wird
+  stichprobenartig mit `ch-file` (zufällige Bereiche der offiziellen Dateien).
+
 ## 7. Command-Registry (`modules/commands.toml`)
 
-16 Commands (3 Client `!…`, 13 Server `@…`) mit `id`, `kind`, `name` (umbenennbar), `module`, `group`
+13 Commands (3 Client `!…`, 10 Server `@…`) mit `id`, `kind`, `name` (umbenennbar), `module`, `group`
 (Mindest-Gruppe), `rate_ms`, `params`, `help_de/en`. Das Studio erzeugt daraus:
 - die Server-Konfig (`og_cmd_<id>`, `og_cmdgroup_<id>`, `og_cmdrate_<id>`, `og_cmdname_<id>`); deaktivierte
   Commands werden nicht registriert. Auch die `!`-Commands prüft der Map-Server (Registry in `og_map.cpp`:
@@ -153,11 +172,13 @@ Commands eines nicht gewählten Moduls sind automatisch aus.
 
 ## 8. OdinGuard Studio (`studio/`)
 
-- `crates/og-core`: registry, profile (Schema + Migration), keys, crypto (Monocypher-FFI), sigpack, generate,
+- `crates/og-core`: registry, profile (Schema + Migration), keys, crypto (Monocypher-FFI), sigpack, grf, generate,
   pipeline (Build), manifest (signiertes Hash-Manifest), update (Updater), rollout (Stufen-Gate).
 - `crates/og-cli` (`og`): new, validate, registry, show, migrate, preview, build, verify-release, sigpack,
-  sigpack-verify, docs, rollout, update, update-manifest, update-verify.
-- `apps/studio` (Tauri 2): Tabs Profil, Module & Challenges, Commands, Auren, Build, Rollout, Updates; ruft nur
+  sigpack-verify, sig-groups, grf-scan, grf-allow, grf-hash, keys, docs, rollout, update, update-manifest,
+  update-verify.
+- `apps/studio` (Tauri 2): Tabs Profil, Module & Challenges, Commands, Signaturen, GRF & Mods, Competitive-Pack,
+  Build, Rollout, Updates; ruft nur
   og-core auf.
 - **Release pro Profil** (`og build`): `client/` (odinguard.dll, ijl15.dll, odin.grf, [odin-dark.grf],
   odinguard.ini, README.txt, Lizenzen), `server/` (src, conf inkl. sigpack und Referenz-Images, sql),
@@ -169,14 +190,18 @@ Commands eines nicht gewählten Moduls sind automatisch aus.
 
 ## 9. odin.grf
 
-Nur Assets (LGP-Kacheln `hanmoon1/2.tga`, später Auren/UI), gebaut mit `rgrf-core` aus den Asset-Gruppen der
+Nur Assets (LGP-Kacheln `hanmoon1/2.tga`, später UI), gebaut mit `rgrf-core` aus den Asset-Gruppen der
 gewählten Module und danach mit `rgrf_core::verify` geprüft. DLLs und Server-Code liegen nie in der GRF.
 `odin.grf` ist Pflicht-Datei der `ch-file`-Challenge, das Competitive-Pack (`odin-dark.grf`) optional.
 Ladereihenfolge (`DATA.INI`): `0=odin.grf`, `1=odin-dark.grf` (falls gewählt), danach die GRFs des Clients.
+Competitive-Pack: aus wählbaren Kategorien (`assets/competitive/recipe.toml`, Staging-Ordner pro Kategorie) oder
+einer fertigen GRF; alle Spieler bekommen dasselbe Pack.
 
 ## 10. Updater und Rollout
 
-- **Studio-Selbstupdate:** Kanäle `stable`/`beta`, Endpunkt `<basis>/<kanal>.json` + `.sig`. Schritt 1 (og-core):
+- **Studio-Selbstupdate:** Kanäle `stable`/`beta`, Endpunkt `<basis>/<kanal>.json` + `.sig`; Standard: GitHub
+  Releases des OdinGuard-Repos (stable = neuestes Release, beta = Release mit Tag `beta`), per
+  `OG_STUDIO_UPDATE_ENDPOINT` überschreibbar. Schritt 1 (og-core):
   Manifest-Signatur (minisign), Downgrade-Sperre gegen die höchste je akzeptierte Version, Pinning des
   Manifest-Hashes. Schritt 2 (Tauri-Updater-Plugin, gleicher Endpunkt): Artefakt-Signatur und Installation.
   Nur https (http nur Loopback in Tests). Privater Schlüssel `keys/studio-updater.key` bleibt lokal.
@@ -197,7 +222,7 @@ Ladereihenfolge (`DATA.INI`): `0=odin.grf`, `1=odin-dark.grf` (falls gewählt), 
 | Profil-Tag / Protokoll-Salt pro Betreiber | beide | Hürde: Clients/Bypässe für einen Server laufen nicht auf einem anderen | gemessen |
 | Parser-Fuzzing | beide | echte Sicherheit gegen Speicherfehler in den Parsern | gemessen |
 | ASLR, DEP, Stack-Protector, keine Timestamps | Client | Hürde, erschwert Exploits | gelesen (Makefile) |
-| CFG | Client | nicht verfügbar mit mingw-gcc | offen |
+| CFG (Control Flow Guard) | Client | Hürde gegen Code-Umlenkung; mit llvm-mingw (`TOOLCHAIN=llvm`, `OG_TOOLCHAIN=llvm og build`), mingw-gcc kann es nicht | gemessen: GuardFlags gesetzt (REA), Laufzeit siehe 05-tests |
 | String-Maskierung, Build-Variation (Link-Reihenfolge, Konstanten) | Client | Hürde gegen generische Patches | gemessen (Hashes je Profil verschieden) |
 | Anti-Debug, Hardware-Breakpoints, API-Hook-Check, Selbst-Integrität | Client | Hürde, zweistufig bestätigt | gemessen (keine Fehlalarme im Testclient) |
 | Code-Signing (Authenticode) | Client | senkt AV-Fehlalarme | Hook vorgesehen, kein Zertifikat |

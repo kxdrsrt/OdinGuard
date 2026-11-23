@@ -1,6 +1,19 @@
 # 32-bit Windows build with mingw-w64 (brew install mingw-w64). The server public key header comes from
 # tools/og_keygen.c (make keys); the secret seed stays in ../keys (git-ignored).
+# TOOLCHAIN=llvm builds with llvm-mingw (clang + lld) and Control Flow Guard (-mguard=cf); LLVM_MINGW = its folder
+TOOLCHAIN ?= gcc
+ifeq ($(TOOLCHAIN),llvm)
+LLVM_MINGW ?= $(HOME)/build/toolchains/llvm-mingw-20261117-ucrt-macos-universal
+CC       = $(LLVM_MINGW)/bin/i686-w64-mingw32-clang
+WINDRES  = $(LLVM_MINGW)/bin/i686-w64-mingw32-windres
+CFG_FLAGS = -mguard=cf
+RTLIBS   = -lssp
+else
 CC       = i686-w64-mingw32-gcc
+WINDRES  = i686-w64-mingw32-windres
+CFG_FLAGS =
+RTLIBS   = -lssp -lgcc
+endif
 # PROFILE_DIR: build folder of a Studio profile (og_modules.h, og_profile.h, og_modules.mk, resources). Without it
 # the development profile in src/ with every module is built.
 PROFILE_DIR ?=
@@ -17,13 +30,13 @@ endif
 # hardening: ASLR (relocations kept), DEP, stack protector; no timestamps (reproducible builds); linker map as
 # proof which module objects are linked (tools/check_modules.py)
 CFLAGS   = -O2 -Wall -Wextra -Wno-format-truncation -Wno-cast-function-type -std=gnu11 -DOG_BUILD -D_WIN32_WINNT=0x0601 \
-           -fstack-protector-strong -ffile-prefix-map=$(CURDIR)=. -ffile-prefix-map=$(abspath ..)=.. $(PROFILE_INC)
-LDFLAGS  = -s -static -static-libgcc -Wl,--kill-at -Wl,--no-insert-timestamp -Wl,--dynamicbase -Wl,--nxcompat \
+           -fstack-protector-strong -ffile-prefix-map=$(CURDIR)=. -ffile-prefix-map=$(abspath ..)=.. $(CFG_FLAGS) $(PROFILE_INC)
+LDFLAGS  = $(CFG_FLAGS) -s -static -static-libgcc -Wl,--kill-at -Wl,--no-insert-timestamp -Wl,--dynamicbase -Wl,--nxcompat \
            -Wl,-Map,$(OUT)/odinguard.map
 MH_SRC   = ../third_party/minhook/src/hook.c ../third_party/minhook/src/buffer.c ../third_party/minhook/src/trampoline.c \
            ../third_party/minhook/src/hde/hde32.c
 LIB_SRC  = ../third_party/monocypher.c $(MH_SRC)
-LIBS     = -lws2_32 -liphlpapi -ladvapi32 -luser32 -lgdi32 -lmsimg32 -lssp -lgcc
+LIBS     = -lws2_32 -liphlpapi -ladvapi32 -luser32 -lgdi32 -lmsimg32 $(RTLIBS)
 KEYS     = ../keys
 RC_DIR  ?= res
 
@@ -42,7 +55,7 @@ src/dev/og_pubkey.h: $(OUT)/og_keygen
 keys: src/dev/og_pubkey.h
 
 $(OUT)/odinguard_res.o: $(RC_DIR)/odinguard.rc $(RC_DIR)/odinguard.ico $(RC_DIR)/splash.bmp src/og_version.h $(PROFILE_DEPS) | $(OUT)
-	i686-w64-mingw32-windres $(PROFILE_INC) -I $(RC_DIR) -I src $(RC_DIR)/odinguard.rc -O coff -o $@
+	$(WINDRES) $(PROFILE_INC) -I $(RC_DIR) -I src $(RC_DIR)/odinguard.rc -O coff -o $@
 
 # one object per module source: the linker map then names exactly the module sources that are in the DLL
 OG_OBJ   = $(addprefix $(OUT)/obj/,$(notdir $(OG_SRC:.c=.o)))
@@ -55,7 +68,7 @@ $(OUT)/obj/%.o: %.c src/og.h src/og_version.h $(PROFILE_DEPS) ../proto/og_proto.
 
 $(OUT)/lib/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) -O2 -std=gnu11 -w -ffile-prefix-map=$(abspath ..)=.. -c -o $@ $<
+	$(CC) -O2 -std=gnu11 -w $(CFG_FLAGS) -ffile-prefix-map=$(abspath ..)=.. -c -o $@ $<
 
 $(OUT)/odinguard.dll: $(OG_OBJ) $(LIB_OBJ) $(OUT)/odinguard_res.o | $(OUT)
 	$(CC) -shared -o $@ $(OG_OBJ) $(LIB_OBJ) $(OUT)/odinguard_res.o $(LDFLAGS) $(LIBS)
@@ -71,7 +84,7 @@ $(OUT)/dettest.exe: tests/dettest.c src/og_detect.c src/og_log.c src/og_sha256.c
 	$(CC) -O2 -Wall -Wextra -Wno-format-truncation -std=gnu11 -D_WIN32_WINNT=0x0601 -Isrc -Isrc/dev -static -o $@ tests/dettest.c src/og_detect.c src/og_log.c src/og_sha256.c -ladvapi32 -luser32 -lbcrypt
 
 $(OUT)/nettest.exe: tests/nettest.c | $(OUT)
-	$(CC) -O2 -Wall -static -o $@ tests/nettest.c -lws2_32
+	$(CC) -O2 -Wall -static -I../third_party/minhook/include -o $@ tests/nettest.c $(MH_SRC) -lws2_32
 
 clean:
 	rm -rf $(OUT)

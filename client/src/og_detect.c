@@ -27,6 +27,7 @@ void og_detect_reset(void)
     g_nreported_mods = 0;
 }
 
+static int seen_peek(uint16_t id) { return (g_reported[id >> 3] >> (id & 7)) & 1; }
 static int seen(uint16_t id) { int r = (g_reported[id >> 3] >> (id & 7)) & 1; g_reported[id >> 3] |= (uint8_t)(1 << (id & 7)); return r; }
 
 static void detect(uint16_t id, uint8_t kind, const char *text)
@@ -216,6 +217,46 @@ static void scan_drivers(void)
     CloseServiceHandle(scm);
 }
 
+/* named kernel objects a tool creates (single-instance mutexes, events, shared memory) */
+static int object_exists(const char *name)
+{
+    HANDLE h;
+    if ((h = OpenMutexA(SYNCHRONIZE, FALSE, name))) { CloseHandle(h); return 1; }
+    if ((h = OpenEventA(SYNCHRONIZE, FALSE, name))) { CloseHandle(h); return 1; }
+    if ((h = OpenFileMappingA(FILE_MAP_READ, FALSE, name))) { CloseHandle(h); return 1; }
+    return 0;
+}
+
+static void scan_objects(void)
+{
+    char g[300];
+    int i;
+    for (i = 0; i < g_nsig; i++) {
+        if (g_sig[i].kind != OG_KIND_MUTEX || seen_peek(g_sig[i].id)) continue;
+        snprintf(g, sizeof g, "Global\\%s", g_sig[i].pattern);
+        if ((object_exists(g_sig[i].pattern) || object_exists(g)) && !seen(g_sig[i].id)) detect(g_sig[i].id, OG_KIND_MUTEX, g_sig[i].pattern);
+    }
+}
+
+/* registry keys a tool leaves behind: "HKCU\\path" or "HKLM\\path" (32- and 64-bit views) */
+static void scan_registry(void)
+{
+    int i;
+    for (i = 0; i < g_nsig; i++) {
+        const char *p = g_sig[i].pattern;
+        HKEY root, k;
+        if (g_sig[i].kind != OG_KIND_REGISTRY || seen_peek(g_sig[i].id)) continue;
+        if (!_strnicmp(p, "HKCU\\", 5)) root = HKEY_CURRENT_USER;
+        else if (!_strnicmp(p, "HKLM\\", 5)) root = HKEY_LOCAL_MACHINE;
+        else continue;
+        if (RegOpenKeyExA(root, p + 5, 0, KEY_READ, &k) == ERROR_SUCCESS ||
+            RegOpenKeyExA(root, p + 5, 0, KEY_READ | KEY_WOW64_64KEY, &k) == ERROR_SUCCESS) {
+            RegCloseKey(k);
+            if (!seen(g_sig[i].id)) detect(g_sig[i].id, OG_KIND_REGISTRY, p);
+        }
+    }
+}
+
 int og_detect_scan(void)
 {
     int unknown;
@@ -230,5 +271,7 @@ int og_detect_scan(void)
     scan_files();
     scan_grfs();
     scan_drivers();
+    scan_objects();
+    scan_registry();
     return unknown;
 }

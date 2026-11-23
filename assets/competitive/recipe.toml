@@ -1,0 +1,201 @@
+# OdinGuard competitive pack ("odin-dark.grf"): operator-selectable categories.
+#
+# Owner decision (2026-11-24): every darkworld / WoE-RO change may be shipped if the operator selects
+# it, because every player receives the same pack (one fair standard, like WoE RO / EstlandRO).
+# Each category below is a staging folder <staging_root>/<staging>/data/... ; the Studio copies the
+# selected folders in the order of the profile list into one tree and builds odin-dark.grf from it
+# (profile: assets.competitive_source = <staging_root>, assets.competitive = [<staging>, ...], listed
+# in `copy_order`).
+#
+# Regenerate the folders: tools/pack/build_categories.sh (inputs and usage in its header).
+# Entry lists with MD5 per file: assets/competitive/manifests/<category>.tsv.
+# Sizes measured 2026-11-24 with rgrf 0.1.0 against client-dev (DATA.INI cdata, core, cpal, data);
+# grf_bytes = test GRF built with rgrf build (zlib 9, 0x200), rgrf verify: 0 errors.
+
+schema = 1
+staging_root = "~/Dev/OdinGuard-assets/competitive"   # outside the repository
+manifests = "assets/competitive/manifests"
+
+# Later folders overwrite earlier ones with the same path. floor-flat-* must come after flat-maps-*.
+copy_order = [
+  "flat-maps-all", "flat-maps-woe-bg-pvp", "floor", "floor-flat-all", "floor-flat-woe-bg-pvp",
+  "trees", "barricades", "pneuma", "nodelay", "effects", "ui", "other",
+]
+
+[load_order]
+data_ini = ["0=odin.grf", "1=odin-dark.grf", "2..=the client's own GRFs in their order"]
+notes = """
+odin.grf wins over odin-dark.grf: its LGP tiles data\\texture\\effect\\hanmoon1.tga and hanmoon2.tga
+also exist in the effects category (darkworld: 1x1 magenta) and stay OdinGuard's.
+odin-dark.grf wins over every client GRF, also over the server's own cdata.grf (effects 8, other 11
+files) and cpal.grf (nodelay: 49 body sprites).
+Paths are stored in cp949 exactly as in the client's data.grf (Korean folders, e.g. 몬스터 = b8 f3 bd ba c5 cd);
+the client compares names without case, so 22 entries that differ from data.grf only in case
+(e.g. trees JA_FF1.bmp, flat-maps Tha_t05.gat) replace the original.
+"""
+
+[[source]]
+name = "dark2.grf"
+sha256 = "045c71de65804624e28fe0a7c4e8225a6408ead27831911a5f9e1f21daa1a748"
+bytes = 78907885
+role = "darkworld, preferred for every path it has"
+
+[[source]]
+name = "dark.grf"
+sha256 = "f7baefcdcb8475a4c37e268329cefedcb75357165b7cf1f069c662596ba906ae"
+bytes = 78113579
+role = "darkworld, only for paths missing in dark2.grf (14 tarot cards, dragon_fly)"
+
+[[source]]
+name = "nodelay.grf"
+sha256 = "0dba7a75f6a5f48c2588fb64387b6529d594e4c0ab04b27879eb4911508c8f11"
+bytes = 2521330
+role = "nodelay body sprites"
+
+[[source]]
+name = "client"
+sha256 = "data.grf cc0f830827bf9468316e4c56a727140ebf9034c7be17ee282c6b073c843d5737 (client-dev)"
+role = "maps: rgrf map flat and the original ground files; any client works, the folders are made from its DATA.INI"
+
+[[category]]
+id = "floor"
+title = "Dark floor tiles"
+description = "Every ground cell shows a dark tile coded by its walk grid (walkable, blocked, snipable, water) plus the darkworld WoE markers (points\\*, woe\\*). On its own: heights, walls, models and shadows of the maps stay."
+default = true
+fairness = "Shows only the walk grid the client already has; same tiles for everyone."
+source = "tiles: dark2.grf; ground: the client's .gnd/.gat; tool: tools/pack/competitive.py floor"
+scope = "woe-bg-pvp"
+staging = "floor"
+files = 178                 # 68 .gnd + 110 tiles
+unpacked_bytes = 236433116
+grf_bytes = 34939630        # mostly the original lightmaps (shadows)
+with_flat_maps = "use floor-flat-<scope> instead of floor (tiles on the flat ground, empty cells filled)"
+
+  [[category.variant]]
+  id = "flat-woe-bg-pvp"
+  requires = "flat-maps-woe-bg-pvp"
+  staging = "floor-flat-woe-bg-pvp"
+  files = 178               # 68 .gnd + 110 tiles
+  unpacked_bytes = 135939076
+  grf_bytes = 4933203
+
+  [[category.variant]]
+  id = "flat-all"
+  requires = "flat-maps-all"
+  staging = "floor-flat-all"
+  files = 1161              # 1027 .gnd + 134 tiles
+  unpacked_bytes = 2353052874
+  grf_bytes = 91294912
+
+[[category]]
+id = "flat-maps"
+title = "Flat maps"
+description = "GRF Editor's flat maps maker (rgrf map flat --flatten --remove-light --remove-shadow): height 0, no walls, no models, lights, sounds or effects, water below the ground. Walkability does not change."
+default = true
+default_variant = "woe-bg-pvp"
+fairness = "No wall or object hides anything; equal for everyone. Server walk grid is unchanged."
+source = "rustygrf flat_maps from client data"
+
+  [[category.variant]]
+  id = "woe-bg-pvp"
+  maps = "WoE castles (FE/SE/TE/novice/rush), guild dungeons, bat_*, pvp_*, guild_vs*: 79 maps"
+  staging = "flat-maps-woe-bg-pvp"
+  files = 215               # 79 .rsw + 68 .gnd + 68 .gat (some .rsw share a ground)
+  unpacked_bytes = 184331123
+  grf_bytes = 5154779
+
+  [[category.variant]]
+  id = "all"
+  maps = "every map of the client: 1054 of 1056 (air_evt, soccer3 lack files in the client)"
+  staging = "flat-maps-all"
+  files = 3110
+  unpacked_bytes = 3298300856
+  grf_bytes = 105609501
+
+[[category]]
+id = "trees"
+title = "Transparent trees and objects"
+description = "126 tree/object textures made (almost) fully transparent, 17 more made smaller or darker."
+default = true
+fairness = "See-through trees and objects on every map; equal for everyone."
+source = "dark2.grf"
+staging = "trees"
+files = 143
+unpacked_bytes = 4172816
+grf_bytes = 1082870
+
+[[category]]
+id = "barricades"
+title = "Shrunk WoE objects"
+description = "Small sprites for the WoE barricade, the summoned plants (flora, geographer, hydra, mandragora, parasite) and the emperium animation (s_empel_1/2.act)."
+default = false
+fairness = "Plants and barricades hide less of the screen; equal for everyone."
+source = "dark2.grf"
+staging = "barricades"
+files = 14
+unpacked_bytes = 124910
+grf_bytes = 15598
+
+[[category]]
+id = "pneuma"
+title = "Pneuma countdown"
+description = "Pneuma (effect 141, pneuma1-3.str) shows the remaining seconds 10..1 (Pneuma01-10.bmp)."
+default = true
+fairness = "Remaining-time information for everyone."
+source = "dark2.grf"
+staging = "pneuma"
+files = 13
+unpacked_bytes = 277856
+grf_bytes = 13836
+
+[[category]]
+id = "nodelay"
+title = "Short body animations (nodelay)"
+description = "29 job body animations (16 male, 13 female: transcendent jobs, ninja, gunslinger, soul linker) and 27 matching sprites with fewer frames per action at the same frame time (e.g. Stalker 456 -> 280 frames)."
+default = false
+fairness = "Client-visual only: the server enforces attack and skill delays anyway. Replaces the client's (cpal.grf) body sprites; check custom dyes."
+source = "nodelay.grf"
+staging = "nodelay"
+files = 56
+unpacked_bytes = 7414502
+grf_bytes = 2516405
+
+[[category]]
+id = "effects"
+title = "Simplified effects"
+description = "Skill effect textures and STR files reduced (transparent, single-colour, smaller); includes the WoE RO ring textures (flat coloured cells for ground skills) and larger target markers."
+default = false
+fairness = "Less screen clutter and clearer ground skills for everyone."
+source = "dark2.grf (14 tarot cards from dark.grf)"
+staging = "effects"
+files = 385                 # 175 .bmp, 111 .tga, 96 .str, 3 .ezv
+unpacked_bytes = 13788003
+grf_bytes = 823652
+
+[[category]]
+id = "ui"
+title = "Dark interface skin"
+description = "darkworld interface pictures (texture\\유저인터페이스), including smaller or transparent windows and map pictures."
+default = false
+fairness = "Cosmetic; equal for everyone."
+source = "dark2.grf"
+staging = "ui"
+files = 194
+unpacked_bytes = 68058894
+grf_bytes = 10542506
+
+[[category]]
+id = "other"
+title = "Other darkworld changes"
+description = "Larger status sprites (stun, sleep, freeze), other damage numbers/messages/cursors, rescaled MVP animations, camera tables (indoorrswtable, viewpointtable), PetTalkTable.xml, 12 data\\asura*.tga pictures."
+default = false
+fairness = "Status and camera changes help to read the fight; equal for everyone."
+source = "dark2.grf (dragon_fly from dark.grf)"
+staging = "other"
+files = 60
+unpacked_bytes = 3081975
+grf_bytes = 488314
+
+# Measured combinations (rgrf build/merge + verify ok, rgrf map check 0 problems):
+#   defaults (flat-maps-woe-bg-pvp, floor-flat-woe-bg-pvp, trees, pneuma): 481 files, 7706483 bytes
+#   same with scope all (flat-maps-all, floor-flat-all, trees, pneuma):    3400 files, 119158239 bytes

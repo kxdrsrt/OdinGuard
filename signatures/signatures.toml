@@ -1,6 +1,15 @@
 # OdinGuard cheat signatures, generated 2026-11-23 by static analysis only (no execution).
-# Source material: "/Users/k/Downloads/RANDOM RESOURCES/RO CHEAT SOFTWARE and CHEAT GRFs etc".
-# Generator: analysis/_work/cheatsig/gen.py (work folder is git-ignored).
+# Extended 2026-11-24 (second batch at the end of the file): deeper static analysis (named mutex/event, registry,
+# window classes, PDB/version strings, statically decoded RoMedic SmartAssembly resources and the embedded AHK
+# script of autopot.exe), public-knowledge entries for tools NOT in the folder (OpenKore, WPE, rPE, Cheat Engine,
+# ArtMoney, speed hacks, macro tools, debuggers, injectors; no binaries downloaded) and the migration of every
+# og_signature line of xAthena-HR conf/odinguard_athena.conf (substring rules -> exact names, see notes).
+# Source material: "<cheat sample folder>".
+# Generators: analysis/_work/cheatsig/gen.py, analysis/_work/cheatre/gen_add.py (work folders are git-ignored).
+# Groups: AHK APOT DD GRF RCX ROEXT ROMED WOERO (folder samples), THOTH DESU GRFNAME (cheat GRF file names),
+#         OPENKORE WPE RPE CE ARTMONEY SPEED MACRO ROMISC DEBUG INJECT (public knowledge, confidence medium/low).
+# Policy: debuggers, system tools and generic macro interpreters are log/flag only, never ban; window_title
+#         substrings are flag at most (browser tabs match), kick/ban needs an injected module, hash or a second signal.
 #
 # Pattern conventions (all comparisons case-insensitive unless a hash):
 #   process        exact lower-case image file name
@@ -15,9 +24,11 @@
 #   string_pattern 'ascii:<text>' / 'utf16:<text>' = bytes in the module/process image or file,
 #                  'section:<name>' = PE section name
 #   driver         service / driver name; registry: key path
+#   mutex          exact name of a named mutex/event/section, without Global\ or Local\ (client tries both)
+#   registry       "HKCU\path" or "HKLM\path" key (32- and 64-bit views)
 # Mapping to og_proto.h kinds: process=1, window_title=2, module=3, window_class=7, file_name=8,
-# file_sha256=9, driver=10, grf_sha256=11. grf_entry, import_pattern, string_pattern and registry have
-# no wire kind yet (OG_KIND_GRF=5 is report-only) and need a client extension.
+# file_sha256=9, driver=10, grf_sha256=11, mutex=16, registry=17. grf_entry, import_pattern and string_pattern
+# have no wire kind (analysis-only / server tooling; OG_KIND_GRF=5 is report-only).
 # confidence: high = exact hash or tool-unique string; medium = specific but renamable or generic tool;
 # low = context only. action is the default suggestion.
 
@@ -321,7 +332,7 @@ pattern = "RoMedic"
 confidence = "medium"
 severity = "high"
 action = "flag"
-note = "Assumed window title (product name); not statically confirmed because the UI resources are obfuscated."
+note = "[gemessen 2026-11-24] MainWindow Title='RoMedic' read from mainwindow.baml after static DES+SimpleZip decoding of the embedded UI assembly (second window: 'Server List', too generic). WPF class is HwndWrapper[RoMedic.exe;;<guid>] (prefix, no exact match possible). Substring also matches browser tabs -> flag."
 
 [[signature]]
 id = "OG-ROMED-004"
@@ -1722,3 +1733,1308 @@ confidence = "medium"
 severity = "medium"
 action = "flag"
 note = "Modified status effect animation."
+
+# ======================================================================================================
+# Batch 2026-11-24: deeper static analysis (mutex/registry/window/PDB strings, decoded RoMedic and AHK
+# resources) + public-knowledge tools + migration of odinguard_athena.conf og_signature lines.
+# ======================================================================================================
+
+[[signature]]
+id = 'OG-RCX-019'
+source = 'RCX (RCXDraw.exe 1.2.0.1 / RCXDrawLauncher.exe, static disassembly)'
+kind = 'mutex'
+pattern = 'RCXDraw'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = "[gemessen] CreateMutexA(NULL, TRUE, 'RCXDraw') as single-instance guard before RegisterClassExA/CreateWindowExA('RCXDraw') and LoadLibraryA('RCXDraw.dll') + InstallHook. Exists while the overlay hook is active."
+
+[[signature]]
+id = 'OG-RCX-020'
+source = 'RCX (RCXDraw.exe 1.2.0.1 / RCXDrawLauncher.exe, static disassembly)'
+kind = 'window_class'
+pattern = 'RCX'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "[gemessen] RCXDraw polls FindWindowA('Ragnarok', NULL) and FindWindowA('RCX', NULL) every 1000 ms (SetTimer) and calls RemoveHook/quits when neither exists -> the RCX main window class is 'RCX' (RCX.exe itself is MPRESS packed, class name taken from the launcher). Exact class match only; short name."
+
+[[signature]]
+id = 'OG-RCX-021'
+source = 'RCX (RCXJPN.dll)'
+kind = 'string_pattern'
+pattern = 'ascii:D:\Projects\RO\RCX_Build\Release\RCXJPN.pdb'
+confidence = 'high'
+severity = 'medium'
+action = 'flag'
+note = '[gemessen] PDB path in the RCX resource DLL (not packed).'
+
+[[signature]]
+id = 'OG-RCX-022'
+source = 'RCX (RCXDraw.exe 1.2.0.1 / RCXDrawLauncher.exe, static disassembly)'
+kind = 'string_pattern'
+pattern = 'utf16:RCXDraw Launcher'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = '[gemessen] VS_VERSION_INFO FileDescription/ProductName of RCXDraw.exe and RCXDrawLauncher.exe (InternalName RCXDrawL, (C) 2009/2011 redchat).'
+
+[[signature]]
+id = 'OG-RCX-023'
+source = 'RCX (RCX.ini [RoChaOption] PacketLogAnalyse)'
+kind = 'file_name'
+pattern = 'packetlog_ws2.txt'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = "[gelesen] Debug packet log written by RCX's ws2_32 recv hook to log\\PacketLog_WS2.txt (relative to RCX.exe, so normally NOT in the client folder). Hook target: ws2_32 recv (APIHookType 0 = address search in ws2_32, 1 = client IAT entry patch)."
+
+[[signature]]
+id = 'OG-RCX-024'
+source = 'RCX (RCX.ini [GPSConnect])'
+kind = 'string_pattern'
+pattern = 'ascii:home.planetleaf.com'
+confidence = 'high'
+severity = 'medium'
+action = 'flag'
+note = '[gelesen] Default GPS/position-sharing server of RCX (port 19802, ID RoToold). Mainly a network indicator (DNS query / TCP 19802 from the player machine).'
+
+[[signature]]
+id = 'OG-RCX-025'
+source = 'RCX (RagMap.ini)'
+kind = 'file_name'
+pattern = 'ragmap.ini'
+confidence = 'low'
+severity = 'low'
+action = 'log'
+note = '[gelesen] RCX map-name table shipped next to RCX.exe (also in EnglishSettingFilePack/jRO_CustomFiles). Context only.'
+
+[[signature]]
+id = 'OG-RCX-026'
+source = 'RCX (history.txt, ROReplay)'
+kind = 'string_pattern'
+pattern = 'ascii:PacketRecv2RCX'
+confidence = 'low'
+severity = 'low'
+action = 'log'
+note = '[gelesen] Option name of the ROReplay feature (replays recorded *.ror packet streams into a client); present in jRO_CustomFiles/RCX.ini and history.txt (file scan), RCX.exe itself is packed. low-value context.'
+
+[[signature]]
+id = 'OG-DD-017'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'registry'
+pattern = 'HKLM\SYSTEM\CurrentControlSet\Services\dd71800x64'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = "[gemessen] Service key created by CreateServiceW('dd71800x64', 'Display_dd71800x64', SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, ImagePath C:\\dd71800x64.sys). The DLL also has a ControlService(STOP)+DeleteService path, so the key may be gone after unload."
+
+[[signature]]
+id = 'OG-DD-018'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'registry'
+pattern = 'HKLM\SYSTEM\CurrentControlSet\Services\dd71800x32'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = '[gemessen] Same for the x86 driver (C:\dd71800x32.sys, display name Display_dd71800x32).'
+
+[[signature]]
+id = 'OG-DD-019'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'registry'
+pattern = 'HKLM\SOFTWARE\Classes\{9B86BE0C-ABE2-4a9e-89D1-BDB0BFB851B6}'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = '[gemessen] Registry path used by the x86 kernel driver (\Registry\Machine\Software\classes\{9B86BE0C-...}). May persist after removal -> flag only.'
+
+[[signature]]
+id = 'OG-DD-020'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'mutex'
+pattern = 'ddevent'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "[gemessen] String 'ddevent' next to the DD status messages in all three DLLs; usage as named event is [vermutet] (no direct push xref, probably built at runtime). Client checks it as mutex/event name."
+
+[[signature]]
+id = 'OG-DD-021'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'string_pattern'
+pattern = 'ascii:C:\dd71800x64\output\Drv_dll.pdb'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = '[gemessen] PDB path of the x64-driver DLL builds (ddx64.32.dll, ddx64.64.dll); OG-DD-013 covers the x86 build.'
+
+[[signature]]
+id = 'OG-DD-022'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'string_pattern'
+pattern = 'ascii:dd7180~1\drv\objfre_win7_x86\i386\dd71800x32.pdb'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = '[gemessen] PDB path inside the embedded x86 kernel driver (RT_HTML 9001). Use for driver image scans.'
+
+[[signature]]
+id = 'OG-DD-023'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'string_pattern'
+pattern = 'ascii:dd7180~2\drv\objfre_win7_amd64\amd64\dd71800x64.pdb'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = '[gemessen] PDB path inside the embedded x64 kernel driver.'
+
+[[signature]]
+id = 'OG-DD-024'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'string_pattern'
+pattern = 'ascii:keyclsSCallback_ZJMS'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = "[gemessen] Debug string in the x64 driver: it calls the keyboard class driver service callback (kbdclass) directly, so synthesized keys enter the stack below the user-mode 'injected' flag."
+
+[[signature]]
+id = 'OG-DD-025'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'string_pattern'
+pattern = 'utf16:Display_dd7180'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = '[gemessen] Prefix of the service display names Display_dd71800x32 / Display_dd71800x64 (DLL images).'
+
+[[signature]]
+id = 'OG-DD-026'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'string_pattern'
+pattern = 'ascii:c:\DD Snap\'
+confidence = 'high'
+severity = 'medium'
+action = 'flag'
+note = "[gemessen] Screenshot folder of DD_SnapPic (CreateDirectoryA('c:\\DD Snap\\'), files '%02d-%02d-%02d %02d.%02d.%02d.%03d .bmp'). The folder C:\\DD Snap\\ on disk indicates DD use."
+
+[[signature]]
+id = 'OG-DD-027'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'string_pattern'
+pattern = 'ascii:dd71800x32.dll'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = '[gemessen] Export-directory DLL name of ddx32.dll (survives file renaming).'
+
+[[signature]]
+id = 'OG-DD-028'
+source = 'Class_DD (DD/ddxoft user-mode DLLs + embedded kernel drivers, static)'
+kind = 'string_pattern'
+pattern = 'ascii:dd71800x64.dll'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = '[gemessen] Export-directory DLL name of ddx64.32.dll and ddx64.64.dll (survives file renaming).'
+
+[[signature]]
+id = 'OG-DD-029'
+source = 'Class_DD (F1 Spam.ahk)'
+kind = 'file_sha256'
+pattern = 'de98650b6b244ffb90eeda85a456c37ba0810c288eaed88451daffe7c6f2cdce'
+confidence = 'high'
+severity = 'medium'
+action = 'flag'
+note = '[gemessen] Example script: while Q is held, F1 + left click every ~20 ms through the DD driver (key spam).'
+
+[[signature]]
+id = 'OG-DD-030'
+source = 'Class_DD (Inventory Move.ahk)'
+kind = 'file_sha256'
+pattern = '7ea9d9120388fc09f4b8c1aaafa2851cdfd7b8321af5dac9d4ec55604a602b53'
+confidence = 'high'
+severity = 'medium'
+action = 'flag'
+note = '[gemessen] Example script: drag inventory <-> storage/cart via DD mouse clicks, 150 ms steps.'
+
+[[signature]]
+id = 'OG-DD-031'
+source = 'Class_DD (Class_DD.ahk)'
+kind = 'file_name'
+pattern = 'class_dd.ahk'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = '[gelesen] AHK wrapper class that LoadLibrary()s DD\32\ddx32.dll or DD\64\ddx64.{32,64}.dll. Only meaningful if found in/near the client folder.'
+
+[[signature]]
+id = 'OG-APOT-007'
+source = "Autopot Fresh (autopot.exe, embedded script RCDATA '>AHK WITH ICON<', extracted statically)"
+kind = 'string_pattern'
+pattern = 'ascii:Ragnapot running.'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = "[gemessen] MsgBox text in the embedded script (also 'Ragnapot stopped.'). Mechanism [gelesen]: WinGetTitle of the active window must contain 'Ragnaclan', then OpenProcess(0x1F0FFF), ReadProcessMemory at fixed client addresses (HP/SP/max/status) every interval+10 ms and ControlSend (posted WM_KEYDOWN/UP to the window, no SendInput) of the configured F-keys."
+
+[[signature]]
+id = 'OG-APOT-008'
+source = "Autopot Fresh (autopot.exe, embedded script RCDATA '>AHK WITH ICON<', extracted statically)"
+kind = 'window_title'
+pattern = '\autopot.exe'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = "[vermutet] Compiled AHK v1 scripts title their hidden main window with the full exe path (no ' - AutoHotkey v' suffix), so OG-AHK-002 does not match; this substring catches the distributed name. Renamable."
+
+[[signature]]
+id = 'OG-AHK-006'
+source = 'AutoHotkey (Ahk2Exe v1 compiled scripts)'
+kind = 'string_pattern'
+pattern = 'ascii:; <COMPILER: v1.'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = "[gemessen] First line of the embedded script of every Ahk2Exe v1 build (autopot.exe: '; <COMPILER: v1.1.26.01>'). Plain-text script follows -> scan the RCDATA of helper processes."
+
+[[signature]]
+id = 'OG-AHK-007'
+source = 'AutoHotkey interpreter (public knowledge)'
+kind = 'process'
+pattern = 'autohotkey.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Public AutoHotkey v1/v2 interpreter image name. Legit general-purpose tool -> log only; escalate only together with OG-DD-*, OG-APOT-* or behaviour B1/B2.'
+
+[[signature]]
+id = 'OG-AHK-008'
+source = 'AutoHotkey interpreter (public knowledge)'
+kind = 'process'
+pattern = 'autohotkeyu32.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Public AutoHotkey v1/v2 interpreter image name. Legit general-purpose tool -> log only; escalate only together with OG-DD-*, OG-APOT-* or behaviour B1/B2.'
+
+[[signature]]
+id = 'OG-AHK-009'
+source = 'AutoHotkey interpreter (public knowledge)'
+kind = 'process'
+pattern = 'autohotkeyu64.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Public AutoHotkey v1/v2 interpreter image name. Legit general-purpose tool -> log only; escalate only together with OG-DD-*, OG-APOT-* or behaviour B1/B2.'
+
+[[signature]]
+id = 'OG-AHK-010'
+source = 'AutoHotkey interpreter (public knowledge)'
+kind = 'process'
+pattern = 'autohotkeya32.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Public AutoHotkey v1/v2 interpreter image name. Legit general-purpose tool -> log only; escalate only together with OG-DD-*, OG-APOT-* or behaviour B1/B2.'
+
+[[signature]]
+id = 'OG-AHK-011'
+source = 'AutoHotkey interpreter (public knowledge)'
+kind = 'process'
+pattern = 'autohotkey32.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Public AutoHotkey v1/v2 interpreter image name. Legit general-purpose tool -> log only; escalate only together with OG-DD-*, OG-APOT-* or behaviour B1/B2.'
+
+[[signature]]
+id = 'OG-AHK-012'
+source = 'AutoHotkey interpreter (public knowledge)'
+kind = 'process'
+pattern = 'autohotkey64.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Public AutoHotkey v1/v2 interpreter image name. Legit general-purpose tool -> log only; escalate only together with OG-DD-*, OG-APOT-* or behaviour B1/B2.'
+
+[[signature]]
+id = 'OG-AHK-013'
+source = 'AutoHotkey installer (public knowledge)'
+kind = 'registry'
+pattern = 'HKLM\SOFTWARE\AutoHotkey'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Installer key (InstallDir). Means installed, not running -> log only.'
+
+[[signature]]
+id = 'OG-ROMED-005'
+source = 'RoMedic (RoMedic.exe, SmartAssembly 5.5; string table and embedded assembly decoded statically)'
+kind = 'string_pattern'
+pattern = 'ascii:RoMedic.MainWindow'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = '[gemessen] Unencrypted type name in the metadata (types RoMedic.MainWindow/ServerList/Settings1/About survive the obfuscation).'
+
+[[signature]]
+id = 'OG-ROMED-006'
+source = 'RoMedic (RoMedic.exe, SmartAssembly 5.5; string table and embedded assembly decoded statically)'
+kind = 'string_pattern'
+pattern = 'utf16:{532f8f66-b536-42d5-aa39-2780e5cbaa50}'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = '[gemessen] Name of the encrypted (DES + SimpleZip) embedded assembly holding the WPF UI (mainwindow.baml, serverlist.baml, images, fonts).'
+
+[[signature]]
+id = 'OG-ROMED-007'
+source = 'RoMedic (RoMedic.exe, SmartAssembly 5.5; string table and embedded assembly decoded statically)'
+kind = 'string_pattern'
+pattern = 'utf16:{5511e926-ac66-45d4-afa1-075c80af14cf}'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = '[gemessen] Resource name of the embedded WPFDeveloperTools.Controls 1.0.4038 assembly.'
+
+[[signature]]
+id = 'OG-ROMED-008'
+source = 'RoMedic (RoMedic.exe, SmartAssembly 5.5; string table and embedded assembly decoded statically)'
+kind = 'string_pattern'
+pattern = 'utf16:Awaiting for Client'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "[gemessen] Status text from the decoded string table (base64 inside the encrypted resource in the FILE; plain UTF-16 only in the PROCESS memory of RoMedic); RoMedic waits for a target client from its server list (process/window names, defaults: VisionRo, Awesome GvG Server/AWSM, ToMREv5, IcariaRo, GwRo, RuneRo, 'A N S R O', ro.bin). Users can add any name, so renaming our exe does not help."
+
+[[signature]]
+id = 'OG-ROMED-009'
+source = 'RoMedic (RoMedic.exe, SmartAssembly 5.5; string table and embedded assembly decoded statically)'
+kind = 'string_pattern'
+pattern = 'utf16:HpWithoutDef'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = '[gemessen] (process memory only, encrypted in the file) Name of one of six byte-pattern scans (HpIndex, HpMassive, HpWithoutDef, Logged, CurrentMap, Status) RoMedic runs over the client with VirtualQueryEx + ReadProcessMemory; it also P/Invokes WriteProcessMemory and PostMessageA.'
+
+[[signature]]
+id = 'OG-ROMED-010'
+source = 'SmartAssembly (generic .NET obfuscator)'
+kind = 'string_pattern'
+pattern = 'ascii:SmartAssembly.Attributes.PoweredByAttribute'
+confidence = 'low'
+severity = 'low'
+action = 'log'
+note = '[gemessen] Marker type of SmartAssembly-protected assemblies (RoMedic). Many legit .NET apps use it -> context only.'
+
+[[signature]]
+id = 'OG-OPENKORE-001'
+source = "OpenKore (public knowledge; migrated og_signature 'openkore')"
+kind = 'process'
+pattern = 'openkore.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'kick'
+note = "Migrated from odinguard_athena.conf 'process,kick,openkore' (was a substring rule; now exact name). Renamable; the bot itself normally runs out-of-client (xKore 0/2/3) and is caught server-side (behaviour B4/B6)."
+
+[[signature]]
+id = 'OG-OPENKORE-002'
+source = "OpenKore (public knowledge; migrated og_signature 'openkore')"
+kind = 'process'
+pattern = 'wxstart.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'kick'
+note = 'OpenKore wxWidgets launcher of the Windows release.'
+
+[[signature]]
+id = 'OG-OPENKORE-003'
+source = "OpenKore (public knowledge; migrated og_signature 'openkore')"
+kind = 'process'
+pattern = 'vxstart.exe'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = 'OpenKore Vx-interface launcher (older releases).'
+
+[[signature]]
+id = 'OG-OPENKORE-004'
+source = "OpenKore (public knowledge; migrated og_signature 'openkore')"
+kind = 'window_title'
+pattern = 'OpenKore'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'window,kick,OpenKore'. Console/wx title ends with '- OpenKore'. Lowered to flag: the substring also matches browser tabs of the OpenKore forum/wiki (see OG-ALLOW-RULE-007)."
+
+[[signature]]
+id = 'OG-OPENKORE-005'
+source = 'OpenKore xKore 1 (public knowledge)'
+kind = 'module'
+pattern = 'netredirect.dll'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = 'xKore 1 injects NetRedirect.dll into the RO client to redirect send/recv to the bot. A module with this name inside the client is a clear signal.'
+
+[[signature]]
+id = 'OG-OPENKORE-006'
+source = "OpenKore (public knowledge; migrated og_signature 'openkore')"
+kind = 'file_name'
+pattern = 'openkore.pl'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'Main Perl script of OpenKore (run by perl.exe/start.exe). Checked in the client folder only; real use is usually in its own folder.'
+
+[[signature]]
+id = 'OG-OPENKORE-007'
+source = "OpenKore (public knowledge; migrated og_signature 'openkore')"
+kind = 'file_name'
+pattern = 'netredirect.dll'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'xKore 1 hook DLL lying in the client folder (not necessarily loaded).'
+
+[[signature]]
+id = 'OG-WPE-001'
+source = 'WPE PRO (Winsock Packet Editor, public knowledge; migrated og_signature)'
+kind = 'process'
+pattern = 'wpepro.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'kick'
+note = "Migrated 'process,kick,wpepro'. Exact image name of WPE PRO."
+
+[[signature]]
+id = 'OG-WPE-002'
+source = 'WPE PRO (Winsock Packet Editor, public knowledge; migrated og_signature)'
+kind = 'window_title'
+pattern = 'WPE PRO'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'window,kick,WPE PRO'. Lowered to flag because of browser/download-page titles."
+
+[[signature]]
+id = 'OG-WPE-003'
+source = 'WPE PRO (Winsock Packet Editor, public knowledge; migrated og_signature)'
+kind = 'module'
+pattern = 'wpespy.dll'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = "Migrated 'module,kick,wpespy'. WPE PRO injects WpeSpy.dll into the target and hooks ws2_32 send/recv/sendto/recvfrom to log/modify/replay packets."
+
+[[signature]]
+id = 'OG-WPE-004'
+source = 'WPE PRO (Winsock Packet Editor, public knowledge; migrated og_signature)'
+kind = 'process'
+pattern = 'wpe pro.exe'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = 'Name used by some repacked WPE builds.'
+
+[[signature]]
+id = 'OG-RPE-001'
+source = 'rPE / Redox Packet Editor (public knowledge; migrated og_signature)'
+kind = 'process'
+pattern = 'rpe.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'kick'
+note = "Migrated 'process,kick,rpe.exe'. Packet editor that hooks the client's winsock send/recv from an injected DLL."
+
+[[signature]]
+id = 'OG-RPE-002'
+source = 'rPE / Redox Packet Editor (public knowledge; migrated og_signature)'
+kind = 'window_title'
+pattern = 'Redox Packet Editor'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'window,kick,Redox Packet Editor' (substring; flag because of browser titles)."
+
+[[signature]]
+id = 'OG-CE-001'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'process'
+pattern = 'cheatengine-i386.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'process,kick,cheatengine' (substring -> exact names of the CE 6.x/7.x binaries and launcher). Running CE is not proof of use against the client -> flag; injected CE modules (OG-CE-006..010) kick."
+
+[[signature]]
+id = 'OG-CE-002'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'process'
+pattern = 'cheatengine-x86_64.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'process,kick,cheatengine' (substring -> exact names of the CE 6.x/7.x binaries and launcher). Running CE is not proof of use against the client -> flag; injected CE modules (OG-CE-006..010) kick."
+
+[[signature]]
+id = 'OG-CE-003'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'process'
+pattern = 'cheatengine-x86_64-sse4-avx2.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'process,kick,cheatengine' (substring -> exact names of the CE 6.x/7.x binaries and launcher). Running CE is not proof of use against the client -> flag; injected CE modules (OG-CE-006..010) kick."
+
+[[signature]]
+id = 'OG-CE-004'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'process'
+pattern = 'cheat engine.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'process,kick,cheatengine' (substring -> exact names of the CE 6.x/7.x binaries and launcher). Running CE is not proof of use against the client -> flag; injected CE modules (OG-CE-006..010) kick."
+
+[[signature]]
+id = 'OG-CE-005'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'window_title'
+pattern = 'Cheat Engine'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'window,kick,Cheat Engine'. Main title 'Cheat Engine 7.x'; flag because browser tabs match too."
+
+[[signature]]
+id = 'OG-CE-006'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'module'
+pattern = 'speedhack-i386.dll'
+confidence = 'high'
+severity = 'critical'
+action = 'kick'
+note = "Migrated 'module,kick,speedhack-i386'. CE speedhack DLL injected into a 32-bit target; hooks timeGetTime/GetTickCount/QueryPerformanceCounter."
+
+[[signature]]
+id = 'OG-CE-007'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'module'
+pattern = 'vehdebug-i386.dll'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = "Migrated 'module,kick,vehdebug-i386'. CE VEH debugger injected into the client."
+
+[[signature]]
+id = 'OG-CE-008'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'module'
+pattern = 'allochook-i386.dll'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = 'CE allocation-tracking hook DLL injected into the target.'
+
+[[signature]]
+id = 'OG-CE-009'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'module'
+pattern = 'luaclient-i386.dll'
+confidence = 'high'
+severity = 'high'
+action = 'kick'
+note = 'CE Lua bridge DLL injected into the target (scripts running inside the client).'
+
+[[signature]]
+id = 'OG-CE-010'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'module'
+pattern = 'winhook-i386.dll'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'CE window-hook helper DLL (32-bit).'
+
+[[signature]]
+id = 'OG-CE-011'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'file_name'
+pattern = 'dbk32.sys'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'CE kernel driver file (DBVM/kernel memory access). Check the loaded-driver list, not the client folder.'
+
+[[signature]]
+id = 'OG-CE-012'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'file_name'
+pattern = 'dbk64.sys'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'CE kernel driver file (x64).'
+
+[[signature]]
+id = 'OG-CE-013'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'driver'
+pattern = 'CEDRIVER73'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = '[vermutet] Default service name of the CE 7.3+ kernel driver (configurable through driver.dat, older builds CEDRIVER60).'
+
+[[signature]]
+id = 'OG-CE-014'
+source = 'Cheat Engine (public knowledge; migrated og_signature)'
+kind = 'registry'
+pattern = 'HKCU\Software\Cheat Engine'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'CE settings key. Means CE was run on this account at some point -> log only.'
+
+[[signature]]
+id = 'OG-ARTMONEY-001'
+source = 'ArtMoney (memory scanner/editor, public knowledge)'
+kind = 'process'
+pattern = 'artmoney.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'Process name of ArtMoney SE/PRO. Memory search/write tool; flag (also used for single-player games).'
+
+[[signature]]
+id = 'OG-ARTMONEY-002'
+source = 'ArtMoney (memory scanner/editor, public knowledge)'
+kind = 'window_title'
+pattern = 'ArtMoney'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = "Main window title 'ArtMoney SE v8.x' / 'ArtMoney PRO'."
+
+[[signature]]
+id = 'OG-SPEED-001'
+source = 'Speed hack tools (public knowledge)'
+kind = 'process'
+pattern = 'speedgear.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'SpeedGear (system-wide game speed changer via timer API hooks).'
+
+[[signature]]
+id = 'OG-SPEED-002'
+source = 'Speed hack tools (public knowledge)'
+kind = 'window_title'
+pattern = 'SpeedGear'
+confidence = 'low'
+severity = 'medium'
+action = 'flag'
+note = 'SpeedGear main window title.'
+
+[[signature]]
+id = 'OG-SPEED-003'
+source = 'Speed hack tools (public knowledge)'
+kind = 'process'
+pattern = 'speeder.exe'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = "[vermutet] 'Speeder' (SpeederSoft) image name."
+
+[[signature]]
+id = 'OG-SPEED-004'
+source = 'Speed hack tools (public knowledge)'
+kind = 'window_title'
+pattern = 'Speed Hack'
+confidence = 'low'
+severity = 'medium'
+action = 'log'
+note = 'Generic title of CE-derived speed hack tools; context only.'
+
+[[signature]]
+id = 'OG-MACRO-001'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'process'
+pattern = 'autoit3.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'AutoIt v3 interpreter. Legit automation -> log; escalate only with behaviour B2.'
+
+[[signature]]
+id = 'OG-MACRO-002'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'process'
+pattern = 'autoit3_x64.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'AutoIt v3 interpreter x64.'
+
+[[signature]]
+id = 'OG-MACRO-003'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'window_class'
+pattern = 'AutoIt v3'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Hidden main window class of every running AutoIt script (interpreter and compiled .exe).'
+
+[[signature]]
+id = 'OG-MACRO-004'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'window_class'
+pattern = 'AutoIt v3 GUI'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Class of AutoIt GUI windows.'
+
+[[signature]]
+id = 'OG-MACRO-005'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'process'
+pattern = 'tinytask.exe'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = 'TinyTask record/replay macro tool (SendInput-based replay).'
+
+[[signature]]
+id = 'OG-MACRO-006'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'process'
+pattern = 'macrocreator.exe'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = "Pulover's Macro Creator (AutoHotkey-based recorder)."
+
+[[signature]]
+id = 'OG-MACRO-007'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'window_title'
+pattern = "Pulover's Macro Creator"
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = "Main window title of Pulover's Macro Creator."
+
+[[signature]]
+id = 'OG-MACRO-008'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'process'
+pattern = 'macrorecorder.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Jitbit Macro Recorder.'
+
+[[signature]]
+id = 'OG-MACRO-009'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'process'
+pattern = 'minimousemacro.exe'
+confidence = 'low'
+severity = 'low'
+action = 'log'
+note = 'Mini Mouse Macro.'
+
+[[signature]]
+id = 'OG-MACRO-010'
+source = 'Macro / input automation tools (public knowledge)'
+kind = 'registry'
+pattern = 'HKLM\SOFTWARE\AutoIt v3\AutoIt'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'AutoIt installer key (installed, not necessarily running) -> log.'
+
+[[signature]]
+id = 'OG-ROMISC-001'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'process'
+pattern = 'potnd.exe'
+confidence = 'low'
+severity = 'high'
+action = 'kick'
+note = "Migrated 'process,kick,potnd' (substring -> exact). PotND RO autopot/no-delay tool [vermutet image name]."
+
+[[signature]]
+id = 'OG-ROMISC-002'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'window_title'
+pattern = 'PotND'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'window,kick,PotND'; flag because substring titles are weak."
+
+[[signature]]
+id = 'OG-ROMISC-003'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'process'
+pattern = 'meth4u.exe'
+confidence = 'low'
+severity = 'high'
+action = 'kick'
+note = "Migrated 'process,kick,meth4u' [vermutet image name]."
+
+[[signature]]
+id = 'OG-ROMISC-004'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'process'
+pattern = 'xrag.exe'
+confidence = 'low'
+severity = 'high'
+action = 'kick'
+note = "Migrated 'process,kick,xrag' [vermutet image name]."
+
+[[signature]]
+id = 'OG-ROMISC-005'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'window_title'
+pattern = 'xRag'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'window,kick,xRag'."
+
+[[signature]]
+id = 'OG-ROMISC-006'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'process'
+pattern = 'xlike.exe'
+confidence = 'low'
+severity = 'high'
+action = 'kick'
+note = "Migrated 'process,kick,xlike' [vermutet image name]."
+
+[[signature]]
+id = 'OG-ROMISC-007'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'window_title'
+pattern = 'xLike'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = "Migrated 'window,kick,xLike'."
+
+[[signature]]
+id = 'OG-ROMISC-008'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'process'
+pattern = 'rotools.exe'
+confidence = 'low'
+severity = 'high'
+action = 'kick'
+note = "Migrated 'process,kick,rotools' [vermutet image name]."
+
+[[signature]]
+id = 'OG-ROMISC-009'
+source = 'RO tools from odinguard_athena.conf og_signature (names only, no sample)'
+kind = 'window_title'
+pattern = 'RO Tools'
+confidence = 'low'
+severity = 'medium'
+action = 'log'
+note = "Migrated 'window,kick,RO Tools'. Downgraded to log: case-insensitive substring also matches 'Pro Tools' (Avid audio software) and similar titles (OG-ALLOW-RULE-008)."
+
+[[signature]]
+id = 'OG-DEBUG-001'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'x32dbg.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = "Migrated 'process,log,x32dbg'. Debugger/system tool: log or flag only, never ban."
+
+[[signature]]
+id = 'OG-DEBUG-002'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'x64dbg.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'x64dbg 64-bit front end (cannot debug the 32-bit client itself). Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-003'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'x96dbg.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'x64dbg launcher. Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-004'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'ollydbg.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = "Migrated 'process,log,ollydbg'. Debugger/system tool: log or flag only, never ban."
+
+[[signature]]
+id = 'OG-DEBUG-005'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'immunitydebugger.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Immunity Debugger (OllyDbg derivative). Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-006'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'ida.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'IDA Pro/Free 7+ (static disassembler, also has a debugger). Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-007'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'ida64.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'IDA 64-bit database front end. Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-008'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'idaq.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'IDA 6.x Qt front end. Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-009'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'idaq64.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'IDA 6.x Qt front end (64-bit databases). Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-010'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'windbg.exe'
+confidence = 'low'
+severity = 'low'
+action = 'log'
+note = 'WinDbg (classic). Common on developer machines. Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-011'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'scylla_x86.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Scylla import reconstructor (dumping/unpacking). Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-012'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'scylla_x64.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Scylla x64. Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-013'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'processhacker.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Process Hacker (admin tool; can read/write process memory and inject). Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-014'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'systeminformer.exe'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'System Informer (Process Hacker successor). Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-015'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'process'
+pattern = 'reclass.net.exe'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = 'ReClass.NET (live memory structure editor, typical cheat-development tool). Debugger/system tool: log or flag only, never ban.'
+
+[[signature]]
+id = 'OG-DEBUG-016'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'window_class'
+pattern = 'OLLYDBG'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Main window class of OllyDbg 1.x/2.x.'
+
+[[signature]]
+id = 'OG-DEBUG-017'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'window_class'
+pattern = 'WinDbgFrameClass'
+confidence = 'low'
+severity = 'low'
+action = 'log'
+note = 'Main window class of classic WinDbg.'
+
+[[signature]]
+id = 'OG-DEBUG-018'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'module'
+pattern = 'hooklibraryx86.dll'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'ScyllaHide hook library injected into the debuggee: the client is being debugged with anti-anti-debug hooks. Flag, not ban.'
+
+[[signature]]
+id = 'OG-DEBUG-019'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'driver'
+pattern = 'TitanHide'
+confidence = 'low'
+severity = 'medium'
+action = 'flag'
+note = 'TitanHide anti-anti-debug kernel driver (hides debuggers from the target).'
+
+[[signature]]
+id = 'OG-DEBUG-020'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'driver'
+pattern = 'KProcessHacker3'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Process Hacker 3 kernel driver (memory access to protected processes).'
+
+[[signature]]
+id = 'OG-DEBUG-021'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'driver'
+pattern = 'KProcessHacker2'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'Process Hacker 2 kernel driver.'
+
+[[signature]]
+id = 'OG-DEBUG-022'
+source = 'Debuggers and system tools (public knowledge; migrated og_signature x32dbg/ollydbg)'
+kind = 'driver'
+pattern = 'KSystemInformer'
+confidence = 'medium'
+severity = 'low'
+action = 'log'
+note = 'System Informer kernel driver.'
+
+[[signature]]
+id = 'OG-INJECT-001'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'process'
+pattern = 'extreme injector v3.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'Extreme Injector v3 (LoadLibrary/manual-map injector).'
+
+[[signature]]
+id = 'OG-INJECT-002'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'window_title'
+pattern = 'Extreme Injector'
+confidence = 'medium'
+severity = 'medium'
+action = 'flag'
+note = 'Extreme Injector main window title.'
+
+[[signature]]
+id = 'OG-INJECT-003'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'process'
+pattern = 'xenos.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'Xenos injector (BlackBone, manual map / thread hijack).'
+
+[[signature]]
+id = 'OG-INJECT-004'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'process'
+pattern = 'xenos64.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'Xenos injector x64.'
+
+[[signature]]
+id = 'OG-INJECT-005'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'process'
+pattern = 'gh injector - x86.exe'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = '[vermutet] GuidedHacking injector x86 helper image name.'
+
+[[signature]]
+id = 'OG-INJECT-006'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'process'
+pattern = 'gh injector - x64.exe'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = '[vermutet] GuidedHacking injector x64 helper image name.'
+
+[[signature]]
+id = 'OG-INJECT-007'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'process'
+pattern = 'winject.exe'
+confidence = 'low'
+severity = 'high'
+action = 'flag'
+note = 'Winject (classic CreateRemoteThread+LoadLibrary injector).'
+
+[[signature]]
+id = 'OG-INJECT-008'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'process'
+pattern = 'remotedll.exe'
+confidence = 'low'
+severity = 'medium'
+action = 'flag'
+note = 'RemoteDLL injector.'
+
+[[signature]]
+id = 'OG-INJECT-009'
+source = 'DLL injectors / manual mappers (public knowledge)'
+kind = 'process'
+pattern = 'kdmapper.exe'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = 'kdmapper (maps unsigned kernel drivers through a vulnerable signed driver); precursor of kernel cheats.'
+
+[[signature]]
+id = 'OG-THOTH-001'
+source = 'Thoth.grf'
+kind = 'file_name'
+pattern = 'thoth.grf'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = '[gemessen] Distributed file name of the Thoth WoE GRF (content: OG-GRF-THOTH-*). Name alone is weak; the hash/entry rules kick.'
+
+[[signature]]
+id = 'OG-DESU-001'
+source = 'Desu GRF 3-15-2018 (desu.grf)'
+kind = 'file_name'
+pattern = 'desu.grf'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = '[gemessen] Distributed file name of the Desu GRF (content: OG-GRF-DESU-*).'
+
+[[signature]]
+id = 'OG-GRFNAME-001'
+source = 'nodelay.grf'
+kind = 'file_name'
+pattern = 'nodelay.grf'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = '[gemessen] Distributed file name of the nodelay GRF (content: OG-GRF-NODELAY-*).'
+
+[[signature]]
+id = 'OG-GRFNAME-002'
+source = 'dark.grf'
+kind = 'file_name'
+pattern = 'dark.grf'
+confidence = 'low'
+severity = 'medium'
+action = 'flag'
+note = '[gemessen] Distributed name of the dark GRF; fairness rated separately (may become an allowed mod).'
+
+[[signature]]
+id = 'OG-GRFNAME-003'
+source = 'dark2.grf'
+kind = 'file_name'
+pattern = 'dark2.grf'
+confidence = 'low'
+severity = 'medium'
+action = 'flag'
+note = '[gemessen] Distributed name of dark2.grf; fairness rated separately.'
+
+[[signature]]
+id = 'OG-GRFNAME-004'
+source = 'WOERO/woerol.grf'
+kind = 'file_name'
+pattern = 'woerol.grf'
+confidence = 'medium'
+severity = 'high'
+action = 'flag'
+note = '[gemessen] Effect/vegetation-blanking GRF of the WOERO pack (OG-GRF-WOEROL-*).'
+
+[[signature]]
+id = 'OG-GRFNAME-005'
+source = 'woebg.grf'
+kind = 'file_name'
+pattern = 'woebg.grf'
+confidence = 'low'
+severity = 'medium'
+action = 'log'
+note = '[gemessen] WoE GRF name; context only (generic name).'
+
+[[signature]]
+id = 'OG-GRFNAME-006'
+source = 'woe.grf'
+kind = 'file_name'
+pattern = 'woe.grf'
+confidence = 'low'
+severity = 'medium'
+action = 'log'
+note = '[gemessen] WoE GRF name; generic, a server could ship a legit woe.grf -> log only.'

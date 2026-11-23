@@ -54,6 +54,7 @@ static void heartbeat(void)
     if (g_seen_generation != g_generation) {
         g_seen_generation = g_generation;
         og_detect_reset();
+        og_assets_reset();
         g_grf_reported = g_api_reported = 0;
     }
 
@@ -65,7 +66,7 @@ static void heartbeat(void)
 #if OG_MOD_INTEGRITY
     if ((flags & OG_ALIVE_API_HOOKED) && !g_api_reported) { g_api_reported = 1; report(OG_KIND_API_HOOK, og_integrity_detail); }
 #endif
-    if (og_policy.grf_strict && og_assets_check(detail, sizeof detail)) {
+    if (og_assets_check(detail, sizeof detail)) {
         flags |= OG_ALIVE_GRF_VIOLATION;
         if (!g_grf_reported) { g_grf_reported = 1; report(OG_KIND_GRF, detail); }
     }

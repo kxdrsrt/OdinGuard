@@ -1,7 +1,8 @@
-# OdinGuard allowlist, generated 2026-11-23 (static measurements only).
+# OdinGuard allowlist, generated 2026-11-23 (static measurements only); 2026-11-24: OG-ALLOW-RULE-006..010
+# (false-positive guards for overlays, browser titles, 'Pro Tools', vendor input software, developer tools).
 # Same conventions as signatures.toml. kind = "rule" describes a generic condition that needs client logic
 # (no single wire kind); file_sha256 maps to OG_KIND_ALLOW_SHA256 (64).
-# Legit client: "/Users/k/Downloads/RO/1 CLIENT-SIDE/client-dev/ragnarok".
+# Legit client: "<reference client>".
 
 schema = 1
 
@@ -228,3 +229,40 @@ source = "AzzyAI / homunculus AI (context)"
 kind = "rule"
 pattern = "path=AI\\USER_AI\\*.lua"
 note = "Homunculus/mercenary AI Lua scripts are a client feature; do not treat AI folders as cheats (WOERO ships AzzyAI-style files and lua.exe)."
+
+# ---- 2026-11-24: false-positive guards for the public-knowledge signatures (OG-OPENKORE/WPE/CE/MACRO/DEBUG/...) ----
+
+[[allow]]
+id = "OG-ALLOW-RULE-006"
+source = "public knowledge (overlay / capture software that injects into games)"
+kind = "rule"
+pattern = "module=gameoverlayrenderer.dll|discordhook.dll|rtsshooks.dll|nvspcap.dll|graphics-hook32.dll|fraps32.dll;authenticode:vendor-signed"
+note = "Steam overlay, Discord overlay, RivaTuner/MSI Afterburner OSD, NVIDIA ShadowPlay/Share capture, OBS game capture and Fraps hook D3D/DirectDraw/input APIs inside the client. Do not report them as unknown injected modules or API hooks when the image is vendor-signed (verify the signer name on first sighting and pin it); unsigned copies under these names stay reportable."
+
+[[allow]]
+id = "OG-ALLOW-RULE-007"
+source = "public knowledge (browsers)"
+kind = "rule"
+pattern = "window_title:ignore-owner=chrome.exe|msedge.exe|firefox.exe|opera.exe|brave.exe|vivaldi.exe|iexplore.exe|discord.exe"
+note = "window_title signatures are substring matches; browser tabs and chat windows ('OpenKore forum', 'Cheat Engine download', 'WPE PRO tutorial') would match. Skip windows owned by these processes, or require a second signal before any action above flag."
+
+[[allow]]
+id = "OG-ALLOW-RULE-008"
+source = "public knowledge (Avid Pro Tools)"
+kind = "rule"
+pattern = "window_title:Pro Tools;process=protools.exe"
+note = "Case-insensitive substring 'RO Tools' (OG-ROMISC-009, migrated from odinguard_athena.conf) matches the audio workstation 'Pro Tools'. Never act on OG-ROMISC-009 when the window belongs to protools.exe or the title contains 'Pro Tools'."
+
+[[allow]]
+id = "OG-ALLOW-RULE-009"
+source = "public knowledge (vendor input software)"
+kind = "rule"
+pattern = "process=lghub.exe|lghub_agent.exe|razer synapse 3.exe|razersynapse.exe|icue.exe|steelseriesgg.exe"
+note = "Logitech G HUB, Razer Synapse, Corsair iCUE and SteelSeries GG offer hardware/driver macros but are installed by most gaming-peripheral owners. No signature targets them; never add them as process/driver signatures. Macro use through them is only visible server-side (behaviour B2)."
+
+[[allow]]
+id = "OG-ALLOW-RULE-010"
+source = "public knowledge (developer / admin tools)"
+kind = "rule"
+pattern = "action<=flag for OG-DEBUG-*, OG-AHK-007..013, OG-MACRO-001..004/008..010"
+note = "Debuggers, Process Hacker/System Informer, AutoHotkey/AutoIt interpreters and installer registry keys are common on developer and power-user machines. Studio must not raise these above flag (no kick/ban) unless combined with a client-side cheat module (e.g. OG-CE-006..009, OG-WPE-003, OG-OPENKORE-005) or a behaviour score."

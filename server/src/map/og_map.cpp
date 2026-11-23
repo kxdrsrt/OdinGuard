@@ -24,11 +24,9 @@
 #include "unit.hpp"
 
 // character registry keys
-#define OG_REG_FLAGS "og_flags"         // bit 0: hide auras of others, bit 1: lite ground skills, bit 3: only SG/LoV/MS
+#define OG_REG_FLAGS "og_flags"         // bit 1: lite ground skills, bit 3: only SG/LoV/MS (bit 0 was "hide auras", now src/map/aura.cpp)
 #define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2..14 = colour set
-#define OG_REG_AURA "og_aura"           // hat effect id of the permanent aura
 #define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
-#define OG_FLAG_HIDE_AURAS 1
 #define OG_FLAG_LGP 2
 #define OG_FLAG_LGP_AOES 8
 
@@ -198,10 +196,6 @@ static int32 og_flags(const map_session_data* sd) {
 	return (int32)pc_readglobalreg(const_cast<map_session_data*>(sd), add_str(OG_REG_FLAGS));
 }
 
-bool og_map_hides_auras(const map_session_data* viewer, const block_list& owner) {
-	return viewer != nullptr && viewer->id != owner.id && (og_flags(viewer) & OG_FLAG_HIDE_AURAS);
-}
-
 static bool og_lgp_in_aoes(uint16 skill_id) {
 	// @aoes: only the three big area skills (og_lgp_aoes: comma separated skill ids)
 	char list[128];
@@ -239,12 +233,6 @@ void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*
 	}, const_cast<block_list*>(&src), AREA_SIZE, BL_PC, &a);
 }
 
-void og_map_toggle_auras(map_session_data* sd) {
-	int32 flags = og_flags(sd) ^ OG_FLAG_HIDE_AURAS;
-	pc_setglobalreg(sd, add_str(OG_REG_FLAGS), flags);
-	clif_displaymessage(sd->fd, (flags & OG_FLAG_HIDE_AURAS) ? "Auras of other players are hidden (they disappear after a map change or @refresh)." : "Auras of other players are shown again (after a map change or @refresh).");
-}
-
 /// @lgp / @square / @circle / @aoes. kind: 0 lgp, 1 square, 2 circle, 3 aoes; arg: "", "on", "off" or a set number
 void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 	int32 flags = og_flags(sd), style = (int32)pc_readglobalreg(sd, add_str(OG_REG_LGP_STYLE));
@@ -273,44 +261,6 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 			style == 1 ? "circle" : style > 1 ? "colour set" : "square", style > 1 ? std::to_string(style).c_str() : "",
 			(flags & OG_FLAG_LGP_AOES) ? "Storm Gust, Lord of Vermilion and Meteor Storm" : "area skills");
 	clif_displaymessage(sd->fd, msg);
-}
-
-int32 og_map_aura_by_name(const char* name) {
-	// only auras from the og_aura list: hat effects without client resources show an error box and can crash the client
-	int32 id = atoi(name);
-	for (const auto& a : og_auras())
-		if (!strcmpi(a.first.c_str(), name) || (id > 0 && a.second == id))
-			return a.second;
-	return -1;
-}
-
-static bool og_aura_allowed(int32 id) {
-	for (const auto& a : og_auras())
-		if (a.second == id)
-			return true;
-	return false;
-}
-
-static void og_apply_aura(map_session_data* sd, int32 old_id, int32 new_id, bool notify) {
-	unit_data* ud = unit_bl2ud(sd);
-	if (ud == nullptr)
-		return;
-	if (old_id > 0 && rathena::util::vector_erase_if_exists(ud->hatEffects, static_cast<int16>(old_id)) && notify)
-		clif_hat_effect_single(*sd, (uint16)old_id, false);
-	if (new_id > 0 && !rathena::util::vector_exists(ud->hatEffects, static_cast<int16>(new_id))) {
-		ud->hatEffects.push_back(static_cast<int16>(new_id));
-		if (notify)
-			clif_hat_effect_single(*sd, (uint16)new_id, true);
-	}
-}
-
-bool og_map_set_aura(map_session_data* sd, int32 aura) {
-	if (aura != 0 && !og_aura_allowed(aura))
-		return false;
-	int32 old_id = (int32)pc_readglobalreg(sd, add_str(OG_REG_AURA));
-	pc_setglobalreg(sd, add_str(OG_REG_AURA), aura);
-	og_apply_aura(sd, old_id, aura, true);
-	return true;
 }
 
 typedef std::vector<std::pair<uint32, std::string>> og_color_list;
@@ -372,18 +322,6 @@ void og_map_on_load(map_session_data* sd, bool first) {
 	if (!og_enabled())
 		return;
 	if (first) {
-		int32 aura = (int32)pc_readglobalreg(sd, add_str(OG_REG_AURA));
-		if (aura > 0 && og_aura_allowed(aura) && !og_aura_valid_on_load(sd, aura)) {
-			// set by a GM before unlocks existed (v0.3): keep it as an unlock
-			for (const s_og_aura& a : og_aura_catalog())
-				if (a.effect == aura) og_aura_unlock(sd, a.name.c_str(), "gm (v0.3)");
-		}
-		if (aura > 0 && (!og_aura_allowed(aura) || !og_aura_valid_on_load(sd, aura))) {
-			// removed from the catalog or no longer unlocked
-			pc_setglobalreg(sd, add_str(OG_REG_AURA), 0);
-			aura = 0;
-		}
-		og_apply_aura(sd, 0, aura, false);
 		if (og_session_active(sd->fd)) {
 			// item colours (names from the item database) and the coloured names of everyone online
 			std::vector<std::pair<uint32, std::string>> items, names;

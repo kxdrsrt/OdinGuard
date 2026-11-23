@@ -70,14 +70,16 @@ static struct {
 	e_og_action integrity_action = OG_ACTION_KICK;
 	e_og_action tamper_action = OG_ACTION_KICK;
 	e_og_action grf_action = OG_ACTION_KICK;
+	e_og_action grf_modified_action = OG_ACTION_KICK;
+	e_og_action grf_unknown_action = OG_ACTION_LOG;
+	e_og_action grf_missing_action = OG_ACTION_LOG;
+	std::vector<s_og_signature> grf_manifest; // kinds GRF_LIST, GRF_MOD, OVERLAY (sent after the signatures)
 	e_og_action inject_action = OG_ACTION_LOG;
 	e_og_action vm_action = OG_ACTION_KICK;
 	std::vector<std::string> allowed_exe;
 	std::vector<s_og_signature> signatures;
 	std::vector<std::pair<int32, uint32>> item_colors, group_colors;
 	std::vector<std::tuple<std::string, uint16, uint16>> lgp; // style, skill, unit
-	std::vector<std::pair<std::string, int32>> auras;
-	std::vector<s_og_aura> aura_catalog;
 	std::vector<std::pair<std::string, std::string>> switches; // module switches and other plain values
 	s_og_challenge_cfg ch[5]; // index = OG_CH_*
 	std::vector<s_og_file> files;
@@ -195,6 +197,8 @@ static uint8 og_parse_kind(const char* v) {
 	if (!strcmpi(v, "file_sha256")) return OG_KIND_FILE_SHA256;
 	if (!strcmpi(v, "driver")) return OG_KIND_DRIVER;
 	if (!strcmpi(v, "grf_sha256")) return OG_KIND_GRF_SHA256;
+	if (!strcmpi(v, "mutex")) return OG_KIND_MUTEX;
+	if (!strcmpi(v, "registry")) return OG_KIND_REGISTRY;
 	if (!strcmpi(v, "allow_sha256")) return OG_KIND_ALLOW_SHA256;
 	if (!strcmpi(v, "allow_path")) return OG_KIND_ALLOW_PATH;
 	return OG_KIND_PROCESS;
@@ -248,6 +252,36 @@ static bool og_config_read(const char* file) {
 		else if (!strcmpi(w1, "og_integrity_action")) og_cfg.integrity_action = og_parse_action(w2);
 		else if (!strcmpi(w1, "og_tamper_action")) og_cfg.tamper_action = og_parse_action(w2);
 		else if (!strcmpi(w1, "og_grf_action")) og_cfg.grf_action = og_parse_action(w2);
+		else if (!strcmpi(w1, "og_grf_modified_action")) og_cfg.grf_modified_action = og_parse_action(w2);
+		else if (!strcmpi(w1, "og_grf_unknown_action")) og_cfg.grf_unknown_action = og_parse_action(w2);
+		else if (!strcmpi(w1, "og_grf_missing_action")) og_cfg.grf_missing_action = og_parse_action(w2);
+		else if (!strcmpi(w1, "og_grf_file") || !strcmpi(w1, "og_grf_mod") || !strcmpi(w1, "og_grf_overlay")) {
+			// og_grf_file: name,size,tail sha256,full sha256 or -,yes|no (required)
+			// og_grf_mod: tail sha256,note      og_grf_overlay: data\folder\ (allowed loose files)
+			s_og_signature e;
+			e.id = 0;
+			e.action = OG_ACTION_LOG;
+			e.score = 0;
+			std::string v = w2;
+			if (!strcmpi(w1, "og_grf_overlay")) {
+				e.kind = OG_KIND_OVERLAY;
+				e.pattern = v;
+			} else if (!strcmpi(w1, "og_grf_mod")) {
+				e.kind = OG_KIND_GRF_MOD;
+				size_t c = v.find(',');
+				e.pattern = v.substr(0, c) + "|" + (c == std::string::npos ? "" : v.substr(c + 1));
+			} else {
+				e.kind = OG_KIND_GRF_LIST;
+				std::vector<std::string> f;
+				size_t a = 0, b;
+				while ((b = v.find(',', a)) != std::string::npos) { f.push_back(v.substr(a, b - a)); a = b + 1; }
+				f.push_back(v.substr(a));
+				if (f.size() != 5 || f[2].size() != 64) { ShowWarning("odinguard: bad og_grf_file line '%s'\n", w2); continue; }
+				e.pattern = f[0] + "|" + f[1] + "|" + f[2] + "|" + f[3] + "|" + (config_switch(f[4].c_str()) ? "r" : "o");
+			}
+			if (e.pattern.size() > 255) { ShowWarning("odinguard: %s too long\n", w1); continue; }
+			og_cfg.grf_manifest.push_back(e);
+		}
 		else if (!strcmpi(w1, "og_inject_action")) og_cfg.inject_action = og_parse_action(w2);
 		else if (!strcmpi(w1, "og_vm_action")) og_cfg.vm_action = og_parse_action(w2);
 		else if (!strcmpi(w1, "og_key")) og_cfg.key_hex = w2;
@@ -299,23 +333,6 @@ static bool og_config_read(const char* file) {
 			unsigned int rgb;
 			if (sscanf(w2, "%d , %x", &id, &rgb) == 2)
 				(w1[3] == 'i' ? og_cfg.item_colors : og_cfg.group_colors).emplace_back(id, rgb & 0xFFFFFF);
-		}
-		else if (!strcmpi(w1, "og_aura")) {
-			// name,effect[,rarity[,unlock]]
-			char name[32], rarity[16] = "common", unlock[64] = "gm";
-			int32 id;
-			if (sscanf(w2, "%31[^,], %d , %15[^,] , %63[^\r\n]", name, &id, rarity, unlock) >= 2) {
-				trim(name);
-				trim(rarity);
-				trim(unlock);
-				auto same = [&name](const auto& e) { return !strcmpi(e.first.c_str(), name); };
-				og_cfg.auras.erase(std::remove_if(og_cfg.auras.begin(), og_cfg.auras.end(), same), og_cfg.auras.end());
-				og_cfg.aura_catalog.erase(std::remove_if(og_cfg.aura_catalog.begin(), og_cfg.aura_catalog.end(), [&name](const s_og_aura& e) { return !strcmpi(e.name.c_str(), name); }), og_cfg.aura_catalog.end());
-				if (id > 0) {
-					og_cfg.auras.emplace_back(name, id);
-					og_cfg.aura_catalog.push_back({ name, id, rarity, unlock });
-				}
-			}
 		}
 		else if (!strcmpi(w1, "og_lgp")) {
 			// [style,]skill,unit  (style: square = default, circle, set2 .. set14); unit 0 removes the entry
@@ -510,14 +527,16 @@ static void og_send_policy(int32 fd, s_og_state* o) {
 	std::vector<uint8> m = { OG_S_POLICY, (uint8)og_cfg.block_vm, (uint8)og_cfg.max_windows, 0, 0, (uint8)og_cfg.input_filter, (uint8)og_cfg.grf_strict, 0, 0 };
 	og_wr16(&m[3], (uint16)og_cfg.alive_interval);
 	og_control(fd, o, m);
-	// signatures in chunks; the first replaces the client's list
+	// signatures and the GRF manifest in chunks; the first replaces the client's list
+	std::vector<s_og_signature> all = og_cfg.signatures;
+	all.insert(all.end(), og_cfg.grf_manifest.begin(), og_cfg.grf_manifest.end());
 	size_t i = 0;
 	do {
-		size_t end = std::min(og_cfg.signatures.size(), i + OG_SIGS_PER_MESSAGE);
+		size_t end = std::min(all.size(), i + OG_SIGS_PER_MESSAGE);
 		std::vector<uint8> s = { OG_S_SIGS, (uint8)(i == 0 ? OG_SIGS_REPLACE : OG_SIGS_APPEND), 0, 0 };
 		og_wr16(&s[2], (uint16)(end - i));
 		for (size_t k = i; k < end; k++) {
-			const s_og_signature& sig = og_cfg.signatures[k];
+			const s_og_signature& sig = all[k];
 			size_t len = std::min(sig.pattern.size(), (size_t)255);
 			size_t pos = s.size();
 			s.resize(pos + 4 + len);
@@ -528,7 +547,7 @@ static void og_send_policy(int32 fd, s_og_state* o) {
 		}
 		og_control(fd, o, s);
 		i = end;
-	} while (i < og_cfg.signatures.size());
+	} while (i < all.size());
 }
 
 bool og_send_control(int32 fd, const std::vector<uint8>& msg) {
@@ -540,17 +559,6 @@ bool og_send_control(int32 fd, const std::vector<uint8>& msg) {
 
 const std::vector<std::pair<int32, uint32>>& og_item_colors() { return og_cfg.item_colors; }
 const std::vector<std::pair<int32, uint32>>& og_group_namecolors() { return og_cfg.group_colors; }
-const std::vector<std::pair<std::string, int32>>& og_auras() { return og_cfg.auras; }
-const std::vector<s_og_aura>& og_aura_catalog() { return og_cfg.aura_catalog; }
-
-const s_og_aura* og_aura_find(const char* name) {
-	int32 id = atoi(name);
-	for (const s_og_aura& a : og_cfg.aura_catalog)
-		if (!strcmpi(a.name.c_str(), name) || (id > 0 && a.effect == id))
-			return &a;
-	return nullptr;
-}
-
 uint16 og_lgp_unit(uint16 skill_id) {
 	return og_lgp_unit_style("square", skill_id);
 }
@@ -815,6 +823,10 @@ static void og_handle_control(int32 fd, s_og_state* o, const uint8* p, size_t n)
 			std::string type = "sig:" + sig->name;
 			og_report(fd, type.c_str(), text.c_str(), sig->action, sig->score);
 		} else if (kind == OG_KIND_GRF) og_event(fd, "detect:grf", text.c_str(), og_cfg.grf_action);
+		else if (kind == OG_KIND_GRF_MODIFIED) og_event(fd, "grf:modified", text.c_str(), og_cfg.grf_modified_action);
+		else if (kind == OG_KIND_GRF_UNKNOWN) og_event(fd, "grf:unknown", text.c_str(), og_cfg.grf_unknown_action);
+		else if (kind == OG_KIND_GRF_MISSING) og_event(fd, "grf:missing", text.c_str(), og_cfg.grf_missing_action);
+		else if (kind == OG_KIND_MUTEX || kind == OG_KIND_REGISTRY) og_event(fd, "detect:unknown-id", text.c_str(), OG_ACTION_LOG);
 		else if (kind == OG_KIND_INJECT) og_event(fd, "detect:module", text.c_str(), og_cfg.inject_action);
 		else if (kind == OG_KIND_API_HOOK) og_event(fd, "detect:api-hook", text.c_str(), OG_ACTION_LOG);
 		else if (kind == OG_KIND_INPUT) og_event(fd, "detect:input", text.c_str(), OG_ACTION_LOG);
@@ -1081,10 +1093,6 @@ const std::vector<const char*>& og_sql_ddl() {
 		" `rule` VARCHAR(64) NOT NULL, `score` INT NOT NULL DEFAULT 0, `ban` TINYINT(1) NOT NULL DEFAULT 0, `detail` VARCHAR(255) NOT NULL DEFAULT '',"
 		" `state` ENUM('open','banned','cleared') NOT NULL DEFAULT 'open',"
 		" PRIMARY KEY (`id`), KEY `account_id` (`account_id`, `state`), KEY `unique_id` (`unique_id`)) ENGINE=InnoDB",
-		"CREATE TABLE IF NOT EXISTS `og_aura_unlock` ("
-		" `account_id` INT UNSIGNED NOT NULL, `char_id` INT UNSIGNED NOT NULL DEFAULT 0, `aura` VARCHAR(32) NOT NULL,"
-		" `source` VARCHAR(64) NOT NULL DEFAULT '', `time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-		" PRIMARY KEY (`account_id`, `char_id`, `aura`)) ENGINE=InnoDB",
 	};
 	return ddl;
 }

@@ -85,39 +85,6 @@ help_en = "Coloured areas only for Storm Gust, Lord of Vermilion and Meteor Stor
 help_de = "farbige Flächen nur für Storm Gust, Lord of Vermilion und Meteor Storm"
 
 [[command]]
-id = "showauras"
-kind = "server"
-name = "showauras"
-module = "auras"
-group = 0
-rate_ms = 1000
-params = ""
-help_en = "Hides or shows the auras of other players (your own stays visible)."
-help_de = "Auren anderer Spieler aus-/einblenden (die eigene bleibt sichtbar)"
-
-[[command]]
-id = "aura"
-kind = "server"
-name = "aura"
-module = "auras"
-group = 0
-rate_ms = 2000
-params = "[name|off]"
-help_en = "Lists your unlocked auras or wears one. GMs: @aura <name>, <character> sets any aura."
-help_de = "zeigt deine freigespielten Auren oder legt eine an. GMs: @aura <Name>, <Charakter> setzt jede Aura"
-
-[[command]]
-id = "auraunlock"
-kind = "server"
-name = "auraunlock"
-module = "auras"
-group = 60
-rate_ms = 0
-params = "<aura>, <character>"
-help_en = "Unlocks an aura for a character (source: gm)."
-help_de = "schaltet eine Aura für einen Charakter frei (Quelle: gm)"
-
-[[command]]
 id = "namecolor"
 kind = "server"
 name = "namecolor"

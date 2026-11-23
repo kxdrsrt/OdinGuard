@@ -12,7 +12,7 @@ use std::process::Command;
 
 use crate::generate::{self, Derived};
 use crate::profile::Profile;
-use crate::registry::{Aura, Registry};
+use crate::registry::Registry;
 use crate::{Error, Result, keys};
 
 #[derive(Debug, Default, Serialize)]
@@ -27,6 +27,8 @@ pub struct BuildReport {
     pub odin_grf_sha256: String,
     pub odin_grf_files: usize,
     pub competitive_pack_sha256: String,
+    pub competitive_files: usize,
+    pub grf_manifest: Vec<crate::profile::GrfFile>,
     pub sigpack: Option<crate::sigpack::Report>,
     pub warnings: Vec<String>,
 }
@@ -94,38 +96,6 @@ fn copy_tree(from: &Path, to: &Path) -> Result<usize> {
     Ok(n)
 }
 
-/// Aura catalog of the profile, checked: unique names, known rarity, effect files present in odin.grf assets when they
-/// come from there (client files are checked with tools/check_auras.py against the operator's client).
-pub fn aura_catalog(p: &Profile, reg: &Registry, base: &Path) -> Result<Vec<Aura>> {
-    let list: Vec<Aura> = if p.aura_catalog.is_empty() {
-        reg.auras.clone()
-    } else {
-        let path = p.resolve(base, &p.aura_catalog);
-        #[derive(serde::Deserialize)]
-        struct F {
-            aura: Vec<Aura>,
-        }
-        let text = io(std::fs::read_to_string(&path), &path)?;
-        toml::from_str::<F>(&text).map_err(|e| Error::Parse(path.display().to_string(), e.to_string()))?.aura
-    };
-    let mut seen = std::collections::HashSet::new();
-    for a in &list {
-        if !seen.insert(a.name.clone()) || a.name.is_empty() || !a.name.chars().all(|c| c.is_ascii_alphanumeric()) {
-            return Err(Error::Invalid(format!("aura '{}': names must be unique letters/digits", a.name)));
-        }
-        if !crate::registry::RARITIES.contains(&a.rarity.as_str()) || a.effect <= 0 {
-            return Err(Error::Invalid(format!("aura {}: rarity or effect id", a.name)));
-        }
-        let ok_unlock = a.unlock == "gm"
-            || ["quest:", "event:"].iter().any(|x| a.unlock.starts_with(x) && a.unlock.len() > x.len())
-            || ["mvp:", "bg_wins:", "woe_castles:"].iter().any(|x| a.unlock.strip_prefix(x).is_some_and(|n| n.parse::<u32>().is_ok_and(|n| n > 0)));
-        if !ok_unlock {
-            return Err(Error::Invalid(format!("aura {}: unknown unlock '{}'", a.name, a.unlock)));
-        }
-    }
-    Ok(list)
-}
-
 fn sha(path: &Path) -> Result<String> {
     Ok(crate::manifest::sha256_file(path)?.0)
 }
@@ -163,9 +133,12 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     rep.client_sources = generate::client_sources(&p, &reg);
     let abs = |x: &Path| x.canonicalize().unwrap_or_else(|_| x.to_path_buf());
     io(std::fs::create_dir_all(&obj), &obj)?;
+    // OG_TOOLCHAIN=llvm: llvm-mingw with Control Flow Guard (client/Makefile TOOLCHAIN)
+    let toolchain = std::env::var("OG_TOOLCHAIN").unwrap_or_else(|_| "gcc".into());
     let status = Command::new("make")
         .arg("-C")
         .arg(root.join("client"))
+        .arg(format!("TOOLCHAIN={toolchain}"))
         .arg(format!("PROFILE_DIR={}", abs(&gendir).display()))
         .arg(format!("OUT={}", abs(&obj).display()))
         .arg(format!("RC_DIR={}", abs(&gendir.join("res")).display()))
@@ -218,9 +191,26 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     rep.odin_grf_files = br.files;
     rep.odin_grf_sha256 = sha(&grf)?;
 
-    // ---- competitive pack
+    // ---- competitive pack: a ready GRF, or built from the selected categories (assets/competitive/recipe.toml)
     if p.modules.iter().any(|m| m == "competitive-pack") {
-        let src = p.resolve(&base, &p.assets.competitive_pack);
+        let src = if p.assets.competitive_pack.is_empty() {
+            let cat_root = p.resolve(&base, &p.assets.competitive_source);
+            let stage = out.join("build/odin-dark");
+            for c in &crate::pack::ordered_selection(&root.join("assets/competitive/recipe.toml"), &p.assets.competitive)? {
+                let data = cat_root.join(c).join("data");
+                if !data.is_dir() {
+                    return Err(Error::Invalid(format!("competitive category {c}: {} missing", data.display())));
+                }
+                rep.competitive_files += copy_tree(&data, &stage.join("data"))?;
+            }
+            let built = out.join("build/odin-dark.grf");
+            // client paths are Korean (cp949), as stored in the client's own GRFs
+            let opts = rgrf_core::build::BuildOptions { names: rgrf_core::NameMode::Cp949, ..Default::default() };
+            rgrf_core::build::build(&stage, &built, &opts, &ctl).map_err(|e| Error::Build(format!("odin-dark.grf: {e}")))?;
+            built
+        } else {
+            p.resolve(&base, &p.assets.competitive_pack)
+        };
         let a = rgrf_core::Archive::open(&src).map_err(|e| Error::Build(format!("competitive pack {}: {e}", src.display())))?;
         let v = rgrf_core::verify::verify(&a, rgrf_core::verify::VerifyOptions::default(), &ctl).map_err(|e| Error::Build(format!("competitive pack: {e}")))?;
         if v.issues.iter().any(|i| matches!(i.severity, rgrf_core::verify::Severity::Error)) {
@@ -244,19 +234,28 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     if p.modules.iter().any(|m| m == "cheat-signatures") {
         let srcs: Vec<PathBuf> = p.signatures.sources.iter().map(|s| p.resolve(&base, s)).collect();
         let allow: Vec<PathBuf> = p.signatures.allowlist.iter().map(|s| p.resolve(&base, s)).collect();
-        let (pack, sr) = crate::sigpack::build(
+        let (pack, sr) = crate::sigpack::build_selected(
             &srcs.iter().map(PathBuf::as_path).collect::<Vec<_>>(),
             &allow.iter().map(PathBuf::as_path).collect::<Vec<_>>(),
             p.signatures.version,
             &p.signatures.max_action,
+            &p.signatures.groups,
+            &p.signatures.disabled,
             &signing_seed,
         )?;
         io(std::fs::write(refdir.join("odinguard.sigpack"), pack), &refdir)?;
         rep.sigpack = Some(sr);
     }
-    let auras = aura_catalog(&p, &reg, &base)?;
+    // GRFs of this release enter the GRF manifest automatically
+    for (name, required) in generate::protected_files(&p) {
+        let f = client.join(name);
+        if f.exists() {
+            let (size, tail) = crate::grf::tail_hash(&f)?;
+            rep.grf_manifest.push(crate::profile::GrfFile { name: name.into(), size, tail, full: sha(&f)?, required });
+        }
+    }
     let signing_pub = crate::crypto::public_key(&signing_seed);
-    generate::write(&server.join("conf/import/odinguard_conf.txt"), &generate::server_conf(&p, &reg, &signing_pub, &auras, "conf/odinguard"))?;
+    generate::write(&server.join("conf/import/odinguard_conf.txt"), &generate::server_conf(&p, &reg, &signing_pub, &rep.grf_manifest, "conf/odinguard"))?;
     generate::write(&out.join("secrets/odinguard.env"), &generate::secrets_env(&d))?;
 
     // ---- patcher list, docs, manifest

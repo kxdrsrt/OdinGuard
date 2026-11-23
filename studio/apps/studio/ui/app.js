@@ -54,7 +54,6 @@ function renderGeneral() {
     field("Allowlists (Komma)", profile.signatures.allowlist.join(","), (v) => (profile.signatures.allowlist = v.split(",").map((s) => s.trim()).filter(Boolean))),
     field("Höchste Signatur-Aktion", profile.signatures.max_action, (v) => (profile.signatures.max_action = v)),
     field("Signaturpaket-Version", profile.signatures.version, (v) => (profile.signatures.version = v), "number"),
-    field("Competitive-Pack (GRF)", profile.assets.competitive_pack, (v) => (profile.assets.competitive_pack = v)),
     field("Ausgabe-Ordner", profile.output, (v) => (profile.output = v)),
   );
 }
@@ -132,9 +131,74 @@ function renderCommands() {
   }
 }
 
-function renderAuras() {
-  $("#auras").innerHTML = "<tr><th>Name</th><th>Effekt</th><th>Seltenheit</th><th>Freischaltung</th><th>Datei</th></tr>" +
-    reg.auras.map((a) => `<tr><td>${esc(a.name)}</td><td>${a.effect}</td><td>${esc(a.rarity)}</td><td>${esc(a.unlock)}</td><td class="muted">${esc(a.file || "(im Client)")}</td></tr>`).join("");
+const ACTIONS = ["log", "flag", "flagban", "kick", "ban"];
+function select(options, value, onchange) {
+  const s = document.createElement("select");
+  for (const [v, t] of options) s.add(new Option(t, v, false, v === value));
+  s.addEventListener("change", () => { onchange(s.value); revalidate(); });
+  return s;
+}
+
+async function renderSignatures() {
+  const t = $("#siggroups");
+  t.innerHTML = "<tr><th>Gruppe</th><th>Art</th><th>Einträge</th><th>Client</th><th>Prüfarten</th><th>Quelle</th><th>Profil</th></tr>";
+  let groups = [];
+  try { groups = await invoke("signature_groups", { path, profile }); } catch (e) { status("Signaturen: " + e, false); return; }
+  profile.signatures.groups = profile.signatures.groups || {};
+  for (const g of groups) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><b>${esc(g.group)}</b></td><td>${g.allow ? "Allowlist" : "Signatur"}</td><td>${g.count}</td><td>${g.active}</td><td class="muted">${esc(g.kinds.join(", "))}</td><td class="muted">${esc(g.sources.slice(0, 2).join(" · "))}</td><td></td>`;
+    const opts = [["", "Standard (" + g.actions.join("/") + ")"], ["off", "aus"]].concat(g.allow ? [] : ACTIONS.map((a) => [a, "alle: " + a]));
+    tr.lastElementChild.appendChild(select(opts, profile.signatures.groups[g.group] || "", (v) => { if (v) profile.signatures.groups[g.group] = v; else delete profile.signatures.groups[g.group]; }));
+    t.appendChild(tr);
+  }
+}
+
+function renderGrf() {
+  const g = profile.grf;
+  const a = $("#grf-actions");
+  a.innerHTML = "";
+  for (const [k, label] of [["modified_action", "GRF verändert"], ["unknown_action", "unbekannte GRF"], ["missing_action", "Pflicht-GRF fehlt"]]) {
+    const l = document.createElement("label");
+    l.textContent = label;
+    l.appendChild(select(ACTIONS.map((x) => [x, x]), g[k], (v) => (g[k] = v)));
+    a.appendChild(l);
+  }
+  $("#grf-files").innerHTML = "<tr><th>Name</th><th>Größe</th><th>Tabellen-Hash</th><th>Datei-Hash</th><th>Pflicht</th><th></th></tr>" +
+    g.file.map((f, i) => `<tr><td>${esc(f.name)}</td><td>${f.size}</td><td class="muted">${esc(f.tail.slice(0, 16))}…</td><td class="muted">${f.full ? esc(f.full.slice(0, 16)) + "…" : "–"}</td><td><input type="checkbox" data-req="${i}" ${f.required ? "checked" : ""}></td><td><button data-del="${i}">entfernen</button></td></tr>`).join("");
+  $("#grf-mods").innerHTML = "<tr><th>Hinweis</th><th>Tabellen-Hash</th><th></th></tr>" +
+    g.mod.map((m, i) => `<tr><td>${esc(m.note)}</td><td class="muted">${esc(m.tail.slice(0, 16))}…</td><td><button data-delmod="${i}">entfernen</button></td></tr>`).join("");
+  $("#grf-files").querySelectorAll("[data-req]").forEach((c) => c.addEventListener("change", () => { g.file[c.dataset.req].required = c.checked; revalidate(); }));
+  $("#grf-files").querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => { g.file.splice(b.dataset.del, 1); renderGrf(); revalidate(); }));
+  $("#grf-mods").querySelectorAll("[data-delmod]").forEach((b) => b.addEventListener("click", () => { g.mod.splice(b.dataset.delmod, 1); renderGrf(); revalidate(); }));
+  $("#grf-overlays").value = g.overlays.join(",");
+}
+
+async function renderPack() {
+  const src = $("#pack-src");
+  src.innerHTML = "";
+  src.append(
+    field("Fertige GRF statt Kategorien (optional)", profile.assets.competitive_pack, (v) => (profile.assets.competitive_pack = v)),
+    field("Ordner mit Kategorie-Staging", profile.assets.competitive_source || "", (v) => (profile.assets.competitive_source = v)),
+  );
+  let cats = [];
+  try { cats = await invoke("competitive_recipe"); } catch (e) { $("#pack-cats").innerHTML = `<tr><td class="muted">Kein Rezept: ${esc(e)}</td></tr>`; return; }
+  profile.assets.competitive = profile.assets.competitive || [];
+  const t = $("#pack-cats");
+  t.innerHTML = "<tr><th>An</th><th>Kategorie</th><th>Beschreibung</th><th>Dateien</th><th>Größe</th><th>Hinweis</th></tr>";
+  for (const c of cats) {
+    const tr = document.createElement("tr");
+    const on = profile.assets.competitive.includes(c.staging);
+    const mb = c.grf_bytes ? (c.grf_bytes / 1e6).toFixed(1) + " MB" : "";
+    tr.innerHTML = `<td><input type="checkbox" ${on ? "checked" : ""}></td><td><b>${esc(c.title)}</b><br><span class="muted">${esc(c.staging)}${c.default ? " · Standard" : ""}${c.requires ? " · braucht " + esc(c.requires) : ""}</span></td><td class="muted">${esc(c.description)}</td><td>${c.files || ""}</td><td>${mb}</td><td class="muted">${esc(c.fairness)}</td>`;
+    tr.querySelector("input").addEventListener("change", (e) => {
+      const l = profile.assets.competitive.filter((x) => x !== c.staging);
+      if (e.target.checked) { l.push(c.staging); if (c.requires && !l.includes(c.requires)) l.push(c.requires); }
+      profile.assets.competitive = cats.map((x) => x.staging).filter((x) => l.includes(x));
+      renderPack(); revalidate();
+    });
+    t.appendChild(tr);
+  }
 }
 
 function renderStages() {
@@ -149,8 +213,10 @@ function render() {
   renderGeneral();
   renderModules();
   renderCommands();
-  renderAuras();
+  renderGrf();
   renderStages();
+  renderSignatures();
+  renderPack();
 }
 
 async function openProfile(p) {
@@ -201,6 +267,27 @@ $("#btn-verify").addEventListener("click", async () => {
   const d = await T.dialog.open({ directory: true });
   if (d) invoke("verify_release", { dir: d }).then((m) => status(m)).catch((e) => status(String(e), false));
 });
+$("#btn-grf-scan").addEventListener("click", async () => {
+  try {
+    const scan = await invoke("grf_scan", { client: $("#grf-client").value, full: $("#grf-full").checked });
+    const keep = $("#grf-keep").checked;
+    const same = (a, b) => a.name.toLowerCase() === b.name.toLowerCase() && a.size === b.size && a.tail === b.tail;
+    for (const s of scan) {
+      if (!keep) profile.grf.file = profile.grf.file.filter((f) => f.name.toLowerCase() !== s.name.toLowerCase() || same(f, s));
+      if (!profile.grf.file.some((f) => same(f, s))) profile.grf.file.push(s);
+    }
+    renderGrf(); revalidate(); status(`${scan.length} GRF(s) eingelesen.`);
+  } catch (e) { status("Einlesen fehlgeschlagen: " + e, false); }
+});
+$("#btn-grf-mod").addEventListener("click", async () => {
+  try {
+    const f = $("#grf-mod").value;
+    const tail = await invoke("grf_tail", { path: f });
+    if (!profile.grf.mod.some((m) => m.tail === tail)) profile.grf.mod.push({ tail, note: f.split(/[\\/]/).pop().replace(/[,|]/g, " ") });
+    renderGrf(); revalidate();
+  } catch (e) { status(String(e), false); }
+});
+$("#grf-overlays").addEventListener("change", () => { profile.grf.overlays = $("#grf-overlays").value.split(",").map((x) => x.trim()).filter(Boolean); revalidate(); });
 const roArgs = () => ({ path, events: $("#ro-events").value, clients: $("#ro-clients").value, active: $("#ro-active").value ? Number($("#ro-active").value) : null, fpPercent: Number($("#ro-fp").value) });
 $("#btn-ro-status").addEventListener("click", async () => {
   try { const s = await invoke("rollout_status", roArgs()); $("#ro-out").textContent = JSON.stringify(s, null, 2); status(s.next_stage_ok ? "Nächste Stufe möglich." : "Gate: " + s.reasons.join("; "), s.next_stage_ok); }
@@ -226,6 +313,6 @@ $("#btn-upd").addEventListener("click", async () => {
   try {
     reg = await invoke("get_registry");
     $("#ver").textContent = "v" + (await invoke("studio_version"));
-    status(`${reg.modules.length} Module, ${reg.commands.length} Commands, ${reg.auras.length} Auren geladen. Profil öffnen oder neu anlegen.`);
+    status(`${reg.modules.length} Module, ${reg.commands.length} Commands geladen. Profil öffnen oder neu anlegen.`);
   } catch (e) { status("Registry nicht gefunden: " + e, false); }
 })();

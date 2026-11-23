@@ -8,7 +8,7 @@ use std::path::Path;
 
 use crate::{Error, Result};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct SigEntry {
     pub id: String,
     #[serde(default)]
@@ -56,6 +56,8 @@ pub fn wire_kind(kind: &str, allow: bool) -> Option<u8> {
         "file_sha256" => 9,
         "driver" => 10,
         "grf_sha256" => 11,
+        "mutex" => 16,
+        "registry" => 17,
         _ => return None,
     })
 }
@@ -91,13 +93,24 @@ fn score(severity: &str, confidence: &str) -> u8 {
 pub struct Report {
     pub signatures: usize,
     pub allow: usize,
-    /// kinds that only the server can use (grf_entry, import/string patterns, registry, rules)
+    /// kinds the guard cannot check (grf_entry, import/string patterns, rules)
     pub skipped: Vec<(String, String)>,
     pub capped: usize,
+    /// left out by the profile (signatures.groups = "off" or signatures.disabled)
+    pub switched_off: usize,
 }
 
 /// Compiles and signs the package. `max_action` caps every action ("" = none).
-pub fn build(sources: &[&Path], allowlists: &[&Path], version: u32, max_action: &str, signing_seed: &[u8; 32]) -> Result<(Vec<u8>, Report)> {
+/// Tool group of a signature id: "OG-RCX-001" -> "RCX", "OG-ALLOW-GRF-001" -> "ALLOW"; other ids -> "LOCAL".
+pub fn group_of(id: &str) -> String {
+    let mut it = id.split('-');
+    match (it.next(), it.next()) {
+        (Some("OG"), Some(g)) if !g.is_empty() => g.to_string(),
+        _ => "LOCAL".into(),
+    }
+}
+
+fn read_all(sources: &[&Path], allowlists: &[&Path]) -> Result<(Vec<SigEntry>, Vec<SigEntry>)> {
     let mut sigs = Vec::new();
     let mut allows = Vec::new();
     for p in sources.iter().chain(allowlists) {
@@ -106,10 +119,69 @@ pub fn build(sources: &[&Path], allowlists: &[&Path], version: u32, max_action: 
         sigs.extend(f.signatures);
         allows.extend(f.allow);
     }
+    Ok((sigs, allows))
+}
+
+/// One tool group of the signature sources (Studio list: switch off or change the action per group).
+#[derive(Debug, Clone, serde::Serialize, PartialEq)]
+pub struct Group {
+    pub group: String,
+    pub allow: bool,
+    pub count: usize,
+    /// client-checkable entries (the rest is analysis data the guard cannot see)
+    pub active: usize,
+    pub kinds: Vec<String>,
+    pub actions: Vec<String>,
+    pub sources: Vec<String>,
+}
+
+pub fn catalog(sources: &[&Path], allowlists: &[&Path]) -> Result<Vec<Group>> {
+    let (sigs, allows) = read_all(sources, allowlists)?;
+    let mut map: std::collections::BTreeMap<(bool, String), Group> = Default::default();
+    for (e, allow) in sigs.iter().map(|s| (s, false)).chain(allows.iter().map(|s| (s, true))) {
+        let g = group_of(&e.id);
+        let x = map.entry((allow, g.clone())).or_insert_with(|| Group { group: g, allow, count: 0, active: 0, kinds: vec![], actions: vec![], sources: vec![] });
+        x.count += 1;
+        if wire_kind(&e.kind, allow).is_some() {
+            x.active += 1;
+        }
+        for (v, list) in [(&e.kind, &mut x.kinds), (&e.action, &mut x.actions), (&e.source, &mut x.sources)] {
+            if !v.is_empty() && !list.contains(v) && list.len() < 8 {
+                list.push(v.clone());
+            }
+        }
+    }
+    Ok(map.into_values().collect())
+}
+
+pub fn build(sources: &[&Path], allowlists: &[&Path], version: u32, max_action: &str, signing_seed: &[u8; 32]) -> Result<(Vec<u8>, Report)> {
+    build_selected(sources, allowlists, version, max_action, &Default::default(), &[], signing_seed)
+}
+
+/// `groups`: group -> "off" or an action replacing the action of the group's signatures; `disabled`: ids left out.
+pub fn build_selected(
+    sources: &[&Path],
+    allowlists: &[&Path],
+    version: u32,
+    max_action: &str,
+    groups: &std::collections::BTreeMap<String, String>,
+    disabled: &[String],
+    signing_seed: &[u8; 32],
+) -> Result<(Vec<u8>, Report)> {
+    let (mut sigs, mut allows) = read_all(sources, allowlists)?;
+    let before = sigs.len() + allows.len();
+    for list in [&mut sigs, &mut allows] {
+        list.retain(|e| !disabled.contains(&e.id) && groups.get(&group_of(&e.id)).is_none_or(|a| a != "off"));
+    }
+    for e in &mut sigs {
+        if let Some(a) = groups.get(&group_of(&e.id)) {
+            e.action = a.clone();
+        }
+    }
     sigs.sort_by(|a, b| a.id.cmp(&b.id));
     allows.sort_by(|a, b| a.id.cmp(&b.id));
     let cap = if max_action.is_empty() { None } else { Some(action(max_action)?) };
-    let mut rep = Report::default();
+    let mut rep = Report { switched_off: before - sigs.len() - allows.len(), ..Default::default() };
     let mut body = Vec::new();
     let mut n: u16 = 0;
     for (e, allow) in sigs.iter().map(|s| (s, false)).chain(allows.iter().map(|s| (s, true))) {

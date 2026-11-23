@@ -23,19 +23,12 @@ struct block_list;
 /// called by clif_parse_LoadEndAck before the character is spawned
 void og_map_on_load(map_session_data* sd, bool first);
 void og_map_on_quit(map_session_data* sd);
-/// viewer does not want to see the auras (hat effects) of others
-bool og_map_hides_auras(const map_session_data* viewer, const block_list& owner);
 /// lite ground skill unit id for this viewer, 0 = normal display
 uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id);
 /// sends buf to every player in the area of src for whom keep(viewer) is true
 void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
-/// @showauras, @lgp (player commands)
-void og_map_toggle_auras(map_session_data* sd);
 /// @lgp (kind 0), @square (1), @circle (2), @aoes (3); arg "", "on", "off" or a colour set 1-14
 void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg);
-/// @aura: sets the permanent aura of a character (0 = none), @return false for an unknown aura
-bool og_map_set_aura(map_session_data* sd, int32 aura);
-int32 og_map_aura_by_name(const char* name);
 /// @namecolor: permanent name colour of a character (-1 = none)
 void og_map_set_namecolor(map_session_data* sd, int32 rgb);
 
@@ -58,15 +51,5 @@ bool og_map_honeypot_hit(map_session_data* sd, int32 target_id);
 bool og_map_command_allowed(map_session_data* sd, const char* id, int32 def_rate_ms);
 const char* og_map_command_name(const char* id);
 
-// aura unlocks (og_map_auras.cpp)
-bool og_aura_unlocked(map_session_data* sd, const char* name);
-/// @return 1 newly unlocked, 0 already unlocked, -1 unknown aura or module off
-int32 og_aura_unlock(map_session_data* sd, const char* name, const char* source);
-void og_aura_unlocked_list(map_session_data* sd, std::vector<std::string>& out);
-bool og_aura_gm(map_session_data* sd);
-void og_aura_command(map_session_data* sd, const char* aura, map_session_data* target);
-bool og_aura_valid_on_load(map_session_data* sd, int32 effect);
-int32 og_aura_check(map_session_data* sd, const char* type, int32 count);
-std::string og_aura_list(map_session_data* sd, const char* unlock);
 
 #endif /* OG_MAP_HPP */

@@ -1,5 +1,5 @@
 //! `odinguard.profile.toml`: the single source of truth of an operator (modules, challenges, commands, signature
-//! package, branding, ports, keys, rollout stage, competitive pack, aura catalog). Paths inside a profile are
+//! package, branding, ports, keys, rollout stage, GRF policy, competitive pack). Paths inside a profile are
 //! relative to the profile file. Secrets are never stored in the profile, only the paths of the key files.
 
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use crate::registry::{ACTIONS, Registry};
 use crate::{Error, Result};
 
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct General {
@@ -61,15 +61,83 @@ pub struct Signatures {
     pub max_action: String,
     /// version written into the package; the server refuses packages older than its og_sigpack_min_version
     pub version: u32,
+    /// per tool group (signature id prefix, e.g. "RCX" for OG-RCX-001): "off" or an action that replaces the
+    /// action of every signature of the group (log, flag, flagban, kick, ban)
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub groups: BTreeMap<String, String>,
+    /// single signature ids that are left out of the package
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub disabled: Vec<String>,
+}
+
+/// One accepted version of a GRF the operator ships (from `og grf-scan`).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct GrfFile {
+    pub name: String,
+    pub size: u64,
+    /// SHA-256 of the header and the file table to the end of the file
+    pub tail: String,
+    /// SHA-256 of the whole file ("" = only the tail is checked)
+    #[serde(default)]
+    pub full: String,
+    #[serde(default = "yes")]
+    pub required: bool,
+}
+
+/// A GRF players may add under any name (skins, darkworld variants, translations), matched by its tail hash.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct GrfMod {
+    pub tail: String,
+    #[serde(default)]
+    pub note: String,
+}
+
+/// GRF manifest and actions (module grf-rules), like Gepard's start-up GRF check but patcher friendly: keep the old
+/// and the new version of a GRF listed while a patch rolls out.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct GrfPolicy {
+    #[serde(default = "kick")]
+    pub modified_action: String,
+    #[serde(default = "log")]
+    pub unknown_action: String,
+    #[serde(default = "log")]
+    pub missing_action: String,
+    /// extra folders where loose files are allowed (e.g. "data\\texture\\skin\\")
+    #[serde(default)]
+    pub overlays: Vec<String>,
+    #[serde(default, rename = "file")]
+    pub files: Vec<GrfFile>,
+    #[serde(default, rename = "mod")]
+    pub mods: Vec<GrfMod>,
+}
+
+impl Default for GrfPolicy {
+    fn default() -> Self {
+        GrfPolicy { modified_action: kick(), unknown_action: log(), missing_action: log(), overlays: vec![], files: vec![], mods: vec![] }
+    }
+}
+
+fn kick() -> String {
+    "kick".into()
+}
+
+fn log() -> String {
+    "log".into()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Assets {
-    /// folders whose `data/` trees are merged into odin.grf (module asset groups: lgp, auras, ...)
+    /// folders whose `data/` trees are merged into odin.grf (module asset groups, e.g. lgp)
     pub odin_grf: BTreeMap<String, String>,
-    /// optional competitive pack (a built GRF), shipped next to odin.grf
+    /// optional competitive pack as a ready GRF, shipped as odin-dark.grf (takes precedence over the categories)
     #[serde(default)]
     pub competitive_pack: String,
+    /// folder with one staging folder (`<category>/data/...`) per competitive-pack category
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub competitive_source: String,
+    /// selected categories (assets/competitive/recipe.toml); the Studio builds odin-dark.grf from them
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub competitive: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -94,9 +162,8 @@ pub struct Profile {
     pub commands: BTreeMap<String, CommandSetting>,
     pub signatures: Signatures,
     pub assets: Assets,
-    /// aura catalog (registry auras.toml format); empty = the registry catalog
     #[serde(default)]
-    pub aura_catalog: String,
+    pub grf: GrfPolicy,
     pub rollout: Rollout,
     /// output folder of builds
     pub output: String,
@@ -131,9 +198,16 @@ impl Profile {
                 allowlist: vec!["signatures/allowlist.toml".into()],
                 max_action: "flagban".into(),
                 version: 1,
+                groups: BTreeMap::new(),
+                disabled: vec![],
             },
-            assets: Assets { odin_grf: BTreeMap::from([("lgp".into(), "assets/odin-grf/lgp".into())]), competitive_pack: String::new() },
-            aura_catalog: String::new(),
+            assets: Assets {
+                odin_grf: BTreeMap::from([("lgp".into(), "assets/odin-grf/lgp".into())]),
+                competitive_pack: String::new(),
+                competitive_source: String::new(),
+                competitive: vec![],
+            },
+            grf: GrfPolicy::default(),
             rollout: Rollout { stage: 1, reviewed_rules: vec![] },
             output: format!("dist/{id}"),
         })
@@ -232,8 +306,38 @@ impl Profile {
         if !(1..=4).contains(&self.rollout.stage) {
             return bad("rollout.stage: 1-4".into());
         }
-        if self.modules.iter().any(|m| m == "competitive-pack") && self.assets.competitive_pack.is_empty() {
-            return bad("module competitive-pack needs assets.competitive_pack".into());
+        if self.modules.iter().any(|m| m == "competitive-pack")
+            && self.assets.competitive_pack.is_empty()
+            && (self.assets.competitive.is_empty() || self.assets.competitive_source.is_empty())
+        {
+            return bad("module competitive-pack needs assets.competitive_pack or assets.competitive + competitive_source".into());
+        }
+        for (g, a) in &self.signatures.groups {
+            if g.is_empty() || !g.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit()) {
+                return bad(format!("signatures.groups: '{g}' is not a group name (e.g. RCX)"));
+            }
+            if a != "off" && !ACTIONS.contains(&a.as_str()) {
+                return bad(format!("signatures.groups.{g}: off or one of {ACTIONS:?}"));
+            }
+        }
+        for (k, a) in [("modified", &self.grf.modified_action), ("unknown", &self.grf.unknown_action), ("missing", &self.grf.missing_action)] {
+            if !ACTIONS.contains(&a.as_str()) {
+                return bad(format!("grf.{k}_action: one of {ACTIONS:?}"));
+            }
+        }
+        let hex64 = |h: &str| h.len() == 64 && h.chars().all(|c| c.is_ascii_hexdigit());
+        for f in &self.grf.files {
+            if f.name.is_empty() || f.name.len() > 60 || f.name.contains(['|', ',', '/', '\\']) || !hex64(&f.tail) || !(f.full.is_empty() || hex64(&f.full)) {
+                return bad(format!("grf.file {}: name or hash invalid", f.name));
+            }
+        }
+        for m in &self.grf.mods {
+            if !hex64(&m.tail) || m.note.contains(['|', ',']) {
+                return bad(format!("grf.mod {}: tail hash (64 hex) and a note without | or ,", m.note));
+            }
+        }
+        if !self.grf.files.is_empty() && !self.modules.iter().any(|m| m == "grf-rules") {
+            warn.push("grf.file entries are only checked with the grf-rules module".into());
         }
         if self.rollout.stage >= 4 && self.param(reg, "core", "required").and_then(|v| v.as_bool()) == Some(false) {
             warn.push("rollout stage 4 forces core.required = true in the generated config".into());
@@ -251,7 +355,7 @@ impl Profile {
 /// Default module set: the features of OdinGuard 0.3 (regression profile). New protection modules are opt-in.
 pub const DEFAULT_MODULES: &[&str] = &[
     "core", "hwid", "multi-client", "heartbeat", "integrity", "cheat-signatures", "grf-rules", "input-filter",
-    "crash-report", "client-commands", "colors", "branding", "lgp", "auras", "ban-system",
+    "crash-report", "client-commands", "colors", "branding", "lgp", "ban-system",
 ];
 
 /// Schema migrations, oldest first. Schema 1 (Studio preview): `[general].mode = "warn|kick|required"`,
@@ -287,6 +391,22 @@ pub fn migrate(v: &mut toml::Value) -> Result<u32> {
             s.entry("version").or_insert(toml::Value::Integer(1));
         }
         t.insert("schema_version".into(), toml::Value::Integer(2));
+    }
+    if from < 3 {
+        // schema 3: auras became a separate rAthena feature (not part of OdinGuard any more)
+        t.remove("aura_catalog");
+        if let Some(m) = t.get_mut("modules").and_then(|m| m.as_array_mut()) {
+            m.retain(|x| x.as_str() != Some("auras"));
+        }
+        if let Some(c) = t.get_mut("commands").and_then(|c| c.as_table_mut()) {
+            for k in ["aura", "auraunlock", "showauras"] {
+                c.remove(k);
+            }
+        }
+        if let Some(p) = t.get_mut("params").and_then(|p| p.as_table_mut()) {
+            p.retain(|k, _| !k.starts_with("auras."));
+        }
+        t.insert("schema_version".into(), toml::Value::Integer(3));
     }
     Ok(from)
 }
@@ -330,7 +450,7 @@ mod tests {
     fn schema1_profile_migrates_without_data_loss() {
         let old = r#"
 schema_version = 1
-modules = ["core", "rate-limit"]
+modules = ["core", "rate-limit", "auras"]
 output = "dist/old"
 aura_catalog = ""
 [general]
@@ -357,12 +477,13 @@ lgp = "a/lgp"
         let f = dir.path().join("old.toml");
         std::fs::write(&f, old).unwrap();
         let p = Profile::load(&f).unwrap();
-        assert_eq!(p.schema_version, 2);
+        assert_eq!(p.schema_version, 3);
         assert_eq!(p.rollout.stage, 2, "mode kick -> stage 2");
         assert_eq!(p.signatures.sources, vec!["sig.toml".to_string()]);
         assert_eq!(p.general.hwid_salt, "old-salt-123");
         assert_eq!(p.params["rate-limit.packets_per_second"].as_integer(), Some(300));
         assert_eq!(p.assets.odin_grf["lgp"], "a/lgp");
+        assert_eq!(p.modules, vec!["core".to_string(), "rate-limit".to_string()], "auras left OdinGuard in schema 3");
         assert!(p.validate(&reg()).is_ok());
         let mut newer: toml::Value = toml::from_str("schema_version = 99").unwrap();
         assert!(migrate(&mut newer).is_err());

@@ -1,5 +1,5 @@
 # SHA-256 of every examined file, 2026-11-23. Format: <sha256>  <size>  <path>
-# Cheat material root: /Users/k/Downloads/RANDOM RESOURCES/RO CHEAT SOFTWARE and CHEAT GRFs etc
+# Cheat material root: <cheat sample folder>
 # 'Archive!entry' = entry inside an archive (streamed with bsdtar, not extracted).
 # Archives contain no additional files (only skin/default/Thumbs.db exists on disk but not in WOERO.rar).
 
@@ -399,6 +399,6 @@ cd782a7fc93a403bf5fa38eedd5e6c206ba59886efa0e55623ca7885110766f3   53882613  cli
 943a76286bd8e909587efd9fa3bf809c1b6f88e87358a493a0318f10ff9cc1ee   14789586  client-dev/ragnarok/cpal.grf
 
 ## references
-04e7ed042187e35f28d3d8d1d583899e0f59ec738020590130736f6617edcfbc  3845198853  /Users/k/Downloads/RO/1 CLIENT-SIDE/0 GRFs/data kro latest.grf    [vanilla reference]
-256361214271fd380b73de15ffa0bc06e541572cc541037494b09f9c68615aa6  901601287  /Users/k/Downloads/RO/1 CLIENT-SIDE/0 GRFs/official_data (chris).grf    [official reference]
-9f7a0e09d782746a666cae275ffcbc47b11814c9f8887262ffba71c9e249b127   20819968  /Users/k/Downloads/RO/1 CLIENT-SIDE/client-dev/ragnarok/alpha.exe    [game exe of client-dev]
+04e7ed042187e35f28d3d8d1d583899e0f59ec738020590130736f6617edcfbc  3845198853  <grf folder>/data kro latest.grf    [vanilla reference]
+256361214271fd380b73de15ffa0bc06e541572cc541037494b09f9c68615aa6  901601287  <grf folder>/official_data (chris).grf    [official reference]
+9f7a0e09d782746a666cae275ffcbc47b11814c9f8887262ffba71c9e249b127   20819968  <reference client>/alpha.exe    [game exe of client-dev]

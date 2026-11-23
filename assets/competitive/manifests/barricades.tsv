@@ -1,0 +1,15 @@
+# source_grf	archive_path	target_path	md5	size
+dark2.grf	data\Sprite\몬스터\barricade.act	data\sprite\몬스터\barricade.act	fb0801f2ebe2c77dba79a5874655b23e	6932
+dark2.grf	data\Sprite\몬스터\barricade.spr	data\sprite\몬스터\barricade.spr	bd685b935cf34b633b98f5d45b7d1aaa	6089
+dark2.grf	data\Sprite\몬스터\flora.act	data\sprite\몬스터\flora.act	79fb3086eaf1e80c514e770760579e82	17020
+dark2.grf	data\Sprite\몬스터\flora.spr	data\sprite\몬스터\flora.spr	a5d5fd016464b243955c341c55476be4	1561
+dark2.grf	data\Sprite\몬스터\geographer.act	data\sprite\몬스터\geographer.act	79fb3086eaf1e80c514e770760579e82	17020
+dark2.grf	data\Sprite\몬스터\geographer.spr	data\sprite\몬스터\geographer.spr	a5d5fd016464b243955c341c55476be4	1561
+dark2.grf	data\Sprite\몬스터\hydra.act	data\sprite\몬스터\hydra.act	79fb3086eaf1e80c514e770760579e82	17020
+dark2.grf	data\Sprite\몬스터\hydra.spr	data\sprite\몬스터\hydra.spr	a5d5fd016464b243955c341c55476be4	1561
+dark2.grf	data\Sprite\몬스터\mandragora.act	data\sprite\몬스터\mandragora.act	79fb3086eaf1e80c514e770760579e82	17020
+dark2.grf	data\Sprite\몬스터\mandragora.spr	data\sprite\몬스터\mandragora.spr	a5d5fd016464b243955c341c55476be4	1561
+dark2.grf	data\Sprite\몬스터\parasite.act	data\sprite\몬스터\parasite.act	79fb3086eaf1e80c514e770760579e82	17020
+dark2.grf	data\Sprite\몬스터\parasite.spr	data\sprite\몬스터\parasite.spr	a5d5fd016464b243955c341c55476be4	1561
+dark2.grf	data\Sprite\몬스터\s_empel_1.act	data\sprite\몬스터\s_empel_1.act	4c321239bdbecc18137259220aabab57	9492
+dark2.grf	data\Sprite\몬스터\s_empel_2.act	data\sprite\몬스터\s_empel_2.act	033d8999a3dca6d591266d3855d99d79	9492

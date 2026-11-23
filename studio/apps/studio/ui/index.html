@@ -19,7 +19,9 @@
   <button data-tab="profile" class="active">Profil</button>
   <button data-tab="modules">Module &amp; Challenges</button>
   <button data-tab="commands">Commands</button>
-  <button data-tab="auras">Auren</button>
+  <button data-tab="signatures">Signaturen</button>
+  <button data-tab="grf">GRF &amp; Mods</button>
+  <button data-tab="pack">Competitive-Pack</button>
   <button data-tab="build">Build</button>
   <button data-tab="rollout">Rollout</button>
   <button data-tab="updates">Updates</button>
@@ -32,7 +34,27 @@
   </section>
   <section id="tab-modules" class="tab"><div id="modules"></div></section>
   <section id="tab-commands" class="tab"><table id="commands"></table></section>
-  <section id="tab-auras" class="tab"><p class="muted">Katalog aus <code>modules/auras.toml</code> oder dem Profil (<code>aura_catalog</code>). Auren werden nur freigespielt, nie verkauft.</p><table id="auras"></table></section>
+  <section id="tab-signatures" class="tab">
+    <p class="muted">Cheat-Signaturen nach Tool-Gruppe (Präfix der ID, z. B. <code>OG-RCX-001</code> → RCX). „Standard“ nimmt die Aktion jeder einzelnen Signatur, „aus“ lässt die Gruppe weg, eine Aktion ersetzt sie für die ganze Gruppe. „Client“ = Einträge, die der Guard prüfen kann (der Rest sind Analysedaten). Eigene Signaturen: weitere TOML-Datei unter Profil → Signatur-Quellen.</p>
+    <table id="siggroups"></table>
+  </section>
+  <section id="tab-grf" class="tab">
+    <p class="muted">GRF-Prüfung wie bei Gepard, aber patcher-tauglich: Jede GRF aus <code>DATA.INI</code> muss eine freigegebene Version (Größe + Tabellen-Hash, im Hintergrund zusätzlich der Datei-Hash) oder ein erlaubter Mod sein. Vor einem Patch: gepatchten Client einlesen mit „alte Versionen behalten“, Server-Konfig ausrollen, dann patchen. <code>odin.grf</code> und das Competitive-Pack trägt der Build selbst ein.</p>
+    <div class="grid" id="grf-actions"></div>
+    <p><label>Client-Ordner <input id="grf-client" placeholder="/pfad/zum/client"></label>
+      <label><input type="checkbox" id="grf-full" checked> Datei-Hash (langsam bei großen GRFs)</label>
+      <label><input type="checkbox" id="grf-keep" checked> alte Versionen behalten</label>
+      <button id="btn-grf-scan">Client einlesen</button>
+      <label>Mod-GRF <input id="grf-mod" placeholder="/pfad/zu/dark.grf"></label> <button id="btn-grf-mod">Als erlaubten Mod hinzufügen</button></p>
+    <h3>Freigegebene GRF-Versionen</h3><table id="grf-files"></table>
+    <h3>Erlaubte Mods</h3><table id="grf-mods"></table>
+    <p><label>Erlaubte Ordner für lose Dateien (Komma) <input id="grf-overlays" size="60"></label></p>
+  </section>
+  <section id="tab-pack" class="tab">
+    <p class="muted">Optionales Pack für alle Spieler (gleiche Bedingungen für alle). Jede Kategorie ist einzeln wählbar; das Studio baut daraus <code>odin-dark.grf</code> und trägt seinen Hash in die GRF-Prüfung ein. Rezept: <code>assets/competitive/recipe.toml</code>.</p>
+    <div class="grid" id="pack-src"></div>
+    <table id="pack-cats"></table>
+  </section>
   <section id="tab-build" class="tab">
     <button id="btn-preview">Vorschau</button> <button id="btn-build" class="primary">Release bauen</button> <button id="btn-verify">Release prüfen</button>
     <pre id="build-out"></pre>

@@ -1,76 +1,58 @@
-# OdinGuard – server side (xAthena / rAthena)
+# OdinGuard Anti Cheat – server module (rAthena)
 
-This folder is the release copy of the server module. The working copy lives in xAthena; refresh it with
-`tools/sync_server.sh` (also writes `HOOKS.txt`). `tools/make_release.sh` packs it with the client.
+Release copy of the server module (working copy: an rAthena fork; refreshed with `tools/sync_server.sh`, which also
+writes `HOOKS.txt` with every hook line). Step-by-step integration: [../docs/INTEGRATION.md](../docs/INTEGRATION.md).
+A Studio release (`og build`) contains this folder plus the generated config.
 
 ## Files
 
 | File | Goes to | Purpose |
 |---|---|---|
-| `src/common/odinguard.cpp/.hpp` | `src/common/` | socket layer: handshake (X25519 + pinned Ed25519 key), XChaCha20-Poly1305 records, config, policy, alive check, SQL tables |
-| `src/common/og_crypto.cpp` | `src/common/` | compiles `3rdparty/monocypher/monocypher.c` into common (copy Monocypher 4 there) |
-| `src/common/og_proto.h` | `src/common/` | wire protocol, identical to the client's `proto/og_proto.h` |
+| `src/common/odinguard.cpp/.hpp` | `src/common/` | socket layer: handshake (X25519, pinned Ed25519 key, profile tag), XChaCha20-Poly1305 records with key rotation, config, policy, signature package and GRF manifest, alive check, challenges, SQL tables |
+| `src/common/og_wire.c/.h`, `og_wire.cpp`, `og_proto.h` | `src/common/` | wire protocol and parsers, byte-identical with the client (`proto/`) |
+| `src/common/og_crypto.cpp` | `src/common/` | compiles `3rdparty/monocypher/monocypher.c` |
 | `src/login/og_login.cpp/.hpp` | `src/login/` | login check: client report, machine bans (exact + fuzzy), `og_client`/`og_component` |
-| `src/map/og_map.cpp/.hpp` | `src/map/` | machine limit, `!ping`/`!vsync`/`!crash`, bans, LGP, auras, `@showauras`, name and item colours |
-| `conf/odinguard_athena.conf` | `conf/` | all switches; local values and the key in `conf/import/odinguard_conf.txt` |
-| `sql/odinguard.sql` | – | reference DDL; the servers create the tables themselves at start |
-| `check_auras.py` | – | which hat effects (auras) a client can draw: `check_auras.py <client folder> --conf` |
+| `src/map/og_map.cpp/.hpp` | `src/map/` | events, kicks, bans, `!ping`/`!vsync`/`!crash`, machine limit, lite ground skills, name and item colours |
+| `src/map/og_map_guard.cpp` | `src/map/` | flags and ban waves, rate limit, behaviour rules (no-delay, autopot, macro), honeypot, captcha, command registry |
+| `conf/odinguard_athena.conf` | `conf/` | every switch with defaults; the Studio writes `conf/import/odinguard_conf.txt` |
+| `sql/odinguard.sql` | – | reference DDL; the servers create the tables at start |
+
+Auras were part of OdinGuard up to 1.0 previews; they are a separate rAthena feature now (rathena-auras).
 
 ## Hooks (exact lines: `HOOKS.txt`)
 
-Build: `odinguard.o og_crypto.o` in `src/common/Makefile.in` (`COMMON_OBJ`) and both files in
-`src/common/CMakeLists.txt`. Run `./configure` again after adding them.
-
 | Where | What |
 |---|---|
+| `src/common/Makefile.in`, `CMakeLists.txt` | `odinguard.o og_crypto.o og_wire.o`; `og_proto.h og_wire.h og_wire.c` in the common headers (otherwise make does not rebuild `og_wire.o`) |
 | `socket.hpp` `struct socket_data` | `void* og;` connection state |
-| `socket.cpp` `recv_to_fifo` / `send_from_fifo` | `og_handles_recv/og_recv`, `og_handles_send/og_send`: decrypts and encrypts OdinGuard connections, plain ones pass through |
-| `socket.cpp` `session_has_output` | `og_has_pending`: encrypted records still waiting to be sent count as output |
+| `socket.cpp` `recv_to_fifo` / `send_from_fifo` | `og_handles_recv/og_recv`, `og_handles_send/og_send`: decrypt/encrypt OdinGuard connections, plain ones pass |
+| `socket.cpp` `session_has_output` | `og_has_pending` |
 | `socket.cpp` `make_connection` | `og_mark_plain`: inter-server links are never OdinGuard connections |
 | `socket.cpp` `delete_session` / `socket_init` / `socket_final` | `og_session_free`, `og_init`, `og_final` |
-| `login.cpp` `LoginServer::initialize` / `finalize` | `og_login_init`, `og_login_final` |
-| `loginclif.cpp` `logclif_auth_ok` | `og_login_check`: refuses banned machines (code 4), clients without OdinGuard when `og_required`, too old versions |
-| `char_clif.cpp` `chclif_parse_reqtoconnect` | refuses clients without OdinGuard when `og_required` |
-| `clif.cpp` `clif_parse_WantToConnection` | same for the map-server |
-| `clif.cpp` `clif_parse_LoadEndAck` | `og_map_on_load` before `clif_spawn`: colour lists, aura from the char reg |
-| `clif.cpp` `clif_parse_GlobalMessage` | `og_map_chat_command`: `!ping`, `!vsync`, `!crash` |
-| `clif.cpp` `clif_getareachar_skillunit` | LGP: per viewer a flat ground unit instead of `UNT_DUMMYSKILL` |
-| `clif.cpp` `clif_skill_poseffect` | LGP: viewers with `@lgp` do not get the heavy ground animation |
-| `clif.cpp` `clif_hat_effects` / `clif_hat_effect_single` | `@showauras`: hat effects of others filtered per viewer |
-| `map.cpp` `map_quit` / `MapServer::initialize` | `og_map_on_quit` (colour broadcast), `og_map_init` |
-| `pc.cpp` `pc_authok` | `og_map_machine_limit` (`og_max_per_machine`) |
-| `atcommand.cpp` | `@ogban`, `@ogunban`, `@oginfo`, `@aura`, `@namecolor` (GM); `@lgp`, `@showauras` (players) + `ACMD_DEF`s |
-| `conf/groups.yml` | `showauras: true`, `lgp: true` in the player group's commands |
+| `login.cpp` / `loginclif.cpp` | `og_login_init/final`; `og_login_check` in `logclif_auth_ok` (banned machine code 4, missing guard when required, old version) |
+| `char_clif.cpp` `chclif_parse_reqtoconnect`, `clif.cpp` `clif_parse_WantToConnection` | refuse clients without the guard when `og_required` |
+| `clif.cpp` `clif_parse_LoadEndAck` | `og_map_on_load` (colour lists), `og_map_honeypot_spawn` |
+| `clif.cpp` `clif_parse_GlobalMessage` | `og_map_chat_command` (`!` commands) |
+| `clif.cpp` packet dispatch | `og_map_packet` (rate limit) |
+| `clif.cpp` skill/item/attack handlers | `og_map_skill_refused`, `og_map_skill_used`, `og_map_item_used`, `og_map_hp_update`, `og_map_honeypot_hit` |
+| `clif.cpp` `clif_getareachar_skillunit`, `clif_skill_poseffect` | lite ground skills per viewer |
+| `map.cpp` | `og_map_init`, `og_map_on_quit` |
+| `pc.cpp` `pc_authok` | `og_map_machine_limit` |
+| `atcommand.cpp` | `@ogban @ogunban @oginfo @ogflags @ogbanwave @namecolor @lgp @square @circle @aoes` + `ACMD_DEF`s |
+| `conf/groups.yml` | player group: `lgp`, `square`, `circle`, `aoes` |
 
-## Key
+## Config keys (generated by the Studio)
 
-`make -C client keys` (client repo) creates `keys/server.seed` (secret) and the public key header compiled
-into `odinguard.dll`. Give the seed to the servers as `og_key: <hex>` in `conf/import/odinguard_conf.txt` or as
-`ODINGUARD_KEY` in the environment (Docker/Easypanel). Never commit it, never ship it with the client.
+Modules: `og_enable`, `og_required`, `og_log_only`, `og_rate_limit`, `og_hwid`, `og_multi_client`, `og_heartbeat`,
+`og_integrity`, `og_signatures`, `og_grf_rules`, `og_input_filter`, `og_client_commands`, `og_colors`,
+`og_lgp_enable`, `og_ban_system`, `og_behaviour`, `og_ch_<nonce|code|time|file|captcha|honeypot>`,
+`og_competitive_pack`. References: `og_guard_file`, `og_protected_file`, `og_sigpack`, `og_sigpack_key`,
+`og_sigpack_min_version`, `og_allowed_exe`. GRF manifest: `og_grf_file`, `og_grf_mod`, `og_grf_overlay`,
+`og_grf_<modified|unknown|missing>_action`. Commands: `og_cmd_<id>`, `og_cmdgroup_<id>`, `og_cmdrate_<id>`,
+`og_cmdname_<id>`. Secrets (environment preferred): `ODINGUARD_KEY`/`og_key`, `ODINGUARD_PROTO_SALT`/`og_proto_salt`,
+`ODINGUARD_BUILD_SECRET`/`og_build_secret`.
 
-## Environment (Docker, `deploy/entrypoint.sh`)
+## Tables
 
-`ODINGUARD_KEY`, `ODINGUARD_ENABLE`, `ODINGUARD_REQUIRED`, `ODINGUARD_LOG_ONLY` (Easypanel: `updateEnv`
-needs `createDotEnv: true`).
-
-## Rollout
-
-1. `og_enable: yes`, `og_required: no`, `og_log_only: yes` – clients with and without OdinGuard work,
-   detections only go to `og_event`.
-2. Ship the client package with the patcher, read `og_event`, collect the `exe_code` of the real clients
-   (`og_allowed_exe`).
-3. `og_log_only: no` – detections act (log / kick / ban per rule).
-4. `og_required: yes` – clients without OdinGuard can no longer log in.
-
-## Commands
-
-| Command | Who | Purpose |
-|---|---|---|
-| `@ogban <char>[, reason]` | GM | bans the machine of an online character (all its accounts), kicks it |
-| `@ogunban <account id>` | GM | lifts the machine bans of all machines the account used |
-| `@oginfo [char]` | GM | OdinGuard version, build, machine and exe hash of a character |
-| `@aura <name\|off>[, char]` | GM | permanent aura from the `og_aura` list |
-| `@namecolor <RRGGBB\|off>[, char]` | GM | permanent name colour (OdinGuard clients) |
-| `@lgp` | player | lite ground skills on/off |
-| `@showauras` | player | auras of other players on/off |
-| `!ping`, `!vsync [on\|off]`, `!crash` | player | client commands (chat) |
+`og_client` (machine ↔ account, build, exe hash), `og_component` (salted hardware components), `og_ban` (machine
+bans), `og_event` (every detection and action), `og_flag` (flags with score for the ban waves).

@@ -76,15 +76,6 @@ const std::vector<std::pair<int32, uint32>>& og_item_colors();       // item id,
 const std::vector<std::pair<int32, uint32>>& og_group_namecolors();  // group id, 0xRRGGBB
 uint16 og_lgp_unit(uint16 skill_id);                                  // square style; 0 = no lite display for the skill
 uint16 og_lgp_unit_style(const char* style, uint16 skill_id);         // square | circle | set2..set14, 0 = not configured
-const std::vector<std::pair<std::string, int32>>& og_auras();         // name, hat effect id (only these are allowed)
-struct s_og_aura {
-	std::string name;   // used by @aura
-	int32 effect;       // hat effect id
-	std::string rarity; // common | uncommon | rare | epic | legendary
-	std::string unlock; // quest:<id> | mvp:<n> | bg_wins:<n> | woe_castles:<n> | event:<name> | gm
-};
-const std::vector<s_og_aura>& og_aura_catalog();
-const s_og_aura* og_aura_find(const char* name_or_id);
 
 // CREATE TABLE IF NOT EXISTS statements (login and map server run them at start)
 const std::vector<const char*>& og_sql_ddl();

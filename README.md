@@ -1,66 +1,78 @@
 # OdinGuard Anti Cheat
 
-Universelles, modulares Anti-Cheat-Toolkit für Ragnarok-Online-Server auf rAthena-Basis (getestet mit xAthena,
-Client 2018-06-20). Betreiber konfigurieren es im **OdinGuard Studio** (oder headless mit `og`) und bauen daraus
-ein signiertes Release für Client und Server. Version 1.0.0, **nur lokales Repository**.
+Open-source, modular anti-cheat for Ragnarok Online servers running **rAthena** (or a fork). Server owners pick
+the protection modules, challenges, commands and signatures in **OdinGuard Studio** and get a signed,
+reproducible release for client and server – their own keys, their own build.
 
-- Client: 32-Bit-Windows-DLL `odinguard.dll` + Loader `ijl15.dll` (Proxy, kein Exe-Patch), C11.
-- Server: Modul für rAthena/xAthena (`src/common/odinguard.*`, `src/login/og_login.*`, `src/map/og_map*.cpp`), C++.
-- Studio: Rust-Workspace (`studio/`) mit `og-core`, `og-cli` und Tauri-2-GUI.
+Deutsch: [README.de.md](README.de.md)
 
-## Schnellstart (Betreiber)
+## Why
 
-```
-brew install mingw-w64                       # Cross-Compiler für die Client-DLL
-cd studio && cargo build --release           # og-cli -> studio/target/release/og
-og new meinserver.profile.toml --id meinserver --operator "Mein RO"   # Profil + Schlüssel (nie committen)
-og validate meinserver.profile.toml
-og build meinserver.profile.toml             # Release -> output aus dem Profil
-og verify-release <release-ordner>
-```
+Ragnarok Online servers fight packet editors, bots, macro and autopot tools, memory readers, no-delay GRFs and
+modified clients. Closed anti-cheats are hard to audit, cause start-up hangs and false "illegal files" alarms, and
+tie every server to one vendor. OdinGuard is:
 
-GUI: `cd studio/apps/studio && npm install && npx tauri dev` (Profil öffnen, Module/Challenges/Commands/Auren
-wählen, bauen, Rollout-Stufe prüfen). Das Release enthält ein Betreiber-Handbuch (`docs/handbook.md`).
+- **Server-authoritative.** The server decides. Client checks raise the cost of cheating and produce evidence; the
+  real security comes from server-side rules (rate limits, delay checks, honeypots, captchas, mandatory handshake).
+- **Open code, secret keys.** Security comes from per-server keys and per-server build variation, not from hiding
+  the code.
+- **Modular.** Unselected modules are not compiled into the client DLL (checked against the linker map).
+- **Careful with players.** Every rule has severity, confidence and an action (log, flag, flag-then-ban, kick,
+  ban); bans come in delayed waves; rollout starts in warn mode; legitimate add-ons are allowlisted.
 
-## Inhalt
+## Features
 
-| Pfad | Inhalt |
+| Area | |
 |---|---|
-| `modules/` | Registry: `modules.toml` (24 Module), `commands.toml` (16 Commands), `auras.toml` (29 Auren) |
-| `profiles/` | `default` (Funktionsumfang v0.3), `minimal` (core + rate-limit), `e2e` (Testprofil) |
-| `signatures/` | Cheat-Signaturen und Allowlist (Quelle für das signierte Signaturpaket) |
-| `assets/odin-grf/` | Eigene Assets für `odin.grf` (LGP-Kacheln) |
-| `proto/` | Protokoll v2 (`og_proto.h`) und gemeinsame Parser (`og_wire.c`, byte-identisch im Server) |
-| `client/` | Guard (`src/`), Loader, Ressourcen, Spieler-README (`package/`), Tests (`tests/`) |
-| `server/` | Release-Kopie des xAthena-Moduls (`tools/sync_server.sh`), `HOOKS.txt`, SQL |
-| `studio/` | `og-core`, `og-cli`, `apps/studio` (Tauri 2) |
-| `tests/e2e/` | End-to-End-Suite (Docker-Server + Windows-VM) |
-| `analysis/` | Cheat-Analyse (nur Signaturdaten, keine Binaries), Ghidra-Ergebnisse |
-| `tools/` | `release_studio.sh`, `sync_server.sh`, `og_keygen.c`, `make_branding.py`, `check_auras.py`, `ghidra/`, `dev/` |
-| `third_party/` | Monocypher (CC0/BSD-2), MinHook (BSD-2) |
+| Network | X25519 handshake with a pinned server key, XChaCha20-Poly1305 for the whole game stream, replay protection, key rotation, per-server profile tag, downgrade protection, fuzzed parsers |
+| Integrity | exe and guard code hashes in every heartbeat, canonical code image, anti-debug, hardware breakpoints, API-hook checks (speed hacks), GRF check with patch-rollout support |
+| Detection | signed, updatable signature package (300 signatures: processes, modules, windows, files, drivers, mutexes, registry, GRF hashes), allowlist, per-group actions |
+| Server rules | packet rate limit (WPE/RPE loops), no-delay detection, autopot/macro timing, honeypot unit, captcha, multi-client limit, hardware bans (exact and fuzzy), flags and ban waves |
+| Challenges | nonce (build secret), random code ranges, clock rate, random file ranges, captcha, honeypot |
+| Features | `!ping`, `!vsync`, `!crash` (crash reports with the last packets), colour names and items, lite ground skills (`@lgp`, flat cell tiles), optional competitive pack (same darkworld-style visuals for everyone) |
+| Tooling | Studio GUI (Tauri 2) and `og` CLI: profiles, validation, reproducible signed releases, signature packages, GRF scan, rollout gate, signed self-update |
 
-## Dokumentation
+## Quick start
 
-- `docs/02-architecture.md` – Modulsystem, Profil, Protokoll, Challenges, Detection, Registry, Studio, Updater,
-  Härtung (Hürde vs. echte Sicherheit), Sprach-ADR
-- `docs/03-integration.md` – Einbindung beim Betreiber und Rollout-Stufen
-- `docs/05-tests.md` – Testmatrix und Live-Abnahme-Checkliste
-- `docs/06-gepard-comparison.md` – Vergleich mit Gepard Shield
-- `docs/07-darkworld-lgp.md` – darkworld-Analyse, LGP-Kacheln, Competitive-Pack (Fairness-Befunde)
-- `docs/01`, `docs/04` – Referenzanalyse und Reverse Engineering des eigenen Clients
-- `analysis/cheat-signatures/` – Inventar, Signaturen, Allowlist, Verhaltenssignaturen
-
-## Tests
-
-```
-make -C client                 # DLLs, selftest, nettest, dettest
-make -C client fuzz            # Parser-Fuzzing (ASan/UBSan)
-cd studio && cargo test --workspace && cargo clippy --workspace --all-targets
-sh tests/e2e/run.sh <xathena-build> dist/e2e dist/minimal
+```sh
+brew install mingw-w64            # or: apt install mingw-w64
+cd studio && cargo build --release && cd ..
+studio/target/release/og new myserver.profile.toml --id myserver --operator "My Ragnarok"
+studio/target/release/og build myserver.profile.toml
 ```
 
-## Sicherheit
+Then follow **[docs/INTEGRATION.md](docs/INTEGRATION.md)** (server hooks, client loader, GRF check with your patcher,
+staged rollout).
 
-Schlüssel (`keys/`, `profiles/keys/`, `secrets/` im Release, `keys/studio-updater.key`) sind git-ignoriert und
-werden nie committet. Client-Prüfungen sind Hürden; echte Sicherheit kommt aus den serverseitigen Regeln
-(siehe `docs/02-architecture.md` Abschnitt 11).
+## Repository
+
+| Path | |
+|---|---|
+| `client/` | guard DLL and loader (C11, 32-bit, mingw-w64 or llvm-mingw with CFG), tests (`selftest`, `nettest`, `dettest`, fuzzer) |
+| `server/` | rAthena module and hook list |
+| `proto/` | wire protocol shared by client and server |
+| `studio/` | Rust workspace: `og-core`, `og` CLI, Tauri app |
+| `modules/` | module and command registry (single source for Studio, builds and docs) |
+| `signatures/` | cheat signatures and allowlist (static analysis results only, no cheat binaries) |
+| `assets/` | own assets for `odin.grf` (LGP tiles) and the competitive-pack recipe |
+| `profiles/` | example profiles: `default`, `minimal`, `e2e` |
+| `tests/e2e/` | end-to-end suite (rAthena in Docker + Windows VM) |
+| `docs/` | integration guide (English), architecture, tests, analyses (German) |
+
+## Status
+
+1.0.0. Tested end to end with a 2018-06-20 client and an rAthena fork (PACKETVER 20180620): see
+[docs/05-tests.md](docs/05-tests.md). Not yet tested on real hardware: input filter, RCX, Warsaw (Brazilian
+banking module), VM detection on VMware/VirtualBox/Hyper-V.
+
+## Honest limits
+
+Anyone who controls the machine (kernel drivers, VM introspection, a reimplemented client) can defeat any
+client-side check. OdinGuard aims to stop public tools and bots and to make manual cheating expensive and
+traceable; the server-side rules work regardless of the client. See the "hurdle vs. real security" table in
+[docs/02-architecture.md](docs/02-architecture.md).
+
+## Licence
+
+MIT OR Apache-2.0 (your choice): [LICENSE-MIT](LICENSE-MIT), [LICENSE-APACHE](LICENSE-APACHE). Third-party: Monocypher (CC0/BSD-2), MinHook (BSD-2), fonts (OFL).
+Security reports: [SECURITY.md](SECURITY.md).

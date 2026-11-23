@@ -18,7 +18,15 @@ sql() { docker exec ogt-db mariadb -N -uragnarok -pragnarok ragnarok -e "$1" 2>/
 maplog() { docker exec ogt-srv sh -c 'cat /tmp/map.log' 2>/dev/null; }
 vm() { for i in 1 2 3 4; do o=$(prlctl exec "$VM" --current-user cmd /c "$1" 2>&1); case "$o" in *PrlJob_Get*) sleep 2;; *) printf '%s\n' "$o"; return;; esac; done; printf '%s\n' "$o"; }
 # nettest <user> <char> "<chat commands>" <hold seconds> [env assignments "A=1 & set B=2"]
-nettest() { vm "cd /d $WIN_E2E & set OG_CHAT=$3 & set OG_HOLD=$4 ${5:+& set $5 }& nettest.exe $HOST_IP 6900 $1 ogtest 6121 5121 $2"; }
+nettest_once() { vm "cd /d $WIN_E2E & set OG_CHAT=$3 & set OG_HOLD=$4 ${5:+& set $5 }& nettest.exe $HOST_IP 6900 $1 ogtest 6121 5121 $2"; }
+# an immediate relogin of the same account can be refused with 0x0081 (still online): wait and retry
+nettest() {
+	for try in 1 2 3; do
+		o=$(nettest_once "$@")
+		case "$o" in *"unexpected packet 0x0081"*|*"no map server answer"*|*"CHAR: unexpected answer"*) sleep 8 ;; *) break ;; esac
+	done
+	printf '%s\n' "$o"
+}
 restart_map() {
 	docker exec ogt-srv sh -c "true"
 	pid=$(docker exec ogt-srv sh -c 'pidof map-server' | tr -d '\r')
@@ -40,8 +48,13 @@ stage_client() {
 	rm -rf "$E2E"; mkdir -p "$E2E"
 	cp "$ROOT/client/build/nettest.exe" "$1/client/odinguard.dll" "$1/client/odin.grf" "$E2E/"
 	[ -f "$1/client/odin-dark.grf" ] && cp "$1/client/odin-dark.grf" "$E2E/"
+	data_ini "0=odin.grf" "1=odin-dark.grf"
 	return 0
 }
+
+# DATA.INI of the test client folder
+data_ini() { { printf '[Data]\r\n'; for l in "$@"; do printf '%s\r\n' "$l"; done; } > "$E2E/DATA.INI"; }
+events() { sql "SELECT COUNT(*) FROM og_event WHERE $1"; }
 
 cat > /tmp/og_e2e.conf <<'EOF'
 og_ch_nonce: yes
@@ -63,16 +76,18 @@ EOF
 stage_client "$R"
 
 echo "== 1 handshake, commands, challenges, self integrity (GM, 60 s)"
-out=$(nettest Mave OgTester '!ping;+aura;+lgp;+square 2;+aoes;+lgp off;+showauras;+showauras;+oginfo;+ogflags' 60)
+out=$(nettest Mave OgTester '!ping;+aura;+lgp;+square 2;+aoes;+lgp off;+showauras;+showauras;+oginfo;+ogflags;+whosell' 60)
 printf '%s\n' "$out" | sed 's/^/   /' | head -40
 check "login and map enter with the profile guard" 'printf '%s\n' "$out" | grep -q "MAP: .* bytes after enter"'
 check "!ping answered by the guard" 'printf '%s\n' "$out" | grep -q "Ping: [0-9]* ms"'
 check "@aura lists the catalog with unlock conditions" 'printf '%s\n' "$out" | grep -q "quest:aura_t1"'
 check "@square 2 selects colour set 2" 'printf '%s\n' "$out" | grep -q "colour set2"'
 check "@aoes limits LGP to SG/LoV/MS" 'printf '%s\n' "$out" | grep -q "Storm Gust, Lord of Vermilion and Meteor Storm"'
+check "@whosell without parameter answers in the chat (market overview)" 'printf '%s\n' "$out" | grep -q "No vending shop is open right now\|Market (selling)"'
 check "@oginfo shows protocol v2 and signatures" 'printf '%s\n' "$out" | grep -q "protocol v2.*signatures v1"'
 check "guard log: handshake and signatures" 'vm "type $WIN_E2E\\odinguard.log" | grep -q "signatures: [0-9]* received"'
 check "no guard-code / exe-code / challenge failure for the honest client" '[ "$(sql "SELECT COUNT(*) FROM og_event WHERE type LIKE \"challenge:%\" OR type IN (\"guard-code\",\"exe-code\")")" = 0 ]'
+check "honest client: no GRF manifest report" '[ "$(events "type LIKE \"grf:%\"")" = 0 ]'
 check "challenges were sent (map log)" 'maplog | grep -q "enabled (required: no, log only: yes, .*challenges nonce code time file"'
 
 echo "== 2 aura unlocks (player + GM)"
@@ -87,7 +102,7 @@ check "second unlock is reported as duplicate" 'printf '%s\n' "$out" | grep -q "
 check "unknown aura is refused" 'printf '%s\n' "$out" | grep -q "Unknown aura."'
 out=$(nettest ogtest2 OgPlayer '+aura green;+aura' 4)
 check "after relog the unlocked aura can be worn" 'printf '%s\n' "$out" | grep -q "Aura set."'
-check "unlock stored once (account scope)" '[ "$(sql "SELECT COUNT(*) FROM og_aura_unlock WHERE account_id=2000001 AND aura=\"green\"")" = 1 ]'
+check "unlock stored once (account scope)" '[ "$(sql "SELECT COUNT(*) FROM aura_unlock WHERE account_id=2000001 AND aura=\"green\"")" = 1 ]'
 out=$(nettest ogtest2 OgPlayer '+auraunlock yellow, OgPlayer' 3)
 check "players cannot use @auraunlock" '! printf '%s\n' "$out" | grep -q "Aura unlocked."'
 
@@ -138,6 +153,58 @@ cp "$R/client/odin-dark.grf" "$E2E/odin-dark.grf"
 printf 'X' | dd of="$E2E/odin-dark.grf" bs=1 seek=60 conv=notrunc 2>/dev/null
 check "manipulated competitive pack on the client: file challenge fails" 'file_challenge_fails'
 cp "$R/client/odin-dark.grf" "$E2E/odin-dark.grf"
+
+echo "== 6 GRF manifest (Gepard-like start-up check, patcher friendly)"
+sql "DELETE FROM og_event"
+cp "$E2E/odin-dark.grf" "$E2E/extra.grf"
+data_ini "0=odin.grf" "1=odin-dark.grf" "2=extra.grf"
+nettest ogtest2 OgPlayer '!ping' 25 >/dev/null
+check "GRF that is neither listed nor an allowed mod is reported (grf:unknown)" '[ "$(events "type=\"grf:unknown\" AND detail=\"extra.grf\"")" -ge 1 ]'
+set -- $("$ROOT/studio/target/debug/og" grf-hash "$E2E/extra.grf")
+printf 'og_grf_mod: %s,e2e test mod\n' "$2" >> "$X/conf/import/odinguard_conf.txt"
+restart_map
+sql "DELETE FROM og_event"
+nettest ogtest2 OgPlayer '!ping' 25 >/dev/null
+check "allowed mod (any name, same tail hash) is accepted" '[ "$(events "type LIKE \"grf:%\"")" = 0 ]'
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+restart_map
+data_ini "0=odin.grf" "1=odin-dark.grf"
+rm -f "$E2E/extra.grf"
+sql "DELETE FROM og_event"
+size=$(wc -c < "$E2E/odin.grf")
+printf 'X' | dd of="$E2E/odin.grf" bs=1 seek=$((size - 2)) conv=notrunc 2>/dev/null
+nettest ogtest2 OgPlayer '!ping' 25 >/dev/null
+check "changed file table of a listed GRF (grf:modified)" '[ "$(events "type=\"grf:modified\" AND detail=\"odin.grf\"")" -ge 1 ]'
+cp "$R/client/odin.grf" "$E2E/odin.grf"
+sql "DELETE FROM og_event"
+printf 'X' | dd of="$E2E/odin.grf" bs=1 seek=60 conv=notrunc 2>/dev/null
+nettest ogtest2 OgPlayer '!ping' 30 >/dev/null
+check "same table, changed content: background full hash (grf:modified content)" '[ "$(events "type=\"grf:modified\" AND detail LIKE \"odin.grf (content)%\"")" -ge 1 ]'
+cp "$R/client/odin.grf" "$E2E/odin.grf"
+sql "DELETE FROM og_event"
+data_ini "0=odin-dark.grf"
+nettest ogtest2 OgPlayer '!ping' 25 >/dev/null
+check "required GRF missing from DATA.INI (grf:missing)" '[ "$(events "type=\"grf:missing\" AND detail=\"odin.grf\"")" -ge 1 ]'
+data_ini "0=odin.grf" "1=odin-dark.grf"
+
+echo "== 7 tamper stubs: speed hack, code patches (test process only)"
+sql "DELETE FROM og_event"
+nettest ogtest2 OgPlayer '!ping' 160 "OG_SPEEDTEST=3" | grep -E "speed test" | sed 's/^/   /'
+check "speed hack: patched time API reported (api-hook)" '[ "$(events "type=\"api-hook\"")" -ge 1 ]'
+check "speed hack: time challenge fails" '[ "$(events "type=\"challenge:time\"")" -ge 1 ]'
+sql "DELETE FROM og_event"
+nettest ogtest2 OgPlayer '!ping' 30 "OG_CODEPATCH=guard" | grep -E "code patch" | sed 's/^/   /'
+check "guard code patched in memory (guard-code)" '[ "$(events "type=\"guard-code\"")" -ge 1 ]'
+exe=$(sql "SELECT exe_code FROM og_client WHERE account_id=2000001 AND exe_code<>'' LIMIT 1")
+printf 'og_allowed_exe: %s\n' "$exe" >> "$X/conf/import/odinguard_conf.txt"
+restart_map
+sql "DELETE FROM og_event"
+nettest ogtest2 OgPlayer '!ping' 20 >/dev/null
+check "unchanged exe matches the allowed exe hash" '[ "$(events "type=\"exe-code\"")" = 0 ]'
+nettest ogtest2 OgPlayer '!ping' 30 "OG_CODEPATCH=exe" | grep -E "code patch" | sed 's/^/   /'
+check "exe code patched in memory (exe-code)" '[ "$(events "type=\"exe-code\"")" -ge 1 ]'
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+restart_map
 
 if [ -n "$OTHER" ]; then
 	echo "== 5 a client built for another profile"

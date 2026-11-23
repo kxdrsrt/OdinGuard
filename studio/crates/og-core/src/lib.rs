@@ -2,6 +2,8 @@
 
 pub mod crypto;
 pub mod generate;
+pub mod grf;
+pub mod pack;
 pub mod keys;
 pub mod manifest;
 pub mod pipeline;

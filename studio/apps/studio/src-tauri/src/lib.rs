@@ -106,9 +106,13 @@ fn rollout_advance(path: String, events: String, clients: String, active: Option
     Ok(stage)
 }
 
-/// Update endpoint base; `<base>/<channel>.json` plus `<channel>.json.sig`. Overridable for staging/tests.
-fn update_base() -> String {
-    std::env::var("OG_STUDIO_UPDATE_ENDPOINT").unwrap_or_else(|_| "https://updates.odinguard.invalid/studio".into())
+/// Update endpoint base; `<base>/<channel>.json` plus `<channel>.json.sig`. Default: GitHub Releases of the
+/// OdinGuard repository (stable = the latest release, beta = the release tagged "beta"). Overridable for
+/// staging/tests and self-hosting.
+fn update_base(channel: &str) -> String {
+    std::env::var("OG_STUDIO_UPDATE_ENDPOINT").unwrap_or_else(|_| {
+        if channel == "beta" { "https://github.com/kxdrsrt/OdinGuard/releases/download/beta".into() } else { "https://github.com/kxdrsrt/OdinGuard/releases/latest/download".into() }
+    })
 }
 
 /// The minisign key line from the updater plugin config (Tauri stores the .pub file base64 encoded).
@@ -133,7 +137,7 @@ async fn studio_update(app: tauri::AppHandle, channel: String, install: bool) ->
     if !matches!(channel.as_str(), "stable" | "beta") {
         return Err(format!("unknown channel {channel}"));
     }
-    let base = update_base();
+    let base = update_base(&channel);
     let dir = app.path().app_data_dir().map_err(err)?.join("updates");
     let u = og_core::update::Updater { endpoint: base.clone(), channel: channel.clone(), public_key: updater_pubkey(&app)?, dir, allow_loopback_http: false };
     let current = app.package_info().version.to_string();
@@ -152,6 +156,31 @@ async fn studio_update(app: tauri::AppHandle, channel: String, install: bool) ->
     update.download_and_install(|_, _| {}, || {}).await.map_err(err)?;
     u.record_installed("studio", &m).map_err(err)?;
     Ok(Some(info))
+}
+
+/// Tool groups of the profile's signature sources (paths relative to the profile file).
+#[tauri::command]
+fn signature_groups(path: String, profile: Profile) -> Res<Vec<og_core::sigpack::Group>> {
+    let base = Path::new(&path).parent().unwrap_or(Path::new(".")).to_path_buf();
+    let src: Vec<PathBuf> = profile.signatures.sources.iter().map(|s| profile.resolve(&base, s)).collect();
+    let al: Vec<PathBuf> = profile.signatures.allowlist.iter().map(|s| profile.resolve(&base, s)).collect();
+    og_core::sigpack::catalog(&src.iter().map(PathBuf::as_path).collect::<Vec<_>>(), &al.iter().map(PathBuf::as_path).collect::<Vec<_>>()).map_err(err)
+}
+
+#[tauri::command]
+async fn grf_scan(client: String, full: bool) -> Res<Vec<og_core::profile::GrfFile>> {
+    tauri::async_runtime::spawn_blocking(move || og_core::grf::scan_client(Path::new(&client), full).map_err(err)).await.map_err(err)?
+}
+
+#[tauri::command]
+fn grf_tail(path: String) -> Res<String> {
+    og_core::grf::tail_hash(Path::new(&path)).map(|(_, t)| t).map_err(err)
+}
+
+/// Selectable staging folders of assets/competitive/recipe.toml in copy order.
+#[tauri::command]
+fn competitive_recipe() -> Res<Vec<og_core::pack::PackOption>> {
+    og_core::pack::options(&og_core::repo_root().join("assets/competitive/recipe.toml")).map_err(err)
 }
 
 #[tauri::command]
@@ -177,6 +206,10 @@ pub fn run() {
             rollout_advance,
             studio_version,
             studio_update,
+            signature_groups,
+            grf_scan,
+            grf_tail,
+            competitive_recipe,
         ])
         .run(tauri::generate_context!())
         .expect("error while running OdinGuard Studio");

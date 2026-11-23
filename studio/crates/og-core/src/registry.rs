@@ -57,16 +57,6 @@ pub struct Command {
     pub help_de: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Aura {
-    pub name: String,
-    pub effect: i64,
-    #[serde(default)]
-    pub file: String,
-    pub rarity: String,
-    pub unlock: String,
-}
-
 #[derive(Debug, Deserialize)]
 struct ModulesFile {
     schema: u32,
@@ -80,21 +70,13 @@ struct CommandsFile {
     commands: Vec<Command>,
 }
 
-#[derive(Debug, Deserialize)]
-struct AurasFile {
-    #[serde(rename = "aura", default)]
-    auras: Vec<Aura>,
-}
-
 #[derive(Debug, Clone, Serialize)]
 pub struct Registry {
     pub modules: Vec<Module>,
     pub commands: Vec<Command>,
-    pub auras: Vec<Aura>,
 }
 
 pub const ACTIONS: &[&str] = &["log", "flag", "kick", "ban", "flagban"];
-pub const RARITIES: &[&str] = &["common", "uncommon", "rare", "epic", "legendary"];
 
 fn read<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     let text = std::fs::read_to_string(path).map_err(|e| Error::Io(path.display().to_string(), e))?;
@@ -102,15 +84,14 @@ fn read<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
 }
 
 impl Registry {
-    /// Loads `modules.toml`, `commands.toml` and `auras.toml` from the registry folder.
+    /// Loads `modules.toml` and `commands.toml` from the registry folder.
     pub fn load(dir: &Path) -> Result<Self> {
         let m: ModulesFile = read(&dir.join("modules.toml"))?;
         if m.schema != 1 {
             return Err(Error::Invalid(format!("modules.toml schema {} is not supported", m.schema)));
         }
         let c: CommandsFile = read(&dir.join("commands.toml"))?;
-        let a: AurasFile = read(&dir.join("auras.toml"))?;
-        let r = Registry { modules: m.modules, commands: c.commands, auras: a.auras };
+        let r = Registry { modules: m.modules, commands: c.commands };
         r.check()?;
         Ok(r)
     }
@@ -144,11 +125,6 @@ impl Registry {
                 return Err(Error::Invalid(format!("command {} belongs to unknown module {}", c.id, c.module)));
             }
         }
-        for a in &self.auras {
-            if !RARITIES.contains(&a.rarity.as_str()) {
-                return Err(Error::Invalid(format!("aura {}: unknown rarity {}", a.name, a.rarity)));
-            }
-        }
         Ok(())
     }
 
@@ -180,7 +156,7 @@ mod tests {
         let r = reg();
         assert!(r.module("core").is_some());
         assert!(r.commands.iter().any(|c| c.id == "lgp"));
-        assert_eq!(r.auras.len(), 29);
+        assert!(r.module("auras").is_none(), "auras are a separate rAthena feature");
     }
 
     #[test]

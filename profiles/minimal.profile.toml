@@ -1,7 +1,9 @@
-# OdinGuard Anti Cheat profile (schema 2). Secrets are only referenced by path.
-schema_version = 2
-modules = ["core", "rate-limit"]
-aura_catalog = ""
+# OdinGuard Anti Cheat profile (schema 3). Secrets are only referenced by path.
+schema_version = 3
+modules = [
+    "core",
+    "rate-limit",
+]
 output = "../dist/minimal"
 
 [general]
@@ -37,6 +39,14 @@ competitive_pack = ""
 
 [assets.odin_grf]
 lgp = "../assets/odin-grf/lgp"
+
+[grf]
+modified_action = "kick"
+unknown_action = "log"
+missing_action = "log"
+overlays = []
+file = []
+mod = []
 
 [rollout]
 stage = 1

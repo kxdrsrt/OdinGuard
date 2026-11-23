@@ -1,0 +1,56 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  studio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: studio
+      - name: test
+        working-directory: studio
+        run: cargo test --workspace
+      - name: clippy
+        working-directory: studio
+        run: cargo clippy --workspace --all-targets
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: mingw-w64
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-i686
+      - name: build (development profile, throw-away keys)
+        run: make -C client
+      - name: parser fuzzing (ASan + UBSan)
+        run: make -C client fuzz
+
+  release-build:
+    needs: [studio, client]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: studio
+      - run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-i686
+      - name: default and minimal profile, built twice (reproducible, signed, verified)
+        run: |
+          cd studio && cargo build -q -p og-cli && cd ..
+          OG=studio/target/debug/og
+          for p in default minimal; do
+            $OG keys profiles/$p.profile.toml
+            $OG build profiles/$p.profile.toml > /tmp/$p-1.json
+            $OG verify-release dist/$p
+            cp dist/$p/manifest.json /tmp/$p-1.manifest
+            $OG build profiles/$p.profile.toml > /tmp/$p-2.json
+            cmp /tmp/$p-1.manifest dist/$p/manifest.json
+          done

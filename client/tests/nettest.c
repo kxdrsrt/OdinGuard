@@ -53,6 +53,51 @@ static SOCKET dial(const char *ip, int port)
     return s;
 }
 
+/* ---- tamper test stubs (detection tests only; they act on this test process and nothing else) ---- */
+#include "MinHook.h"
+static DWORD (WINAPI *real_tick)(void);
+static BOOL (WINAPI *real_qpc)(LARGE_INTEGER *);
+static int g_factor = 1;
+static DWORD g_tick0;
+static LONGLONG g_qpc0;
+static DWORD WINAPI fast_tick(void) { DWORD t = real_tick(); return g_tick0 + (t - g_tick0) * (DWORD)g_factor; }
+static BOOL WINAPI fast_qpc(LARGE_INTEGER *c)
+{
+    BOOL r = real_qpc(c);
+    if (r) c->QuadPart = g_qpc0 + (c->QuadPart - g_qpc0) * g_factor;
+    return r;
+}
+
+/* OG_SPEEDTEST=<factor>: time APIs of this process run <factor> times faster (speed-hack pattern) */
+static void speed_test(int factor)
+{
+    LARGE_INTEGER q;
+    HMODULE k = GetModuleHandleA("kernel32.dll");
+    g_factor = factor;
+    g_tick0 = GetTickCount();
+    QueryPerformanceCounter(&q);
+    g_qpc0 = q.QuadPart;
+    if (MH_Initialize() != MH_OK ||
+        MH_CreateHook((LPVOID)GetProcAddress(k, "GetTickCount"), (LPVOID)fast_tick, (LPVOID *)&real_tick) != MH_OK ||
+        MH_CreateHook((LPVOID)GetProcAddress(k, "QueryPerformanceCounter"), (LPVOID)fast_qpc, (LPVOID *)&real_qpc) != MH_OK ||
+        MH_EnableHook(MH_ALL_HOOKS) != MH_OK) { printf("speed test: hooks failed\n"); return; }
+    printf("speed test: time x%d\n", factor);
+}
+
+/* OG_CODEPATCH=guard|exe: changes one code byte of a function that is never called in this process */
+static void unused_function(void) { printf("never called\n"); }
+static void code_patch(const char *what)
+{
+    unsigned char *p = !_stricmp(what, "guard") ? (unsigned char *)GetProcAddress(GetModuleHandleA("odinguard.dll"), "OdinGuard_CanonDump")
+                                                : (unsigned char *)unused_function;
+    DWORD old;
+    if (!p || !VirtualProtect(p, 1, PAGE_EXECUTE_READWRITE, &old)) { printf("code patch: failed\n"); return; }
+    p[0] ^= 0x01;
+    VirtualProtect(p, 1, old, &old);
+    FlushInstructionCache(GetCurrentProcess(), p, 1);
+    printf("code patch: one byte of the %s code changed\n", what);
+}
+
 int main(int argc, char **argv)
 {
     WSADATA wd;
@@ -160,6 +205,12 @@ int main(int argc, char **argv)
                         memcpy(act + 2, &account, 4);
                         for (i = 0; i < cnt; i++) { if (send(m, (const char *)act, 7, 0) <= 0) break; if (i % 50 == 0) Sleep(200); }
                         printf("MAP: flood %d sent\n", i);
+                    }
+                    if (GetEnvironmentVariableA("OG_SPEEDTEST", envbuf, sizeof envbuf) && atoi(envbuf) > 1) speed_test(atoi(envbuf));
+                    if (GetEnvironmentVariableA("OG_CODEPATCH", envbuf, sizeof envbuf)) {
+                        char *e = envbuf + strlen(envbuf);
+                        while (e > envbuf && (e[-1] == ' ' || e[-1] == '\t')) *--e = 0;   /* cmd "set X=v &" keeps the space */
+                        code_patch(envbuf);
                     }
                     /* OG_ATTACK=1: attack the honeypot unit (only a bot would) */
                     if (GetEnvironmentVariableA("OG_ATTACK", envbuf, sizeof envbuf)) {
