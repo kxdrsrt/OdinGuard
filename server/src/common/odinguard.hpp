@@ -14,11 +14,15 @@ enum e_og_action : uint8 {
 	OG_ACTION_LOG = 0,
 	OG_ACTION_KICK,
 	OG_ACTION_BAN,
+	OG_ACTION_FLAG,    // flag with a score, the player stays online
+	OG_ACTION_FLAGBAN, // flag now, ban with the next ban wave (the player cannot tell which check fired)
 };
+const char* og_action_name(e_og_action a);
 
 struct s_og_info {
 	std::string unique_id; // hex
-	std::string exe_code;  // hex, latest reported
+	std::string exe_code;  // hex, latest reported (BLAKE2b of the canonical exe code)
+	std::string guard_code; // hex, latest reported (BLAKE2b of the canonical guard code + read-only data)
 	std::string build;
 	uint8 flags = 0;
 	uint8 version = 0;
@@ -32,6 +36,16 @@ bool og_required();
 bool og_log_only();
 int32 og_ban_match();
 int32 og_max_per_machine();
+uint32 og_sigpack_version();
+
+// values of conf/odinguard_athena.conf read by the server modules (og_rate_*, og_bh_*, og_banwave_*, og_cmd_* ...)
+const char* og_setting(const char* key, const char* def);
+int32 og_setting_int(const char* key, int32 def);
+e_og_action og_setting_action(const char* key, e_og_action def);
+bool og_module_on(const char* key, bool def); // module switch, always false while OdinGuard is disabled
+
+// reports a detection: event log, flag score or action (warn mode turns every action into log)
+void og_report(int32 fd, const char* type, const char* detail, e_og_action action, int32 score);
 
 // state of a client connection
 bool og_session_active(int32 fd);
@@ -52,7 +66,7 @@ bool og_send_control(int32 fd, const std::vector<uint8>& msg);
 bool og_send_command(int32 fd, const char* command);
 
 // callbacks set by the servers
-typedef void (*og_event_handler)(int32 fd, const char* type, const char* detail, e_og_action action);
+typedef void (*og_event_handler)(int32 fd, const char* type, const char* detail, e_og_action action, int32 score);
 typedef void (*og_text_handler)(int32 fd, const char* text);
 typedef void (*og_pong_handler)(int32 fd, int64 rtt_ms);
 void og_set_handlers(og_event_handler ev, og_text_handler text, og_pong_handler pong);
@@ -60,8 +74,17 @@ void og_set_handlers(og_event_handler ev, og_text_handler text, og_pong_handler 
 // display features (map-server)
 const std::vector<std::pair<int32, uint32>>& og_item_colors();       // item id, 0xRRGGBB
 const std::vector<std::pair<int32, uint32>>& og_group_namecolors();  // group id, 0xRRGGBB
-uint16 og_lgp_unit(uint16 skill_id);                                  // 0 = no lite display for the skill
+uint16 og_lgp_unit(uint16 skill_id);                                  // square style; 0 = no lite display for the skill
+uint16 og_lgp_unit_style(const char* style, uint16 skill_id);         // square | circle | set2..set14, 0 = not configured
 const std::vector<std::pair<std::string, int32>>& og_auras();         // name, hat effect id (only these are allowed)
+struct s_og_aura {
+	std::string name;   // used by @aura
+	int32 effect;       // hat effect id
+	std::string rarity; // common | uncommon | rare | epic | legendary
+	std::string unlock; // quest:<id> | mvp:<n> | bg_wins:<n> | woe_castles:<n> | event:<name> | gm
+};
+const std::vector<s_og_aura>& og_aura_catalog();
+const s_og_aura* og_aura_find(const char* name_or_id);
 
 // CREATE TABLE IF NOT EXISTS statements (login and map server run them at start)
 const std::vector<const char*>& og_sql_ddl();

@@ -1,0 +1,498 @@
+# OdinGuard Anti Cheat – module registry (single source of truth for the Studio, the client build, the server
+# config and the generated docs). Schema: docs/02-architecture.md section 3.
+#
+# id          stable module id (used in profiles)
+# kind        core | protection | challenge | detection | gameplay | client-feature
+# side        client | server | both
+# requires    module ids that must be enabled too
+# client_src  C files of client/src compiled only when the module is selected (none = server only)
+# define      preprocessor switch set for the client build
+# server_key  config switch in conf/odinguard_athena.conf (runtime toggle on the server)
+# [[module.param]] name, type (bool|int|string|action), default, min, max, conf (server key), help
+# Actions: log | flag | kick | ban | flagban (flag now, ban with the next ban wave)
+
+schema = 1
+
+[[module]]
+id = "core"
+version = "2.0.0"
+kind = "core"
+side = "both"
+requires = []
+client_src = ["og_main.c", "og_log.c", "og_net.c", "og_sha256.c", "og_challenge.c", "../../proto/og_wire.c"]
+define = "OG_MOD_CORE"
+server_key = "og_enable"
+summary = "Handshake (X25519, pinned server key), XChaCha20-Poly1305 records with key rotation, profile tag, nonce challenge."
+  [[module.param]]
+  name = "required"
+  type = "bool"
+  default = false
+  conf = "og_required"
+  help = "Clients without a valid guard cannot log in (rollout stage 4)."
+  [[module.param]]
+  name = "log_only"
+  type = "bool"
+  default = true
+  conf = "og_log_only"
+  help = "Warn mode: every action is only logged (rollout stage 1)."
+  [[module.param]]
+  name = "min_version"
+  type = "int"
+  default = 2
+  min = 2
+  max = 255
+  conf = "og_min_version"
+  help = "Lowest protocol version accepted (downgrade protection)."
+
+[[module]]
+id = "rate-limit"
+version = "1.0.0"
+kind = "protection"
+side = "server"
+requires = []
+client_src = []
+server_key = "og_rate_limit"
+summary = "Packets per second per connection; floods and packet tools (WPE/RPE send loops) are flagged or kicked."
+  [[module.param]]
+  name = "packets_per_second"
+  type = "int"
+  default = 150
+  min = 20
+  max = 2000
+  conf = "og_rate_pps"
+  help = "Game packets per second before the rule fires."
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "kick"
+  conf = "og_rate_action"
+
+[[module]]
+id = "hwid"
+version = "1.0.0"
+kind = "protection"
+side = "both"
+requires = ["core"]
+client_src = ["og_hwid.c"]
+define = "OG_MOD_HWID"
+server_key = "og_hwid"
+summary = "Salted hardware components (13), unique id, exact and fuzzy machine bans."
+  [[module.param]]
+  name = "ban_match"
+  type = "int"
+  default = 2
+  min = 1
+  max = 13
+  conf = "og_ban_match"
+  help = "Equal components needed to link a machine to a banned one."
+
+[[module]]
+id = "multi-client"
+version = "1.0.0"
+kind = "protection"
+side = "both"
+requires = ["hwid"]
+client_src = ["og_env.c"]
+define = "OG_MOD_ENV"
+server_key = "og_multi_client"
+summary = "Characters per machine (server) and game windows per machine (client semaphore), optional VM block."
+  [[module.param]]
+  name = "max_per_machine"
+  type = "int"
+  default = 3
+  min = 0
+  max = 32
+  conf = "og_max_per_machine"
+  help = "0 = unlimited."
+  [[module.param]]
+  name = "max_windows"
+  type = "int"
+  default = 0
+  min = 0
+  max = 32
+  conf = "og_max_windows"
+  help = "0 = unlimited."
+  [[module.param]]
+  name = "block_vm"
+  type = "bool"
+  default = false
+  conf = "og_block_vm"
+  help = "Refuse virtual machines (CPUID + firmware strings)."
+  [[module.param]]
+  name = "vm_action"
+  type = "action"
+  default = "kick"
+  conf = "og_vm_action"
+
+[[module]]
+id = "heartbeat"
+version = "1.0.0"
+kind = "protection"
+side = "both"
+requires = ["core"]
+client_src = ["og_guard.c"]
+define = "OG_MOD_HEARTBEAT"
+server_key = "og_heartbeat"
+summary = "Heartbeat over the encrypted channel; a client that stops sending is kicked."
+  [[module.param]]
+  name = "interval"
+  type = "int"
+  default = 30
+  min = 5
+  max = 300
+  conf = "og_alive_interval"
+  [[module.param]]
+  name = "timeout"
+  type = "int"
+  default = 120
+  min = 15
+  max = 900
+  conf = "og_alive_timeout"
+
+[[module]]
+id = "integrity"
+version = "1.0.0"
+kind = "protection"
+side = "both"
+requires = ["heartbeat"]
+client_src = ["og_integrity.c"]
+define = "OG_MOD_INTEGRITY"
+server_key = "og_integrity"
+summary = "Exe code hash and guard self-integrity (code + read-only data incl. the embedded profile) in every heartbeat; anti-debug and API-hook checks."
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "kick"
+  conf = "og_integrity_action"
+  [[module.param]]
+  name = "tamper_action"
+  type = "action"
+  default = "flagban"
+  conf = "og_tamper_action"
+  help = "Hooks replaced, debugger, hardware breakpoints, timing APIs patched (speed hacks)."
+
+[[module]]
+id = "cheat-signatures"
+version = "1.0.0"
+kind = "detection"
+side = "both"
+requires = ["heartbeat"]
+client_src = ["og_detect.c"]
+define = "OG_MOD_DETECT"
+server_key = "og_signatures"
+summary = "Signed, updatable signature package (processes, modules, window classes/titles, file and GRF hashes, drivers) with an allowlist; injected-module report."
+  [[module.param]]
+  name = "package"
+  type = "string"
+  default = "conf/odinguard.sigpack"
+  conf = "og_sigpack"
+  [[module.param]]
+  name = "inject_action"
+  type = "action"
+  default = "log"
+  conf = "og_inject_action"
+
+[[module]]
+id = "grf-rules"
+version = "1.0.0"
+kind = "protection"
+side = "both"
+requires = ["heartbeat"]
+client_src = ["og_assets.c"]
+define = "OG_MOD_ASSETS"
+server_key = "og_grf_rules"
+summary = "Only the shipped GRFs (DATA.INI allowlist) and no loose protected files (no-delay ACTs, transparent walls)."
+  [[module.param]]
+  name = "strict"
+  type = "bool"
+  default = false
+  conf = "og_grf_strict"
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "kick"
+  conf = "og_grf_action"
+
+[[module]]
+id = "input-filter"
+version = "1.0.0"
+kind = "protection"
+side = "both"
+requires = ["heartbeat"]
+client_src = ["og_input.c"]
+define = "OG_MOD_INPUT"
+server_key = "og_input_filter"
+summary = "Rejects synthetic keyboard/mouse input (macro and autopot tools) while the game has focus."
+  [[module.param]]
+  name = "enabled"
+  type = "bool"
+  default = false
+  conf = "og_input_filter"
+
+[[module]]
+id = "crash-report"
+version = "1.0.0"
+kind = "client-feature"
+side = "client"
+requires = ["core"]
+client_src = ["og_crash.c"]
+define = "OG_MOD_CRASH"
+summary = "Crash log with registers, stack, modules, GRFs and the last 32 packets."
+
+[[module]]
+id = "client-commands"
+version = "1.0.0"
+kind = "client-feature"
+side = "both"
+requires = ["core"]
+client_src = ["og_cmds.c"]
+define = "OG_MOD_CMDS"
+server_key = "og_client_commands"
+summary = "!ping, !vsync, !crash (see commands.toml)."
+
+[[module]]
+id = "colors"
+version = "1.0.0"
+kind = "gameplay"
+side = "both"
+requires = ["core"]
+client_src = ["og_text.c", "og_ui.c"]
+define = "OG_MOD_COLORS"
+server_key = "og_colors"
+summary = "Colour nicks (group, @namecolor) and colour item names."
+
+[[module]]
+id = "branding"
+version = "1.0.0"
+kind = "client-feature"
+side = "client"
+requires = ["core"]
+client_src = ["og_splash.c"]
+define = "OG_MOD_SPLASH"
+summary = "Splash screen with the operator name from the profile."
+
+[[module]]
+id = "lgp"
+version = "2.0.0"
+kind = "gameplay"
+side = "server"
+requires = ["core"]
+client_src = []
+server_key = "og_lgp_enable"
+assets = ["lgp"]
+summary = "Lite ground skills (@lgp/@square/@circle/@aoes): flat cell tiles from odin.grf instead of heavy ground effects."
+
+[[module]]
+id = "auras"
+version = "2.0.0"
+kind = "gameplay"
+side = "server"
+requires = ["core"]
+client_src = []
+server_key = "og_auras_enable"
+summary = "Aura catalog, unlocks per account/character (quests, BG/WoE/MVP milestones, events), @aura, @showauras."
+  [[module.param]]
+  name = "scope"
+  type = "string"
+  default = "account"
+  conf = "og_aura_scope"
+  help = "account | character: who owns an unlock."
+
+[[module]]
+id = "ban-system"
+version = "1.0.0"
+kind = "protection"
+side = "server"
+requires = ["core"]
+client_src = []
+server_key = "og_ban_system"
+summary = "Flags with score, delayed ban waves, audit log, @ogflags/@ogbanwave."
+  [[module.param]]
+  name = "wave_hour"
+  type = "int"
+  default = 4
+  min = -1
+  max = 23
+  conf = "og_banwave_hour"
+  help = "Hour (server time) of the daily ban wave, -1 = only by GM command."
+  [[module.param]]
+  name = "ban_score"
+  type = "int"
+  default = 100
+  min = 10
+  max = 10000
+  conf = "og_ban_score"
+  help = "Flag score at which a 'flagban' becomes a ban in the next wave."
+
+[[module]]
+id = "behaviour"
+version = "1.0.0"
+kind = "detection"
+side = "server"
+requires = ["ban-system"]
+client_src = []
+server_key = "og_behaviour"
+summary = "Server-side behaviour signatures: no-delay attempts, autopot reaction time, macro timing."
+  [[module.param]]
+  name = "nodelay_per_minute"
+  type = "int"
+  default = 120
+  min = 10
+  max = 10000
+  conf = "og_bh_nodelay"
+  help = "Skill requests refused by the delay check per minute before a flag."
+  [[module.param]]
+  name = "autopot_ms"
+  type = "int"
+  default = 90
+  min = 20
+  max = 500
+  conf = "og_bh_autopot_ms"
+  help = "Median heal-item reaction after HP fell below 50 % that is below human speed."
+  [[module.param]]
+  name = "macro_jitter_ms"
+  type = "int"
+  default = 4
+  min = 1
+  max = 50
+  conf = "og_bh_macro_jitter"
+  help = "Standard deviation of action intervals below which 40 actions in a row count as a macro."
+
+[[module]]
+id = "ch-nonce"
+version = "1.0.0"
+kind = "challenge"
+side = "both"
+requires = ["core"]
+client_src = []
+server_key = "og_ch_nonce"
+summary = "Keyed nonce challenge-response: proves the operator's guard build (build secret) is running; replay-proof."
+  [[module.param]]
+  name = "interval"
+  type = "int"
+  default = 300
+  min = 30
+  max = 86400
+  conf = "og_ch_nonce_interval"
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "flagban"
+  conf = "og_ch_nonce_action"
+
+[[module]]
+id = "ch-code"
+version = "1.0.0"
+kind = "challenge"
+side = "both"
+requires = ["integrity"]
+client_src = []
+define = "OG_MODCH_CODE"
+server_key = "og_ch_code"
+summary = "Random code range hash of the exe (reference dump) and the guard DLL (release file)."
+  [[module.param]]
+  name = "interval"
+  type = "int"
+  default = 600
+  min = 60
+  max = 86400
+  conf = "og_ch_code_interval"
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "flagban"
+  conf = "og_ch_code_action"
+
+[[module]]
+id = "ch-time"
+version = "1.0.0"
+kind = "challenge"
+side = "both"
+requires = ["core"]
+client_src = []
+define = "OG_MODCH_TIME"
+server_key = "og_ch_time"
+summary = "Client clock rate against the server clock (speed hacks)."
+  [[module.param]]
+  name = "interval"
+  type = "int"
+  default = 60
+  min = 20
+  max = 3600
+  conf = "og_ch_time_interval"
+  [[module.param]]
+  name = "max_drift_percent"
+  type = "int"
+  default = 6
+  min = 2
+  max = 50
+  conf = "og_ch_time_drift"
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "flag"
+  conf = "og_ch_time_action"
+
+[[module]]
+id = "ch-file"
+version = "1.0.0"
+kind = "challenge"
+side = "both"
+requires = ["core"]
+client_src = []
+define = "OG_MODCH_FILE"
+server_key = "og_ch_file"
+summary = "Random range hash of protected files (odin.grf, competitive pack); the server holds the official files."
+  [[module.param]]
+  name = "interval"
+  type = "int"
+  default = 900
+  min = 60
+  max = 86400
+  conf = "og_ch_file_interval"
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "kick"
+  conf = "og_ch_file_action"
+
+[[module]]
+id = "ch-captcha"
+version = "1.0.0"
+kind = "challenge"
+side = "server"
+requires = ["behaviour"]
+client_src = []
+server_key = "og_ch_captcha"
+summary = "Bot captcha (the client's macro detector window) after behaviour flags; never on WoE/BG maps."
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "kick"
+  conf = "og_ch_captcha_action"
+
+[[module]]
+id = "ch-honeypot"
+version = "1.0.0"
+kind = "challenge"
+side = "server"
+requires = ["ban-system"]
+client_src = []
+server_key = "og_ch_honeypot"
+summary = "Invisible decoy unit only bots see and attack; hits are flagged (delayed ban)."
+  [[module.param]]
+  name = "action"
+  type = "action"
+  default = "flagban"
+  conf = "og_ch_honeypot_action"
+
+[[module]]
+id = "competitive-pack"
+version = "1.0.0"
+kind = "gameplay"
+side = "both"
+requires = ["ch-file"]
+client_src = []
+server_key = "og_competitive_pack"
+assets = ["competitive"]
+summary = "Optional fair darkworld-style GRF (odin-dark.grf) for WoE/BG/PvP; only the official hash is accepted."

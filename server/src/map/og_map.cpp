@@ -24,11 +24,13 @@
 #include "unit.hpp"
 
 // character registry keys
-#define OG_REG_FLAGS "og_flags"         // bit 0: hide auras of others, bit 1: lite ground skills
+#define OG_REG_FLAGS "og_flags"         // bit 0: hide auras of others, bit 1: lite ground skills, bit 3: only SG/LoV/MS
+#define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2..14 = colour set
 #define OG_REG_AURA "og_aura"           // hat effect id of the permanent aura
 #define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
 #define OG_FLAG_HIDE_AURAS 1
 #define OG_FLAG_LGP 2
+#define OG_FLAG_LGP_AOES 8
 
 static std::string og_esc(const std::string& s) {
 	std::string out(s.size() * 2 + 1, '\0');
@@ -49,25 +51,36 @@ static void og_insert_ban(const std::string& uid, const char* by, const char* re
 		Sql_ShowDebug(mmysql_handle);
 }
 
-static void og_map_event(int32 fd, const char* type, const char* detail, e_og_action action) {
+static void og_map_event(int32 fd, const char* type, const char* detail, e_og_action action, int32 score) {
 	const s_og_info* info = og_info(fd);
 	map_session_data* sd = og_sd(fd);
-	static const char* names[] = { "log", "kick", "ban" };
+	std::string uid = info ? info->unique_id : std::string();
 
 	std::string q = "INSERT INTO `og_event` (`unique_id`,`account_id`,`char_name`,`type`,`detail`,`action`) VALUES ('" +
-		(info ? info->unique_id : std::string()) + "'," + std::to_string(sd ? sd->status.account_id : 0) + ",'" +
+		uid + "'," + std::to_string(sd ? sd->status.account_id : 0) + ",'" +
 		og_esc(sd ? sd->status.name : "") + "','" + og_esc(std::string(type).substr(0, 64)) + "','" +
-		og_esc(std::string(detail).substr(0, 255)) + "','" + names[action] + "')";
+		og_esc(std::string(detail).substr(0, 255)) + "','" + og_action_name(action) + "')";
 	if (SQL_ERROR == Sql_QueryStr(mmysql_handle, q.c_str()))
 		Sql_ShowDebug(mmysql_handle);
 
-	if (action == OG_ACTION_BAN && info != nullptr)
-		og_insert_ban(info->unique_id, "OdinGuard", type);
-	if (action != OG_ACTION_LOG) {
+	switch (action) {
+	case OG_ACTION_FLAG:
+	case OG_ACTION_FLAGBAN:
+		// flag now, act later: the player cannot tell which check fired (ban-system module)
+		og_map_flag(sd, uid.c_str(), type, score, action == OG_ACTION_FLAGBAN, detail);
+		break;
+	case OG_ACTION_BAN:
+		if (!uid.empty())
+			og_insert_ban(uid, "OdinGuard", type);
+		[[fallthrough]];
+	case OG_ACTION_KICK:
 		if (sd != nullptr)
 			clif_authfail_fd(fd, 15); // "You have been forced to disconnect by the GM Team"
 		else
 			set_eof(fd);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -91,6 +104,7 @@ void og_map_init() {
 		if (SQL_ERROR == Sql_QueryStr(mmysql_handle, q))
 			Sql_ShowDebug(mmysql_handle);
 	og_set_handlers(og_map_event, og_map_text, og_map_pong);
+	og_map_guard_init();
 }
 
 bool og_map_chat_command(map_session_data* sd, const char* message) {
@@ -104,9 +118,14 @@ bool og_map_chat_command(map_session_data* sd, const char* message) {
 	char* arg = strchr(cmd, ' ');
 	if (arg != nullptr)
 		*arg++ = '\0';
-	bool known = !strcmpi(cmd, "ping") || !strcmpi(cmd, "vsync") || !strcmpi(cmd, "crash");
-	if (!known)
+	// client commands can be renamed in the profile (og_cmdname_<id>)
+	const char* id = !strcmpi(cmd, og_map_command_name("ping")) ? "ping" : !strcmpi(cmd, og_map_command_name("vsync")) ? "vsync"
+		: !strcmpi(cmd, og_map_command_name("crash")) ? "crash" : nullptr;
+	if (id == nullptr || !og_module_on("og_client_commands", true))
 		return false;
+	if (!og_map_command_allowed(sd, id, !strcmp(id, "crash") ? 60000 : !strcmp(id, "ping") ? 2000 : 1000))
+		return true;
+	safestrncpy(cmd, id, sizeof(cmd));
 	if (!og_session_active(sd->fd)) {
 		clif_displaymessage(sd->fd, "OdinGuard is not active on this client.");
 		return true;
@@ -149,7 +168,7 @@ bool og_map_ban(map_session_data* target, const char* by, const char* reason) {
 	if (info == nullptr)
 		return false;
 	og_insert_ban(info->unique_id, by, reason);
-	og_map_event(target->fd, "gm-ban", reason, OG_ACTION_LOG);
+	og_map_event(target->fd, "gm-ban", reason, OG_ACTION_LOG, 0);
 	clif_authfail_fd(target->fd, 15);
 	return true;
 }
@@ -169,8 +188,8 @@ void og_map_info(map_session_data* target, char* out, size_t size) {
 		safesnprintf(out, size, "%s: no OdinGuard session.", target->status.name);
 		return;
 	}
-	safesnprintf(out, size, "%s: OdinGuard v%d, build '%s', machine %.16s, exe %.16s, flags %d", target->status.name,
-		info->version, info->build.c_str(), info->unique_id.c_str(), info->exe_code.c_str(), info->flags);
+	safesnprintf(out, size, "%s: protocol v%d, build '%s', machine %.16s, exe %.16s, guard %.16s, flags %d, signatures v%u", target->status.name,
+		info->version, info->build.c_str(), info->unique_id.c_str(), info->exe_code.c_str(), info->guard_code.c_str(), info->flags, og_sigpack_version());
 }
 
 // ---------------------------------------------------------------- display features
@@ -183,10 +202,27 @@ bool og_map_hides_auras(const map_session_data* viewer, const block_list& owner)
 	return viewer != nullptr && viewer->id != owner.id && (og_flags(viewer) & OG_FLAG_HIDE_AURAS);
 }
 
+static bool og_lgp_in_aoes(uint16 skill_id) {
+	// @aoes: only the three big area skills (og_lgp_aoes: comma separated skill ids)
+	char list[128];
+	safestrncpy(list, og_setting("og_lgp_aoes", "89,83,85"), sizeof(list));
+	for (char* t = strtok(list, ", "); t != nullptr; t = strtok(nullptr, ", "))
+		if (atoi(t) == skill_id) return true;
+	return false;
+}
+
 uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id) {
-	if (viewer == nullptr || !(og_flags(viewer) & OG_FLAG_LGP))
+	if (viewer == nullptr || !og_module_on("og_lgp_enable", true))
 		return 0;
-	return og_lgp_unit(skill_id);
+	int32 flags = og_flags(viewer);
+	if (!(flags & OG_FLAG_LGP) || ((flags & OG_FLAG_LGP_AOES) && !og_lgp_in_aoes(skill_id)))
+		return 0;
+	int32 style = (int32)pc_readglobalreg(const_cast<map_session_data*>(viewer), add_str(OG_REG_LGP_STYLE));
+	char name[16];
+	if (style == 1) safestrncpy(name, "circle", sizeof(name));
+	else safesnprintf(name, sizeof(name), "set%d", style);
+	uint16 unit = style > 0 ? og_lgp_unit_style(name, skill_id) : 0;
+	return unit ? unit : og_lgp_unit(skill_id);
 }
 
 struct s_og_area { const block_list* src; const void* buf; int32 len; bool (*keep)(map_session_data*, const block_list&, void*); void* ctx; };
@@ -209,10 +245,34 @@ void og_map_toggle_auras(map_session_data* sd) {
 	clif_displaymessage(sd->fd, (flags & OG_FLAG_HIDE_AURAS) ? "Auras of other players are hidden (they disappear after a map change or @refresh)." : "Auras of other players are shown again (after a map change or @refresh).");
 }
 
-void og_map_toggle_lgp(map_session_data* sd) {
-	int32 flags = og_flags(sd) ^ OG_FLAG_LGP;
+/// @lgp / @square / @circle / @aoes. kind: 0 lgp, 1 square, 2 circle, 3 aoes; arg: "", "on", "off" or a set number
+void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
+	int32 flags = og_flags(sd), style = (int32)pc_readglobalreg(sd, add_str(OG_REG_LGP_STYLE));
+	bool on = !(flags & OG_FLAG_LGP);
+	if (!strcmpi(arg, "on")) on = true;
+	else if (!strcmpi(arg, "off")) on = false;
+	else if (kind == 1 && atoi(arg) > 0) {
+		int32 set = atoi(arg);
+		if (set > 14) { clif_displaymessage(sd->fd, "Colour sets: 1-14."); return; }
+		style = set == 1 ? 0 : set;
+		on = true;
+	} else if (kind != 0 && *arg == '\0')
+		on = true;
+	if (kind == 1 && atoi(arg) <= 0) style = 0;
+	if (kind == 2) style = 1;
+	if (kind == 3) flags = on ? (flags | OG_FLAG_LGP_AOES) : (flags & ~OG_FLAG_LGP_AOES);
+	else if (kind != 0) flags &= ~OG_FLAG_LGP_AOES;
+	flags = on ? (flags | OG_FLAG_LGP) : (flags & ~(OG_FLAG_LGP | OG_FLAG_LGP_AOES));
 	pc_setglobalreg(sd, add_str(OG_REG_FLAGS), flags);
-	clif_displaymessage(sd->fd, (flags & OG_FLAG_LGP) ? "Lite ground skills on: Storm Gust, Meteor Storm and Lord of Vermilion are shown as coloured cells." : "Lite ground skills off: normal skill effects.");
+	pc_setglobalreg(sd, add_str(OG_REG_LGP_STYLE), style);
+	char msg[CHAT_SIZE_MAX];
+	if (!on)
+		safesnprintf(msg, sizeof(msg), "Lite ground skills off: normal skill effects.");
+	else
+		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat cell tiles.",
+			style == 1 ? "circle" : style > 1 ? "colour set" : "square", style > 1 ? std::to_string(style).c_str() : "",
+			(flags & OG_FLAG_LGP_AOES) ? "Storm Gust, Lord of Vermilion and Meteor Storm" : "area skills");
+	clif_displaymessage(sd->fd, msg);
 }
 
 int32 og_map_aura_by_name(const char* name) {
@@ -313,8 +373,13 @@ void og_map_on_load(map_session_data* sd, bool first) {
 		return;
 	if (first) {
 		int32 aura = (int32)pc_readglobalreg(sd, add_str(OG_REG_AURA));
-		if (aura > 0 && !og_aura_allowed(aura)) {
-			// removed from the list since it was set
+		if (aura > 0 && og_aura_allowed(aura) && !og_aura_valid_on_load(sd, aura)) {
+			// set by a GM before unlocks existed (v0.3): keep it as an unlock
+			for (const s_og_aura& a : og_aura_catalog())
+				if (a.effect == aura) og_aura_unlock(sd, a.name.c_str(), "gm (v0.3)");
+		}
+		if (aura > 0 && (!og_aura_allowed(aura) || !og_aura_valid_on_load(sd, aura))) {
+			// removed from the catalog or no longer unlocked
 			pc_setglobalreg(sd, add_str(OG_REG_AURA), 0);
 			aura = 0;
 		}
@@ -340,6 +405,7 @@ void og_map_on_load(map_session_data* sd, bool first) {
 }
 
 void og_map_on_quit(map_session_data* sd) {
+	og_map_guard_quit(sd);
 	if (og_enabled() && og_namecolor(sd) >= 0)
 		og_announce_name(sd, true);
 }

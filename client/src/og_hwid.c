@@ -174,30 +174,20 @@ void og_hwid_unique(const og_component *c, int n, char hex[65])
     og_hex(out, 32, hex);
 }
 
-int og_random(void *p, size_t n)
-{
-    typedef BOOLEAN (WINAPI *rtlgenrandom_t)(PVOID, ULONG);
-    static rtlgenrandom_t gen;
-    if (!gen) gen = (rtlgenrandom_t)GetProcAddress(LoadLibraryA("advapi32.dll"), "SystemFunction036");
-    return gen && gen(p, (ULONG)n);
-}
-
-/* identity for the server hello: unique id, in-memory code hash of the exe and the hashed components */
-void og_identity(uint8_t uid[32], uint8_t exe_code[32], og_component *comp, int *ncomp)
+/* identity for the server hello: unique id and the hashed components (cached) */
+void og_identity(uint8_t uid[32], og_component *comp, int *ncomp)
 {
     static og_component cache[OG_MAX_COMPONENTS];
     static int ncache = -1;
     static char uid_hex[65];
-    char hex[65];
-    int i;
     if (ncache < 0) {
-        ncache = og_hwid_collect(cache, OG_MAX_COMPONENTS, og_cfg.salt);
+        char salt[64];
+        og_profile_hwid_salt(salt, sizeof salt);
+        ncache = og_hwid_collect(cache, OG_MAX_COMPONENTS, salt);
+        SecureZeroMemory(salt, sizeof salt);
         og_hwid_unique(cache, ncache, uid_hex);
     }
-    for (i = 0; i < 32; i++) { unsigned v; sscanf(uid_hex + i * 2, "%2x", &v); uid[i] = (uint8_t)v; }
-    memset(exe_code, 0, 32);
-    if (og_hash_module_code(GetModuleHandleA(NULL), hex))
-        for (i = 0; i < 32; i++) { unsigned v; sscanf(hex + i * 2, "%2x", &v); exe_code[i] = (uint8_t)v; }
+    og_unhex(uid_hex, uid, 32);
     memcpy(comp, cache, sizeof(og_component) * ncache);
     *ncomp = ncache;
 }

@@ -26,6 +26,19 @@ static int recv_some(SOCKET s, unsigned char *buf, int cap, int ms)
     return got;
 }
 
+/* prints every chat/system message (0x008E) in buf */
+static void print_messages(const char *what, const unsigned char *buf, int n)
+{
+    int k, any = 0;
+    for (k = 0; k + 4 < n; k++) {
+        if (buf[k] == 0x8E && buf[k + 1] == 0x00) {
+            int plen = buf[k + 2] | (buf[k + 3] << 8);
+            if (plen > 4 && k + plen <= n) { printf("MAP: %-12s -> %.*s\n", any ? "" : what, plen - 4, buf + k + 4); any = 1; k += plen - 1; }
+        }
+    }
+    if (!any && what[0] != '(') printf("MAP: %-12s -> (no answer)\n", what);
+}
+
 static SOCKET dial(const char *ip, int port)
 {
     SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
@@ -124,25 +137,55 @@ int main(int argc, char **argv)
                         for (c = 0; c < 4; c++) cmds[ncmd++] = defcmds[c];
                     }
                     for (c = 0; c < ncmd; c++) {
-                        char chat[80], found[200] = "";
-                        int k, len = snprintf(chat + 4, sizeof chat - 4, "%s : %s", argc > 7 ? argv[7] : "OgTester", cmds[c]) + 5;
+                        char chat[160];
+                        int len = snprintf(chat + 4, sizeof chat - 4, "%s : %s", argc > 7 ? argv[7] : "OgTester", cmds[c]) + 5;
                         chat[0] = (char)0xF3; chat[1] = 0; chat[2] = (char)len; chat[3] = 0;
                         send(m, chat, len, 0);
-                        n = recv_some(m, buf, sizeof buf, 3000);
-                        for (k = 0; k + 4 < n; k++) {
-                            if (buf[k] == 0x8E && buf[k + 1] == 0x00) {
-                                int plen = buf[k + 2] | (buf[k + 3] << 8);
-                                if (plen > 4 && k + plen <= n) { snprintf(found, sizeof found, "%.*s", plen - 4, buf + k + 4); break; }
-                            }
-                        }
-                        printf("MAP: %-10s -> %s\n", cmds[c], found[0] ? found : "(no answer)");
+                        n = recv_some(m, buf, sizeof buf, 2500);
+                        print_messages(cmds[c], buf, n);
+                    }
+                    /* OG_SKILLSPAM=n: n First Aid requests on yourself without waiting (no-delay pattern) */
+                    if (GetEnvironmentVariableA("OG_SKILLSPAM", envbuf, sizeof envbuf)) {
+                        int i, cnt = atoi(envbuf);
+                        unsigned char sk[10] = { 0x38, 0x04, 1, 0, 142, 0 };
+                        memcpy(sk + 6, &account, 4);
+                        for (i = 0; i < cnt; i++) { send(m, (const char *)sk, 10, 0); Sleep(20); }
+                        n = recv_some(m, buf, sizeof buf, 1500);
+                        printf("MAP: skillspam %d sent\n", cnt);
+                    }
+                    /* OG_FLOOD=n: n packets as fast as possible (rate limit) */
+                    if (GetEnvironmentVariableA("OG_FLOOD", envbuf, sizeof envbuf)) {
+                        int i, cnt = atoi(envbuf);
+                        unsigned char act[7] = { 0x37, 0x04, 0, 0, 0, 0, 0 };
+                        memcpy(act + 2, &account, 4);
+                        for (i = 0; i < cnt; i++) { if (send(m, (const char *)act, 7, 0) <= 0) break; if (i % 50 == 0) Sleep(200); }
+                        printf("MAP: flood %d sent\n", i);
+                    }
+                    /* OG_ATTACK=1: attack the honeypot unit (only a bot would) */
+                    if (GetEnvironmentVariableA("OG_ATTACK", envbuf, sizeof envbuf)) {
+                        unsigned char act[7] = { 0x37, 0x04 };
+                        unsigned int id = 0x7A000000u | (account & 0xFFFFFF);
+                        memcpy(act + 2, &id, 4);
+                        act[6] = 0;
+                        send(m, (const char *)act, 7, 0);
+                        printf("MAP: attacked honeypot %08x\n", id);
                     }
                 }
                 {
                     char hold[16];
-                    Sleep(GetEnvironmentVariableA("OG_HOLD", hold, sizeof hold) ? atoi(hold) * 1000 : 6000);
+                    /* keep reading like the game does: the guard answers challenges and pings inside recv() */
+                    DWORD end = GetTickCount() + (GetEnvironmentVariableA("OG_HOLD", hold, sizeof hold) ? atoi(hold) * 1000 : 6000);
+                    while ((LONG)(end - GetTickCount()) > 0) {
+                        n = recv_some(m, buf, sizeof buf, 500);
+                        if (n > 0) print_messages("(hold)", buf, n);
+                    }
                 }
                 closesocket(m);
+                {   /* OG_CANON=<file>: write the guard's canonical image after the session (self-integrity diagnostics) */
+                    char path[MAX_PATH];
+                    int (*dump)(const char *) = (int (*)(const char *))GetProcAddress(GetModuleHandleA("odinguard.dll"), "OdinGuard_CanonDump");
+                    if (dump && GetEnvironmentVariableA("OG_CANON", path, sizeof path)) printf("canon dump: %d\n", dump(path));
+                }
             } else {
                 Sleep(1500);
                 closesocket(s);

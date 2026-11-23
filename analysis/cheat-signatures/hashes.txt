@@ -1,0 +1,404 @@
+# SHA-256 of every examined file, 2026-11-23. Format: <sha256>  <size>  <path>
+# Cheat material root: /Users/k/Downloads/RANDOM RESOURCES/RO CHEAT SOFTWARE and CHEAT GRFs etc
+# 'Archive!entry' = entry inside an archive (streamed with bsdtar, not extracted).
+# Archives contain no additional files (only skin/default/Thumbs.db exists on disk but not in WOERO.rar).
+
+## cheat material on disk
+71fe7dca8d3d1daaa276c1438fdcdd920961aa8b586f7c6c4686a7e2865e7479     468215  Autopot Fresh.rar
+c91935ba15c25f826cc2f2f852f7da5d7a049c3a8687659852315e18423f8745       1758  Autopot Fresh/598.ico
+4101b61444b302ceafb33ab78fafd9a52b5af6488ee18ad443903dfcfd0bdaf9       2298  Autopot Fresh/autopot.ahk
+fac12a429ffe3eaf207622d99125ccfe179887c8d1cf0f7869cbd60708edb7b7    1078272  Autopot Fresh/autopot.exe
+19f8bc1bd6cc11623e5304c682afc68c32698333a5266b67b6f5c321e46f008c        162  Autopot Fresh/ragnapot.ini
+89c553d10c3fb45e73484410cbf5665caff79aad03bec6f6d5bc85be4023e066    5126071  Class_DD.zip
+eeefd669c2d5913f9f50e6c1092c4189a6dade90ac493e3afb825598b8cccbf6       4496  Class_DD/Class_DD.ahk
+baaa42821f4774b1f56f1962ab8a583b048855874f3a90bcaf0f874e7236f85b    3127896  Class_DD/DD/32/ddx32.dll
+c1601352b45fc22b370280f405db1c7297d1bce4545117c445e97399356075af    3565224  Class_DD/DD/64/ddx64.32.dll
+6d32fa338d8a4955dc63204211c3dc402661686bb352bfbe913d94a9ce112440    4702912  Class_DD/DD/64/ddx64.64.dll
+de98650b6b244ffb90eeda85a456c37ba0810c288eaed88451daffe7c6f2cdce        410  Class_DD/F1 Spam.ahk
+7ea9d9120388fc09f4b8c1aaafa2851cdfd7b8321af5dac9d4ec55604a602b53       1070  Class_DD/Inventory Move.ahk
+f5ba20a3ed2e471790588fc56bb5d7f05df0e1e46706cdcfd5915b763df7e998       1742  Class_DD/README.md
+f7baefcdcb8475a4c37e268329cefedcb75357165b7cf1f069c662596ba906ae   78113579  dark.grf
+045c71de65804624e28fe0a7c4e8225a6408ead27831911a5f9e1f21daa1a748   78907885  dark2.grf
+a2ece5f6dfb90570370ba7f5c08f272cf42ce1277ba88550aad6ce8d6f2787d5   17385319  Desu GRF 3-15-2018.rar
+4eab63bd4e566e032b5aeccccaf66ec24f840a47ac423f3ca86671f6cfde932d       1671  Desu GRF 3-15-2018/Desu GRF Edit Log.txt
+f8e44f945c0dc4952a95c6663ee1bd93ca2319eca49fdec4cbe610518224ba06   18435814  Desu GRF 3-15-2018/desu.grf
+0dba7a75f6a5f48c2588fb64387b6529d594e4c0ab04b27879eb4911508c8f11    2521330  nodelay.grf
+a6afbb7e68ec9b88e720b98df7d342669002a1c242bcc469b799a2bb888e9e83       9864  RoExt.zip
+3d8d3f03f96cd859f587afe6bcb7beb7915b1a35044a58be324c779c1e42e878      10784  RoExt/dinput.dll
+6e59a44d4a90378711bef18eafe90a86c18fb1a97a6dfa851fa8c2fd1e6483ba       1896  RoExt/dinput.ini
+7899a14886f64ecaa6e2db61cacaa28e741bb444de55eff8e525430110a4bbe1       4431  RoExt/readme.txt
+0f3339fabb4207e421475a2b74c91f65079ff9531d08ffb4d0609f9356594cf0    6687447  RoMedic.rar
+abbae13412ac78c63ccb384b3ed45f25d178a3a53280f2f5157a81e2927f4f16    6715392  RoMedic/RoMedic.exe
+25ca384acb3c9c00b3d7238194ae45def6567f6cc427f8f84c3ecdbd7b35d6d4    9441029  Thoth.grf
+ce6623a1ac80a7b356c412d8eabcc1cd7631f25dcfc5dccfc0415dd0dcca0af5   18802593  woe.grf
+cca1d37f20b1ee788b94b4cbbc983b53d95db7048d99de7a24841c8c9efa35dd   19039042  woebg.grf
+ccc69efb69ac78c8c33f52e0ba5e0f22f75fb3b65f44b8a030ed20e0ab5fb298   38164953  WOERO.rar
+037683b2b575e11ae6a18d2ee084928dc4d69fd47321bab383e2ef8edb5470b7       7855  WOERO/AI/Actor_Presets.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO/AI/ActorList.txt
+38b827b26b5f39fffa50682fde1bd10148989d356b33a28d07d2a456d5b3346b      14066  WOERO/AI/ai.lua
+08e993383701a84469576102dfa6a18882361161a5f117250813e121472dfb6f      13803  WOERO/AI/AI_M.lua
+8abf6b8628a66b142cdd537a7d324f87f787c4b4bdd1988c6b6941386c108c21       6989  WOERO/AI/Config.lua
+08907bbb5bcec0f3ba9bcc024a1837a706d457f3b5cc57d6fc61f2e9eddf9b93       3463  WOERO/AI/Config_M.lua
+ec486fa9a6166c476a5cdb18f09ff72e808e2865b2538963ccd929ae4de9946c       3111  WOERO/AI/const.lua
+e6f61a3ed1749e6a0441f6434e33db973701751a5ad2f351ff67148d968c949b      98421  WOERO/AI/Control.lua
+b217a45d1cc1e4d74254cb4f144429f2ece312eebcb05933d6630ff69f72ce7f      14927  WOERO/AI/Default.lua
+945ea26ba0666123be8f9772c9a7dc9fd63d39752c3304e3b1a244042c01bda5      35808  WOERO/AI/GPLv3 License.txt
+3570d1a28d7f1823280aee7fcb29e11900196ef7f16f9a6e00e0addbda9d27c8       8660  WOERO/AI/HomConfigBasic.txt
+079805d5647d469df178455f88bc0b0b32ae7b7518aa1b7f1f9f49cdd626d61b     188416  WOERO/AI/lua.exe
+a2e6859079c6f351c0bba8449c766251c89ed76a832f7e87d3000c1cdebc0799      11560  WOERO/AI/MerConfigBasic.txt
+52cab81c30d66194936f1cca5a7ed7d7621e61e831ee7f3d54f0406887c660e4         22  WOERO/AI/message.txt
+844ce58d1d1b1b9b6317fdbfd02883f9d69966f6691c499df64b69de8f604b52       2939  WOERO/AI/PassiveDB.lua
+c69bdaeb65a66bbef03d1f351a2b8672d1e9077a0c50ca5faa728f0f00fc9940       1207  WOERO/AI/Patrol.lua
+330d5054e6cf65866fb851187307d95f50091c60538653681711cec022a8d0a7       9693  WOERO/AI/pcAI.lua
+428cea4793e8822d926e44ebd6b1c84da6e4914a3a340e379f1096731424b6d7       7010  WOERO/AI/README.txt
+e07fcb65fe0e1a0d7fb01eeb190896841983cc1ad7a759e37b1e96cdec63829f      14668  WOERO/AI/RunOnce.lua
+f116f871934ac28ef5bcf28845a7a7a8393d8e513d32e4517389285a9558c240         83  WOERO/AI/SelectedMercMod.lua
+86731f0115f70dcee3266dc5b7f1b85129a66ea2d757e1a378ce756a9addc185         84  WOERO/AI/SelectedMod.lua
+6a4c48774212acbcbd857a199ba9fd35f633729863e148a7ce74f4d89d1bcfb2       1338  WOERO/AI/SkillList.lua
+d358be33e98d5e1d975f132bc8d6e21729e29fbe17e6ae4e5718eb757b3ac839        910  WOERO/AI/Standard_Mod.lua
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO/AI/Timeout.txt
+08e993383701a84469576102dfa6a18882361161a5f117250813e121472dfb6f      13803  WOERO/AI/USER_AI/__AI_M.lua
+471aeb81a5bfc93e97a516d755dcfe916c821a7298bee8348b230f74da9a71fd      57780  WOERO/AI/USER_AI/AI.lua
+ccb539b1d0713768a2a44367944bece0217ee85f6a6bdabc0afb373ca6e6280c      65261  WOERO/AI/USER_AI/AI_M.lua
+8abf6b8628a66b142cdd537a7d324f87f787c4b4bdd1988c6b6941386c108c21       6989  WOERO/AI/USER_AI/Config.lua
+08907bbb5bcec0f3ba9bcc024a1837a706d457f3b5cc57d6fc61f2e9eddf9b93       3463  WOERO/AI/USER_AI/Config_M.lua
+b21a3965e2b130bd546cc5ec05f334a95917293fb9e11c3ecb2b2eb660efae13       3883  WOERO/AI/USER_AI/Const.lua
+05a00c8f2e92c1eda00ec760c6984b2f303d9ea5a9cc65218695ed74d37ebdea       8618  WOERO/AI/USER_AI/HomConfigCustom.txt
+9c9aa1fdf604cc27c3d23547fea51a0ac08766243892d5f67f82fda0180ec921      11504  WOERO/AI/USER_AI/MerConfigCustom.txt
+844ce58d1d1b1b9b6317fdbfd02883f9d69966f6691c499df64b69de8f604b52       2939  WOERO/AI/USER_AI/PassiveDB.lua
+c69bdaeb65a66bbef03d1f351a2b8672d1e9077a0c50ca5faa728f0f00fc9940       1207  WOERO/AI/USER_AI/Patrol.lua
+f116f871934ac28ef5bcf28845a7a7a8393d8e513d32e4517389285a9558c240         83  WOERO/AI/USER_AI/SelectedMercMod.lua
+86731f0115f70dcee3266dc5b7f1b85129a66ea2d757e1a378ce756a9addc185         84  WOERO/AI/USER_AI/SelectedMod.lua
+d358be33e98d5e1d975f132bc8d6e21729e29fbe17e6ae4e5718eb757b3ac839        910  WOERO/AI/USER_AI/Standard_Mod.lua
+fc3d2e67397b30dff4fce2bef873b833f83ffd705041be205199c4656f43d4bd       7950  WOERO/AI/USER_AI/Util.lua
+f6ec5b608ba82a4b1177346a5660bd05a9a4e9c7586f2a66dbb9fd324feb1a91       2663  WOERO/AI/util.lua
+4e9abfe88551594c343334f3ed6702400ef4aac2da154a6524532fc99323bbee      46673  WOERO/data/NHCgogo_10.eot
+e0fbb58aa5fdc974446ed7558d5669c0409d63c30aaf0f5100aa2a7193c4a9e7      51867  WOERO/data/NHCgogo_12.eot
+84a8f4987c31833362b8517e3ced3e121a02ae76a29bea8dfd7b49fd94c7f8b1      41775  WOERO/data/RixDiary_10.eot
+1f39ba39b92b98b4cdd0050a6a263d9d85b6b67ba3feaae32ce3fd3b14d4d807      40277  WOERO/data/RixFreshman_10.eot
+8786df95dd23837fcc3b9b74c18621e226a4d90baffa2a6134e6459df62155f1      38396  WOERO/data/RixJJangu_10.eot
+765b1b8cb327c639931abf5f3f6757b9cfe3535b2066cabbc91493d10b359544      38534  WOERO/data/RixKid_10.eot
+68732ae1cff8cae6046cc309787c77d8c9b3c7aaeb5549b8f577340e153b8ae9      40190  WOERO/data/RixLoveangel_10.eot
+1a69a0421819b8e6d81dbf135a0d8a9755976c605d8a5537726d16fb34348d2b      47196  WOERO/data/RixLoveangel_12.eot
+d9bc08b5671dc7f4f02a22545de6da26302f5ba9ae861096cfa70c3d68fe70dd      45347  WOERO/data/RixMagic_10.eot
+0d37f04a313e1390d907a925ed328091d919d8182802cada72ef6fb1752a096a      41273  WOERO/data/RixMiniHeart_10.eot
+71c51e9435295c07e749160bc0e567ab154c18a55fe6b0d4581c6a12c60412f5      46253  WOERO/data/RixNHCgogo_10.eot
+636fa9199b594e5ff93e0ff0248c46aa858fb372b025687073ba4e84bf5bf0ce      42850  WOERO/data/RixSquirrel_10.eot
+f8ec59c3f0883a84128e28b2bc139bd73d0a120394f3d4bf944c47182c21a526      46460  WOERO/data/RixSquirrel_12.eot
+ebf9d194c3b5fe558dcdb4f8f1808cdcb8f41a463bee910694ad2f48e6af737c       9229  WOERO/data/Table/EntryQueue.bex
+3d8d3f03f96cd859f587afe6bcb7beb7915b1a35044a58be324c779c1e42e878      10784  WOERO/dinput.dll
+b948521aec7c3f99cf7808865cd82971f681835142a6d9aa8aa74eccf75fd7c5       1884  WOERO/dinput.ini
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO/pdata2.txt
+480c1cd53faaed0bd99cc69cfae430c2913e6952867a913c674689120c4c426d       1530  WOERO/RCX/AccountCollector/sample.ini
+480c1cd53faaed0bd99cc69cfae430c2913e6952867a913c674689120c4c426d       1530  WOERO/RCX/EnglishSettingFilePack/AccountCollector/sample.ini
+14b48660d4d98c6bdc203a368069f312d1cd98d4cbddb039a4fee1ffb8b5ad4d       2083  WOERO/RCX/EnglishSettingFilePack/JobClass.ini
+440bc4e8fa896d49cd82ff324cbec3a80cc4a4967a63269a99913e04b652946b      19920  WOERO/RCX/EnglishSettingFilePack/RagMap.ini
+a0c33becf64b42188c47a1fb639840f2248ca57bffaa2c848ecb02db7227df14      36771  WOERO/RCX/EnglishSettingFilePack/RCX.ini
+4b4581d2e750db1149bd64b7f13a05ba8c29ec205726611603aee4ae49c419d2         40  WOERO/RCX/ExNGWords/AE_Yggdrashil.txt
+6cfa420eac44252352fb17ddac5e582ecb61b441e7d3d94c89e6b0aac4ee5b76        410  WOERO/RCX/ExNGWords/BR_Thor.txt
+4c177694aad12d55d6840c8387f86a54cd15133fe932f79010d92a6b5a2e2a16        914  WOERO/RCX/ExNGWords/US_Valkyrie.txt
+b82cff6794d2ecc6dbe0f5ab2bc77a24f33699e8cb6a63dbc880d112430994e1       2458  WOERO/RCX/Groupie/default.txt
+ba439e282967ffb7289a9822c4d3c919a63febc6add376983bbef9b805741271     115673  WOERO/RCX/history.txt
+14b48660d4d98c6bdc203a368069f312d1cd98d4cbddb039a4fee1ffb8b5ad4d       2083  WOERO/RCX/JobClass.ini
+8793636160b760057a295561221e15d391aa94b2745a33fc61c56c2a893ba6ea       2353  WOERO/RCX/jRO_CustomFiles/AccountCollector/sample.ini
+f020af4ccf785b273c1db3ae358e596a2174de63af4a30f6cc55148302cee740       2079  WOERO/RCX/jRO_CustomFiles/JobClass.ini
+6e7331709c19993de760f8e2dd099a54fdb5cdf008fdd7372377e0d76daee434     218723  WOERO/RCX/jRO_CustomFiles/mobinfo.ini
+c58352b44496e6bdf4072ba313bcdc96088192c89b90e5f94b6aecc9a2d275d2      33960  WOERO/RCX/jRO_CustomFiles/RagMap.ini
+17f5aedda9b32f44147639a2db268aa3a1c0b9e1fcf4ddb69ffbd62bb02683cc      45102  WOERO/RCX/jRO_CustomFiles/RCX.ini
+e9b9e5a6badf08355561a2fe6ff92233ed02434c787b274fe3c06500172d7ffd          9  WOERO/RCX/KillCount/192.165.67.160_A_D3D99E8B.log
+6e7331709c19993de760f8e2dd099a54fdb5cdf008fdd7372377e0d76daee434     218723  WOERO/RCX/mobinfo.ini
+a9e3bf299942b65faf3ec6fbeaa55e123ec7644fbe2279eb868e662f087fe896     206284  WOERO/RCX/mobinfo_preR.ini
+440bc4e8fa896d49cd82ff324cbec3a80cc4a4967a63269a99913e04b652946b      19920  WOERO/RCX/RagMap.ini
+b1516729065d9bf84e2fb9a8963cc4fad604e22a1fd0ca37cfc41a87e3cae4b6     109568  WOERO/RCX/RCX.exe
+7e89315fd96904b65ad678893b53314104085cfff4d4a152e0f6fa5fa173ea6c      31731  WOERO/RCX/RCX.ini
+d35831f923df06dc79fd7de9f9c965b309b71f75b7e1bfb64a9eafa6af88063a     279040  WOERO/RCX/RCXDraw.dll
+9d9166772d9fb042d010f515e41845cd7df5fc8f5e93cef26f958452f31b9ae4      51200  WOERO/RCX/RCXDraw.exe
+558a9b031b02c3b023467e375b4b013414ca4135a25bb06c373db4c34367e0da      44544  WOERO/RCX/RCXDrawLauncher.exe
+692f455aae4d19d747141d348a91a40a017bde79e426fa1172d9ef6304a05688      69632  WOERO/RCX/RCXJPN.dll
+b90a3184a5a35a985bce08235036bbc58a28dd47667be7d039359621917bef05        652  WOERO/RCX/README.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO/RCX/SendCommands/bootup.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO/RCX/SendCommands/US_Valkyrie.txt
+21366ec82209ad380202bc5f7162250dcff9f3c3a0a06648178362057158d87b       1400  WOERO/RCX/skin/mobhp_bar.bmp
+4659e093111239bf76c956e5b1ab0ca7544beeb2b87211c19b84f08ca41878c7       1400  WOERO/RCX/skin/mobhp_scale_green.bmp
+855078a362deaa936729ee47633c02897e4dc476896bb7b1c064283679f61f2f       1400  WOERO/RCX/skin/mobhp_scale_red.bmp
+47d96a1d75e842353cb034870207a91f276b4fd6216512f590ce1ce79f299805       1400  WOERO/RCX/skin/mobhp_scale_violet.bmp
+a86d5419c4346309a65742157eccc5bb808e21478024761d937ed635dc7a3ed6        576  WOERO/skin/default/basic_interface/btn_comparison_resize.bmp
+1f8a9b20c452b3e3814a966e515f7a401e86e1bce8fca38b7480a48acbbb3ab6     100856  WOERO/skin/default/basic_interface/collection_comparison_bg.bmp
+4af9d52c5656ab8685b31e6979c4f7b87a55e8f8f36458f8428e735794ff3713        670  WOERO/skin/default/basic_interface/sysbox_comparison_bg.bmp
+d5230e70af4995658227d7993e547783bed5d6c615ad5a239d1db4bba7575a05        672  WOERO/skin/default/basic_interface/sysbox_comparison_ld.bmp
+c0da51386b500df5133d8daf0f79b2ca11b4283888e6041965fea4d4f4249bca        672  WOERO/skin/default/basic_interface/sysbox_comparison_lm.bmp
+8bdc5f776c02832c365f0a27193b2655e7bc0f8add73ac4d68d001bdfb66a17a        672  WOERO/skin/default/basic_interface/sysbox_comparison_lu.bmp
+cee908930b216820626df3faf3a96dd1bc982dcfbf2fcab1b64f45006f2d36fd        672  WOERO/skin/default/basic_interface/sysbox_comparison_md.bmp
+75e8871618a29d431ba367db7ec85d1b69868a5397c9bd9353eaeb60dc8cc9ab        672  WOERO/skin/default/basic_interface/sysbox_comparison_mu.bmp
+7c4b011a6c3bb67cb24631c672ca5e2415d0fb8bd7882dda0c3c7de24c0b0a4c        672  WOERO/skin/default/basic_interface/sysbox_comparison_rd.bmp
+d80a642f1e8910edfbd4c409302b1c984defd47b4b61bd9e84957fbc70203943        672  WOERO/skin/default/basic_interface/sysbox_comparison_rm.bmp
+06288532d63d1819c12e37036966eaeb9937d939dbf5a2c272c24fa25d6d857c        672  WOERO/skin/default/basic_interface/sysbox_comparison_ru.bmp
+9d53120d1255ceba0de73a306fd7600f5b78e27f6d797e3c77f163d830e0b138       1216  WOERO/skin/default/btn_reset.bmp
+51571417c4afc7b0ac66c44855bf8ce6832ffb676e00c1e4d2412f36d0f7f7d6       1444  WOERO/skin/default/btn_reset_a.bmp
+2c43b1e15a0ddb19b30198ee1fdde4671d6e3884344a6437bb167765d3e9658b       1448  WOERO/skin/default/btn_reset_b.bmp
+46bf01ac7418fe87ad4ed91504b7e0bae75b52d9387b32714e2fd4ad50dbf169       2616  WOERO/skin/default/btn_shortcut.bmp
+84f69a29e9780183e722aeb167d5e853325c35425bbb16b0664e721776ce901a       2616  WOERO/skin/default/btn_shortcut_a.bmp
+70c4f41261452b4deddeeb1fd3beb8d9f4412ad074763fef2da0e33b1a93a514       2616  WOERO/skin/default/btn_shortcut_b.bmp
+0ecc06313831ece8b50d30f94c7bc755f9f6a74b97fe88529fdace6699ca0e63       3128  WOERO/skin/default/colorchip.bmp
+e4bd76aca9622eaaa71f74cc533d20fda38e9b074220bb6e698e8aaa29dd24ee      13336  WOERO/skin/default/esc_001a.bmp
+19bb362bbd6fb358f7d4d1b2e0c18d633f9d22124e264ecef046090ec63f9459      13336  WOERO/skin/default/esc_001b.bmp
+99047a2796ecb437eb6e5c4131026acc9f47e2f0bd786baacf74926de90a0966      13336  WOERO/skin/default/esc_001c.bmp
+dc11a9b77318fe68d387025755de429dce2e73c110747e9414b373080394aa14       4808  WOERO/skin/default/esc_09a.bmp
+b45a4d29fd7bdc9db58048f7e7d89db3490bb9cea3c1d8efdfa2581d969c1f95       5008  WOERO/skin/default/esc_09b.bmp
+2dbbf8c27636ec2cda12241875d2f56566543bcbc73da81ace318783c4e73dc9       5008  WOERO/skin/default/esc_09c.bmp
+6ec76735b65d58ffd672d1a910b839be3319ebcd1e213b57b23a4b5df19aa1b8       1302  WOERO/skin/default/sysbox_bg.bmp
+5fef75cf9118ad86007a79af3f8fd2b8b1e625539033c1eefe00b96cd4485d31       3072  WOERO/skin/default/Thumbs.db
+bf8d2a4e367e2803b68aa60cfec89a950906dcb18c8f6fc619d88f8229dca2db        576  WOERO/skin/scribbling kid/basic_interface/btn_comparison_resize.bmp
+9bb0e35d7d94a543351b1786c7c724599103434517256e4c7e05972d49f829a0     100856  WOERO/skin/scribbling kid/basic_interface/collection_bg.bmp
+d078c62fc4345130ec2a8c37e92e84827622388af11407a12335b98dc7c1c688     100856  WOERO/skin/scribbling kid/basic_interface/collection_comparison_bg.bmp
+01ad28c27984491ecd6f46754f4202993f139d82bcb7aecc8829cf00d54e43e7        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_bg.bmp
+087f35ce66c59bb756c8b48f81090f194d67909065ee0b139c745954b1031ad1        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_ld.bmp
+c1e79da1e901082e55799b483257ef75c53570c1231e4b9e2b4f6132a67ad750        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_lm.bmp
+ddf96ea411347414d9a8b30a954c514079e9a7fdc18ef563064de99a4ec01cce        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_lu.bmp
+7a86b3c00e91e516ab4d2876dc3aaac898f4bf6d72a5cf508c034790e50d4c0b        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_md.bmp
+3a07058629e5338e2ccf5a4193d39f2059ec197a81af1c889c1d536fe61da91e        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_mu.bmp
+caad2173905a79d1aacd9c4df6cca933b3f21fdf124753efc540ea14e28b8ffe        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_rd.bmp
+46979682f5d4285d5d3f4f36f4fb2cecdd9fea2bf53ecac05648a43f4ac1d4a7        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_rm.bmp
+9476ca162e7dc499f9303dbb75252b4503a00f278ad747d12d289252510d00ef        672  WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_ru.bmp
+2cd76c7dbb22815eece362cbde4b3eb079d1e892c8052ce5edf1a6f2a45bd3df       3128  WOERO/skin/scribbling kid/colorchip.bmp
+3b5133e0592288e0bc22c9705688a54ede96cb5c9c4f8f9eca1dc52cb58ee363        296  WOERO/skin/scribbling kid/sysbox_bg.bmp
+c23a5e2acb8d39b6b8936fe3e7f317d0269e8d8b36d54b4e112217a7edfffb3d       3072  WOERO/skin/scribbling kid/Thumbs.db
+4b8de1fff1fd235beafc444f0eb5719a70c7242025ee8b5114b8a876515f9ec2        100  WOERO/SMALL_RESOLUTION_FIX.cmd
+4e9abfe88551594c343334f3ed6702400ef4aac2da154a6524532fc99323bbee      46673  WOERO/System/Font/NHCgogo_10.eot
+e0fbb58aa5fdc974446ed7558d5669c0409d63c30aaf0f5100aa2a7193c4a9e7      51867  WOERO/System/Font/NHCgogo_12.eot
+84a8f4987c31833362b8517e3ced3e121a02ae76a29bea8dfd7b49fd94c7f8b1      41775  WOERO/System/Font/RixDiary_10.eot
+1f39ba39b92b98b4cdd0050a6a263d9d85b6b67ba3feaae32ce3fd3b14d4d807      40277  WOERO/System/Font/RixFreshman_10.eot
+8786df95dd23837fcc3b9b74c18621e226a4d90baffa2a6134e6459df62155f1      38396  WOERO/System/Font/RixJJangu_10.eot
+765b1b8cb327c639931abf5f3f6757b9cfe3535b2066cabbc91493d10b359544      38534  WOERO/System/Font/RixKid_10.eot
+68732ae1cff8cae6046cc309787c77d8c9b3c7aaeb5549b8f577340e153b8ae9      40190  WOERO/System/Font/RixLoveangel_10.eot
+1a69a0421819b8e6d81dbf135a0d8a9755976c605d8a5537726d16fb34348d2b      47196  WOERO/System/Font/RixLoveangel_12.eot
+d9bc08b5671dc7f4f02a22545de6da26302f5ba9ae861096cfa70c3d68fe70dd      45347  WOERO/System/Font/RixMagic_10.eot
+0d37f04a313e1390d907a925ed328091d919d8182802cada72ef6fb1752a096a      41273  WOERO/System/Font/RixMiniHeart_10.eot
+71c51e9435295c07e749160bc0e567ab154c18a55fe6b0d4581c6a12c60412f5      46253  WOERO/System/Font/RixNHCgogo_10.eot
+636fa9199b594e5ff93e0ff0248c46aa858fb372b025687073ba4e84bf5bf0ce      42850  WOERO/System/Font/RixSquirrel_10.eot
+f8ec59c3f0883a84128e28b2bc139bd73d0a120394f3d4bf944c47182c21a526      46460  WOERO/System/Font/RixSquirrel_12.eot
+773983bfac129d10f10e9f0a8ae16b31a8d375a67a95744d6fce817087600243       2625  WOERO/System/LuaFiles514/MsgString.lub
+6496eae9d6d4b9100b685bf1e033ceee95eaa2780ed466d7a66c0b635fbf22f6       4034  WOERO/System/LuaFiles514/OptionInfo.lub
+4979984b24b584c8f17893ac9d2119f068bd82eefb93f34adca64e97629c1b1b      55319  WOERO/System/monster_size_effect.lub
+c1e3f2990b72ee3ec4e26f4d6852bf5308612bf5e2cec74e8ce5d9df8a7f8d0b       2152  WOERO/System/MsgString.lub
+84c5dbf77c62a4a52e658ca7c67801e2c16e9eff6f90832585b20f62dcca2524       1099  WOERO/System/OptionInfo.lub
+4a296b77743acf94a1daf3bdfec7dfa8f8b6d2eb73ca2c3bc822a9524291dd0b      24015  WOERO/System/ShadowTable.lub
+9bcf6a299fd74e568ebce26249ad5f496ab228819fb906c0d3fb0193b3983830      21706  WOERO/System/Towninfo.lub
+6b108154a7d888e3b887d04ac32cdaa966c527d414238550d12d98bee3235ac4         61  WOERO/woe.ini
+358afb212b75e131610bed3ba7ad75f196b7b3ac00f33f1cdb3605b894ea1f87    3990430  WOERO/woero.exe
+efc7a20403314023e99907053ebb7297356f3a0b16120327e3abb4494d8235c7   46399732  WOERO/woero.grf
+5c59071c1c658d360cc927137a009e75c71c51b5bdaae84f49add9dc8b07df76    3477949  WOERO/woerol.grf
+2112f0287b6cafeb9e8208c99873a7a58baba1df8d09c2b16dcf622700d02198    4431124  WOERO/woerop.grf
+
+## entries inside archives (status vs. extracted copy)
+c91935ba15c25f826cc2f2f852f7da5d7a049c3a8687659852315e18423f8745       1758  Autopot Fresh.rar!Autopot Fresh/598.ico    [= Autopot Fresh/598.ico]
+4101b61444b302ceafb33ab78fafd9a52b5af6488ee18ad443903dfcfd0bdaf9       2298  Autopot Fresh.rar!Autopot Fresh/autopot.ahk    [= Autopot Fresh/autopot.ahk]
+fac12a429ffe3eaf207622d99125ccfe179887c8d1cf0f7869cbd60708edb7b7    1078272  Autopot Fresh.rar!Autopot Fresh/autopot.exe    [= Autopot Fresh/autopot.exe]
+19f8bc1bd6cc11623e5304c682afc68c32698333a5266b67b6f5c321e46f008c        162  Autopot Fresh.rar!Autopot Fresh/ragnapot.ini    [= Autopot Fresh/ragnapot.ini]
+eeefd669c2d5913f9f50e6c1092c4189a6dade90ac493e3afb825598b8cccbf6       4496  Class_DD.zip!Class_DD/Class_DD.ahk    [= Class_DD/Class_DD.ahk]
+baaa42821f4774b1f56f1962ab8a583b048855874f3a90bcaf0f874e7236f85b    3127896  Class_DD.zip!Class_DD/DD/32/ddx32.dll    [= Class_DD/DD/32/ddx32.dll]
+c1601352b45fc22b370280f405db1c7297d1bce4545117c445e97399356075af    3565224  Class_DD.zip!Class_DD/DD/64/ddx64.32.dll    [= Class_DD/DD/64/ddx64.32.dll]
+6d32fa338d8a4955dc63204211c3dc402661686bb352bfbe913d94a9ce112440    4702912  Class_DD.zip!Class_DD/DD/64/ddx64.64.dll    [= Class_DD/DD/64/ddx64.64.dll]
+de98650b6b244ffb90eeda85a456c37ba0810c288eaed88451daffe7c6f2cdce        410  Class_DD.zip!Class_DD/F1 Spam.ahk    [= Class_DD/F1 Spam.ahk]
+7ea9d9120388fc09f4b8c1aaafa2851cdfd7b8321af5dac9d4ec55604a602b53       1070  Class_DD.zip!Class_DD/Inventory Move.ahk    [= Class_DD/Inventory Move.ahk]
+f5ba20a3ed2e471790588fc56bb5d7f05df0e1e46706cdcfd5915b763df7e998       1742  Class_DD.zip!Class_DD/README.md    [= Class_DD/README.md]
+4eab63bd4e566e032b5aeccccaf66ec24f840a47ac423f3ca86671f6cfde932d       1671  Desu GRF 3-15-2018.rar!Desu GRF Edit Log.txt    [= Desu GRF 3-15-2018/Desu GRF Edit Log.txt]
+f8e44f945c0dc4952a95c6663ee1bd93ca2319eca49fdec4cbe610518224ba06   18435814  Desu GRF 3-15-2018.rar!desu.grf    [= Desu GRF 3-15-2018/desu.grf]
+3d8d3f03f96cd859f587afe6bcb7beb7915b1a35044a58be324c779c1e42e878      10784  RoExt.zip!dinput.dll    [= RoExt/dinput.dll]
+6e59a44d4a90378711bef18eafe90a86c18fb1a97a6dfa851fa8c2fd1e6483ba       1896  RoExt.zip!dinput.ini    [= RoExt/dinput.ini]
+7899a14886f64ecaa6e2db61cacaa28e741bb444de55eff8e525430110a4bbe1       4431  RoExt.zip!readme.txt    [= RoExt/readme.txt]
+abbae13412ac78c63ccb384b3ed45f25d178a3a53280f2f5157a81e2927f4f16    6715392  RoMedic.rar!RoMedic.exe    [= RoMedic/RoMedic.exe]
+037683b2b575e11ae6a18d2ee084928dc4d69fd47321bab383e2ef8edb5470b7       7855  WOERO.rar!WOERO/AI/Actor_Presets.txt    [= WOERO/AI/Actor_Presets.txt]
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO.rar!WOERO/AI/ActorList.txt    [= WOERO/AI/ActorList.txt]
+38b827b26b5f39fffa50682fde1bd10148989d356b33a28d07d2a456d5b3346b      14066  WOERO.rar!WOERO/AI/ai.lua    [= WOERO/AI/ai.lua]
+08e993383701a84469576102dfa6a18882361161a5f117250813e121472dfb6f      13803  WOERO.rar!WOERO/AI/AI_M.lua    [= WOERO/AI/AI_M.lua]
+8abf6b8628a66b142cdd537a7d324f87f787c4b4bdd1988c6b6941386c108c21       6989  WOERO.rar!WOERO/AI/Config.lua    [= WOERO/AI/Config.lua]
+08907bbb5bcec0f3ba9bcc024a1837a706d457f3b5cc57d6fc61f2e9eddf9b93       3463  WOERO.rar!WOERO/AI/Config_M.lua    [= WOERO/AI/Config_M.lua]
+ec486fa9a6166c476a5cdb18f09ff72e808e2865b2538963ccd929ae4de9946c       3111  WOERO.rar!WOERO/AI/const.lua    [= WOERO/AI/const.lua]
+e6f61a3ed1749e6a0441f6434e33db973701751a5ad2f351ff67148d968c949b      98421  WOERO.rar!WOERO/AI/Control.lua    [= WOERO/AI/Control.lua]
+b217a45d1cc1e4d74254cb4f144429f2ece312eebcb05933d6630ff69f72ce7f      14927  WOERO.rar!WOERO/AI/Default.lua    [= WOERO/AI/Default.lua]
+945ea26ba0666123be8f9772c9a7dc9fd63d39752c3304e3b1a244042c01bda5      35808  WOERO.rar!WOERO/AI/GPLv3 License.txt    [= WOERO/AI/GPLv3 License.txt]
+3570d1a28d7f1823280aee7fcb29e11900196ef7f16f9a6e00e0addbda9d27c8       8660  WOERO.rar!WOERO/AI/HomConfigBasic.txt    [= WOERO/AI/HomConfigBasic.txt]
+079805d5647d469df178455f88bc0b0b32ae7b7518aa1b7f1f9f49cdd626d61b     188416  WOERO.rar!WOERO/AI/lua.exe    [= WOERO/AI/lua.exe]
+a2e6859079c6f351c0bba8449c766251c89ed76a832f7e87d3000c1cdebc0799      11560  WOERO.rar!WOERO/AI/MerConfigBasic.txt    [= WOERO/AI/MerConfigBasic.txt]
+52cab81c30d66194936f1cca5a7ed7d7621e61e831ee7f3d54f0406887c660e4         22  WOERO.rar!WOERO/AI/message.txt    [= WOERO/AI/message.txt]
+844ce58d1d1b1b9b6317fdbfd02883f9d69966f6691c499df64b69de8f604b52       2939  WOERO.rar!WOERO/AI/PassiveDB.lua    [= WOERO/AI/PassiveDB.lua]
+c69bdaeb65a66bbef03d1f351a2b8672d1e9077a0c50ca5faa728f0f00fc9940       1207  WOERO.rar!WOERO/AI/Patrol.lua    [= WOERO/AI/Patrol.lua]
+330d5054e6cf65866fb851187307d95f50091c60538653681711cec022a8d0a7       9693  WOERO.rar!WOERO/AI/pcAI.lua    [= WOERO/AI/pcAI.lua]
+428cea4793e8822d926e44ebd6b1c84da6e4914a3a340e379f1096731424b6d7       7010  WOERO.rar!WOERO/AI/README.txt    [= WOERO/AI/README.txt]
+e07fcb65fe0e1a0d7fb01eeb190896841983cc1ad7a759e37b1e96cdec63829f      14668  WOERO.rar!WOERO/AI/RunOnce.lua    [= WOERO/AI/RunOnce.lua]
+f116f871934ac28ef5bcf28845a7a7a8393d8e513d32e4517389285a9558c240         83  WOERO.rar!WOERO/AI/SelectedMercMod.lua    [= WOERO/AI/SelectedMercMod.lua]
+86731f0115f70dcee3266dc5b7f1b85129a66ea2d757e1a378ce756a9addc185         84  WOERO.rar!WOERO/AI/SelectedMod.lua    [= WOERO/AI/SelectedMod.lua]
+6a4c48774212acbcbd857a199ba9fd35f633729863e148a7ce74f4d89d1bcfb2       1338  WOERO.rar!WOERO/AI/SkillList.lua    [= WOERO/AI/SkillList.lua]
+d358be33e98d5e1d975f132bc8d6e21729e29fbe17e6ae4e5718eb757b3ac839        910  WOERO.rar!WOERO/AI/Standard_Mod.lua    [= WOERO/AI/Standard_Mod.lua]
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO.rar!WOERO/AI/Timeout.txt    [= WOERO/AI/Timeout.txt]
+08e993383701a84469576102dfa6a18882361161a5f117250813e121472dfb6f      13803  WOERO.rar!WOERO/AI/USER_AI/__AI_M.lua    [= WOERO/AI/USER_AI/__AI_M.lua]
+471aeb81a5bfc93e97a516d755dcfe916c821a7298bee8348b230f74da9a71fd      57780  WOERO.rar!WOERO/AI/USER_AI/AI.lua    [= WOERO/AI/USER_AI/AI.lua]
+ccb539b1d0713768a2a44367944bece0217ee85f6a6bdabc0afb373ca6e6280c      65261  WOERO.rar!WOERO/AI/USER_AI/AI_M.lua    [= WOERO/AI/USER_AI/AI_M.lua]
+8abf6b8628a66b142cdd537a7d324f87f787c4b4bdd1988c6b6941386c108c21       6989  WOERO.rar!WOERO/AI/USER_AI/Config.lua    [= WOERO/AI/USER_AI/Config.lua]
+08907bbb5bcec0f3ba9bcc024a1837a706d457f3b5cc57d6fc61f2e9eddf9b93       3463  WOERO.rar!WOERO/AI/USER_AI/Config_M.lua    [= WOERO/AI/USER_AI/Config_M.lua]
+b21a3965e2b130bd546cc5ec05f334a95917293fb9e11c3ecb2b2eb660efae13       3883  WOERO.rar!WOERO/AI/USER_AI/Const.lua    [= WOERO/AI/USER_AI/Const.lua]
+05a00c8f2e92c1eda00ec760c6984b2f303d9ea5a9cc65218695ed74d37ebdea       8618  WOERO.rar!WOERO/AI/USER_AI/HomConfigCustom.txt    [= WOERO/AI/USER_AI/HomConfigCustom.txt]
+9c9aa1fdf604cc27c3d23547fea51a0ac08766243892d5f67f82fda0180ec921      11504  WOERO.rar!WOERO/AI/USER_AI/MerConfigCustom.txt    [= WOERO/AI/USER_AI/MerConfigCustom.txt]
+844ce58d1d1b1b9b6317fdbfd02883f9d69966f6691c499df64b69de8f604b52       2939  WOERO.rar!WOERO/AI/USER_AI/PassiveDB.lua    [= WOERO/AI/USER_AI/PassiveDB.lua]
+c69bdaeb65a66bbef03d1f351a2b8672d1e9077a0c50ca5faa728f0f00fc9940       1207  WOERO.rar!WOERO/AI/USER_AI/Patrol.lua    [= WOERO/AI/USER_AI/Patrol.lua]
+f116f871934ac28ef5bcf28845a7a7a8393d8e513d32e4517389285a9558c240         83  WOERO.rar!WOERO/AI/USER_AI/SelectedMercMod.lua    [= WOERO/AI/USER_AI/SelectedMercMod.lua]
+86731f0115f70dcee3266dc5b7f1b85129a66ea2d757e1a378ce756a9addc185         84  WOERO.rar!WOERO/AI/USER_AI/SelectedMod.lua    [= WOERO/AI/USER_AI/SelectedMod.lua]
+d358be33e98d5e1d975f132bc8d6e21729e29fbe17e6ae4e5718eb757b3ac839        910  WOERO.rar!WOERO/AI/USER_AI/Standard_Mod.lua    [= WOERO/AI/USER_AI/Standard_Mod.lua]
+fc3d2e67397b30dff4fce2bef873b833f83ffd705041be205199c4656f43d4bd       7950  WOERO.rar!WOERO/AI/USER_AI/Util.lua    [= WOERO/AI/USER_AI/Util.lua]
+f6ec5b608ba82a4b1177346a5660bd05a9a4e9c7586f2a66dbb9fd324feb1a91       2663  WOERO.rar!WOERO/AI/util.lua    [= WOERO/AI/util.lua]
+4e9abfe88551594c343334f3ed6702400ef4aac2da154a6524532fc99323bbee      46673  WOERO.rar!WOERO/data/NHCgogo_10.eot    [= WOERO/data/NHCgogo_10.eot]
+e0fbb58aa5fdc974446ed7558d5669c0409d63c30aaf0f5100aa2a7193c4a9e7      51867  WOERO.rar!WOERO/data/NHCgogo_12.eot    [= WOERO/data/NHCgogo_12.eot]
+84a8f4987c31833362b8517e3ced3e121a02ae76a29bea8dfd7b49fd94c7f8b1      41775  WOERO.rar!WOERO/data/RixDiary_10.eot    [= WOERO/data/RixDiary_10.eot]
+1f39ba39b92b98b4cdd0050a6a263d9d85b6b67ba3feaae32ce3fd3b14d4d807      40277  WOERO.rar!WOERO/data/RixFreshman_10.eot    [= WOERO/data/RixFreshman_10.eot]
+8786df95dd23837fcc3b9b74c18621e226a4d90baffa2a6134e6459df62155f1      38396  WOERO.rar!WOERO/data/RixJJangu_10.eot    [= WOERO/data/RixJJangu_10.eot]
+765b1b8cb327c639931abf5f3f6757b9cfe3535b2066cabbc91493d10b359544      38534  WOERO.rar!WOERO/data/RixKid_10.eot    [= WOERO/data/RixKid_10.eot]
+68732ae1cff8cae6046cc309787c77d8c9b3c7aaeb5549b8f577340e153b8ae9      40190  WOERO.rar!WOERO/data/RixLoveangel_10.eot    [= WOERO/data/RixLoveangel_10.eot]
+1a69a0421819b8e6d81dbf135a0d8a9755976c605d8a5537726d16fb34348d2b      47196  WOERO.rar!WOERO/data/RixLoveangel_12.eot    [= WOERO/data/RixLoveangel_12.eot]
+d9bc08b5671dc7f4f02a22545de6da26302f5ba9ae861096cfa70c3d68fe70dd      45347  WOERO.rar!WOERO/data/RixMagic_10.eot    [= WOERO/data/RixMagic_10.eot]
+0d37f04a313e1390d907a925ed328091d919d8182802cada72ef6fb1752a096a      41273  WOERO.rar!WOERO/data/RixMiniHeart_10.eot    [= WOERO/data/RixMiniHeart_10.eot]
+71c51e9435295c07e749160bc0e567ab154c18a55fe6b0d4581c6a12c60412f5      46253  WOERO.rar!WOERO/data/RixNHCgogo_10.eot    [= WOERO/data/RixNHCgogo_10.eot]
+636fa9199b594e5ff93e0ff0248c46aa858fb372b025687073ba4e84bf5bf0ce      42850  WOERO.rar!WOERO/data/RixSquirrel_10.eot    [= WOERO/data/RixSquirrel_10.eot]
+f8ec59c3f0883a84128e28b2bc139bd73d0a120394f3d4bf944c47182c21a526      46460  WOERO.rar!WOERO/data/RixSquirrel_12.eot    [= WOERO/data/RixSquirrel_12.eot]
+ebf9d194c3b5fe558dcdb4f8f1808cdcb8f41a463bee910694ad2f48e6af737c       9229  WOERO.rar!WOERO/data/Table/EntryQueue.bex    [= WOERO/data/Table/EntryQueue.bex]
+3d8d3f03f96cd859f587afe6bcb7beb7915b1a35044a58be324c779c1e42e878      10784  WOERO.rar!WOERO/dinput.dll    [= WOERO/dinput.dll]
+b948521aec7c3f99cf7808865cd82971f681835142a6d9aa8aa74eccf75fd7c5       1884  WOERO.rar!WOERO/dinput.ini    [= WOERO/dinput.ini]
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO.rar!WOERO/pdata2.txt    [= WOERO/pdata2.txt]
+480c1cd53faaed0bd99cc69cfae430c2913e6952867a913c674689120c4c426d       1530  WOERO.rar!WOERO/RCX/AccountCollector/sample.ini    [= WOERO/RCX/AccountCollector/sample.ini]
+480c1cd53faaed0bd99cc69cfae430c2913e6952867a913c674689120c4c426d       1530  WOERO.rar!WOERO/RCX/EnglishSettingFilePack/AccountCollector/sample.ini    [= WOERO/RCX/EnglishSettingFilePack/AccountCollector/sample.ini]
+14b48660d4d98c6bdc203a368069f312d1cd98d4cbddb039a4fee1ffb8b5ad4d       2083  WOERO.rar!WOERO/RCX/EnglishSettingFilePack/JobClass.ini    [= WOERO/RCX/EnglishSettingFilePack/JobClass.ini]
+440bc4e8fa896d49cd82ff324cbec3a80cc4a4967a63269a99913e04b652946b      19920  WOERO.rar!WOERO/RCX/EnglishSettingFilePack/RagMap.ini    [= WOERO/RCX/EnglishSettingFilePack/RagMap.ini]
+a0c33becf64b42188c47a1fb639840f2248ca57bffaa2c848ecb02db7227df14      36771  WOERO.rar!WOERO/RCX/EnglishSettingFilePack/RCX.ini    [= WOERO/RCX/EnglishSettingFilePack/RCX.ini]
+4b4581d2e750db1149bd64b7f13a05ba8c29ec205726611603aee4ae49c419d2         40  WOERO.rar!WOERO/RCX/ExNGWords/AE_Yggdrashil.txt    [= WOERO/RCX/ExNGWords/AE_Yggdrashil.txt]
+6cfa420eac44252352fb17ddac5e582ecb61b441e7d3d94c89e6b0aac4ee5b76        410  WOERO.rar!WOERO/RCX/ExNGWords/BR_Thor.txt    [= WOERO/RCX/ExNGWords/BR_Thor.txt]
+4c177694aad12d55d6840c8387f86a54cd15133fe932f79010d92a6b5a2e2a16        914  WOERO.rar!WOERO/RCX/ExNGWords/US_Valkyrie.txt    [= WOERO/RCX/ExNGWords/US_Valkyrie.txt]
+b82cff6794d2ecc6dbe0f5ab2bc77a24f33699e8cb6a63dbc880d112430994e1       2458  WOERO.rar!WOERO/RCX/Groupie/default.txt    [= WOERO/RCX/Groupie/default.txt]
+ba439e282967ffb7289a9822c4d3c919a63febc6add376983bbef9b805741271     115673  WOERO.rar!WOERO/RCX/history.txt    [= WOERO/RCX/history.txt]
+14b48660d4d98c6bdc203a368069f312d1cd98d4cbddb039a4fee1ffb8b5ad4d       2083  WOERO.rar!WOERO/RCX/JobClass.ini    [= WOERO/RCX/JobClass.ini]
+8793636160b760057a295561221e15d391aa94b2745a33fc61c56c2a893ba6ea       2353  WOERO.rar!WOERO/RCX/jRO_CustomFiles/AccountCollector/sample.ini    [= WOERO/RCX/jRO_CustomFiles/AccountCollector/sample.ini]
+f020af4ccf785b273c1db3ae358e596a2174de63af4a30f6cc55148302cee740       2079  WOERO.rar!WOERO/RCX/jRO_CustomFiles/JobClass.ini    [= WOERO/RCX/jRO_CustomFiles/JobClass.ini]
+6e7331709c19993de760f8e2dd099a54fdb5cdf008fdd7372377e0d76daee434     218723  WOERO.rar!WOERO/RCX/jRO_CustomFiles/mobinfo.ini    [= WOERO/RCX/jRO_CustomFiles/mobinfo.ini]
+c58352b44496e6bdf4072ba313bcdc96088192c89b90e5f94b6aecc9a2d275d2      33960  WOERO.rar!WOERO/RCX/jRO_CustomFiles/RagMap.ini    [= WOERO/RCX/jRO_CustomFiles/RagMap.ini]
+17f5aedda9b32f44147639a2db268aa3a1c0b9e1fcf4ddb69ffbd62bb02683cc      45102  WOERO.rar!WOERO/RCX/jRO_CustomFiles/RCX.ini    [= WOERO/RCX/jRO_CustomFiles/RCX.ini]
+e9b9e5a6badf08355561a2fe6ff92233ed02434c787b274fe3c06500172d7ffd          9  WOERO.rar!WOERO/RCX/KillCount/192.165.67.160_A_D3D99E8B.log    [= WOERO/RCX/KillCount/192.165.67.160_A_D3D99E8B.log]
+6e7331709c19993de760f8e2dd099a54fdb5cdf008fdd7372377e0d76daee434     218723  WOERO.rar!WOERO/RCX/mobinfo.ini    [= WOERO/RCX/mobinfo.ini]
+a9e3bf299942b65faf3ec6fbeaa55e123ec7644fbe2279eb868e662f087fe896     206284  WOERO.rar!WOERO/RCX/mobinfo_preR.ini    [= WOERO/RCX/mobinfo_preR.ini]
+440bc4e8fa896d49cd82ff324cbec3a80cc4a4967a63269a99913e04b652946b      19920  WOERO.rar!WOERO/RCX/RagMap.ini    [= WOERO/RCX/RagMap.ini]
+b1516729065d9bf84e2fb9a8963cc4fad604e22a1fd0ca37cfc41a87e3cae4b6     109568  WOERO.rar!WOERO/RCX/RCX.exe    [= WOERO/RCX/RCX.exe]
+7e89315fd96904b65ad678893b53314104085cfff4d4a152e0f6fa5fa173ea6c      31731  WOERO.rar!WOERO/RCX/RCX.ini    [= WOERO/RCX/RCX.ini]
+d35831f923df06dc79fd7de9f9c965b309b71f75b7e1bfb64a9eafa6af88063a     279040  WOERO.rar!WOERO/RCX/RCXDraw.dll    [= WOERO/RCX/RCXDraw.dll]
+9d9166772d9fb042d010f515e41845cd7df5fc8f5e93cef26f958452f31b9ae4      51200  WOERO.rar!WOERO/RCX/RCXDraw.exe    [= WOERO/RCX/RCXDraw.exe]
+558a9b031b02c3b023467e375b4b013414ca4135a25bb06c373db4c34367e0da      44544  WOERO.rar!WOERO/RCX/RCXDrawLauncher.exe    [= WOERO/RCX/RCXDrawLauncher.exe]
+692f455aae4d19d747141d348a91a40a017bde79e426fa1172d9ef6304a05688      69632  WOERO.rar!WOERO/RCX/RCXJPN.dll    [= WOERO/RCX/RCXJPN.dll]
+b90a3184a5a35a985bce08235036bbc58a28dd47667be7d039359621917bef05        652  WOERO.rar!WOERO/RCX/README.txt    [= WOERO/RCX/README.txt]
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO.rar!WOERO/RCX/SendCommands/bootup.txt    [= WOERO/RCX/SendCommands/bootup.txt]
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO.rar!WOERO/RCX/SendCommands/US_Valkyrie.txt    [= WOERO/RCX/SendCommands/US_Valkyrie.txt]
+21366ec82209ad380202bc5f7162250dcff9f3c3a0a06648178362057158d87b       1400  WOERO.rar!WOERO/RCX/skin/mobhp_bar.bmp    [= WOERO/RCX/skin/mobhp_bar.bmp]
+4659e093111239bf76c956e5b1ab0ca7544beeb2b87211c19b84f08ca41878c7       1400  WOERO.rar!WOERO/RCX/skin/mobhp_scale_green.bmp    [= WOERO/RCX/skin/mobhp_scale_green.bmp]
+855078a362deaa936729ee47633c02897e4dc476896bb7b1c064283679f61f2f       1400  WOERO.rar!WOERO/RCX/skin/mobhp_scale_red.bmp    [= WOERO/RCX/skin/mobhp_scale_red.bmp]
+47d96a1d75e842353cb034870207a91f276b4fd6216512f590ce1ce79f299805       1400  WOERO.rar!WOERO/RCX/skin/mobhp_scale_violet.bmp    [= WOERO/RCX/skin/mobhp_scale_violet.bmp]
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855          0  WOERO.rar!WOERO/savedata    [(directory entry / archive only)]
+a86d5419c4346309a65742157eccc5bb808e21478024761d937ed635dc7a3ed6        576  WOERO.rar!WOERO/skin/default/basic_interface/btn_comparison_resize.bmp    [= WOERO/skin/default/basic_interface/btn_comparison_resize.bmp]
+1f8a9b20c452b3e3814a966e515f7a401e86e1bce8fca38b7480a48acbbb3ab6     100856  WOERO.rar!WOERO/skin/default/basic_interface/collection_comparison_bg.bmp    [= WOERO/skin/default/basic_interface/collection_comparison_bg.bmp]
+4af9d52c5656ab8685b31e6979c4f7b87a55e8f8f36458f8428e735794ff3713        670  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_bg.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_bg.bmp]
+d5230e70af4995658227d7993e547783bed5d6c615ad5a239d1db4bba7575a05        672  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_ld.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_ld.bmp]
+c0da51386b500df5133d8daf0f79b2ca11b4283888e6041965fea4d4f4249bca        672  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_lm.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_lm.bmp]
+8bdc5f776c02832c365f0a27193b2655e7bc0f8add73ac4d68d001bdfb66a17a        672  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_lu.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_lu.bmp]
+cee908930b216820626df3faf3a96dd1bc982dcfbf2fcab1b64f45006f2d36fd        672  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_md.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_md.bmp]
+75e8871618a29d431ba367db7ec85d1b69868a5397c9bd9353eaeb60dc8cc9ab        672  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_mu.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_mu.bmp]
+7c4b011a6c3bb67cb24631c672ca5e2415d0fb8bd7882dda0c3c7de24c0b0a4c        672  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_rd.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_rd.bmp]
+d80a642f1e8910edfbd4c409302b1c984defd47b4b61bd9e84957fbc70203943        672  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_rm.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_rm.bmp]
+06288532d63d1819c12e37036966eaeb9937d939dbf5a2c272c24fa25d6d857c        672  WOERO.rar!WOERO/skin/default/basic_interface/sysbox_comparison_ru.bmp    [= WOERO/skin/default/basic_interface/sysbox_comparison_ru.bmp]
+9d53120d1255ceba0de73a306fd7600f5b78e27f6d797e3c77f163d830e0b138       1216  WOERO.rar!WOERO/skin/default/btn_reset.bmp    [= WOERO/skin/default/btn_reset.bmp]
+51571417c4afc7b0ac66c44855bf8ce6832ffb676e00c1e4d2412f36d0f7f7d6       1444  WOERO.rar!WOERO/skin/default/btn_reset_a.bmp    [= WOERO/skin/default/btn_reset_a.bmp]
+2c43b1e15a0ddb19b30198ee1fdde4671d6e3884344a6437bb167765d3e9658b       1448  WOERO.rar!WOERO/skin/default/btn_reset_b.bmp    [= WOERO/skin/default/btn_reset_b.bmp]
+46bf01ac7418fe87ad4ed91504b7e0bae75b52d9387b32714e2fd4ad50dbf169       2616  WOERO.rar!WOERO/skin/default/btn_shortcut.bmp    [= WOERO/skin/default/btn_shortcut.bmp]
+84f69a29e9780183e722aeb167d5e853325c35425bbb16b0664e721776ce901a       2616  WOERO.rar!WOERO/skin/default/btn_shortcut_a.bmp    [= WOERO/skin/default/btn_shortcut_a.bmp]
+70c4f41261452b4deddeeb1fd3beb8d9f4412ad074763fef2da0e33b1a93a514       2616  WOERO.rar!WOERO/skin/default/btn_shortcut_b.bmp    [= WOERO/skin/default/btn_shortcut_b.bmp]
+0ecc06313831ece8b50d30f94c7bc755f9f6a74b97fe88529fdace6699ca0e63       3128  WOERO.rar!WOERO/skin/default/colorchip.bmp    [= WOERO/skin/default/colorchip.bmp]
+e4bd76aca9622eaaa71f74cc533d20fda38e9b074220bb6e698e8aaa29dd24ee      13336  WOERO.rar!WOERO/skin/default/esc_001a.bmp    [= WOERO/skin/default/esc_001a.bmp]
+19bb362bbd6fb358f7d4d1b2e0c18d633f9d22124e264ecef046090ec63f9459      13336  WOERO.rar!WOERO/skin/default/esc_001b.bmp    [= WOERO/skin/default/esc_001b.bmp]
+99047a2796ecb437eb6e5c4131026acc9f47e2f0bd786baacf74926de90a0966      13336  WOERO.rar!WOERO/skin/default/esc_001c.bmp    [= WOERO/skin/default/esc_001c.bmp]
+dc11a9b77318fe68d387025755de429dce2e73c110747e9414b373080394aa14       4808  WOERO.rar!WOERO/skin/default/esc_09a.bmp    [= WOERO/skin/default/esc_09a.bmp]
+b45a4d29fd7bdc9db58048f7e7d89db3490bb9cea3c1d8efdfa2581d969c1f95       5008  WOERO.rar!WOERO/skin/default/esc_09b.bmp    [= WOERO/skin/default/esc_09b.bmp]
+2dbbf8c27636ec2cda12241875d2f56566543bcbc73da81ace318783c4e73dc9       5008  WOERO.rar!WOERO/skin/default/esc_09c.bmp    [= WOERO/skin/default/esc_09c.bmp]
+6ec76735b65d58ffd672d1a910b839be3319ebcd1e213b57b23a4b5df19aa1b8       1302  WOERO.rar!WOERO/skin/default/sysbox_bg.bmp    [= WOERO/skin/default/sysbox_bg.bmp]
+bf8d2a4e367e2803b68aa60cfec89a950906dcb18c8f6fc619d88f8229dca2db        576  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/btn_comparison_resize.bmp    [= WOERO/skin/scribbling kid/basic_interface/btn_comparison_resize.bmp]
+9bb0e35d7d94a543351b1786c7c724599103434517256e4c7e05972d49f829a0     100856  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/collection_bg.bmp    [= WOERO/skin/scribbling kid/basic_interface/collection_bg.bmp]
+d078c62fc4345130ec2a8c37e92e84827622388af11407a12335b98dc7c1c688     100856  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/collection_comparison_bg.bmp    [= WOERO/skin/scribbling kid/basic_interface/collection_comparison_bg.bmp]
+01ad28c27984491ecd6f46754f4202993f139d82bcb7aecc8829cf00d54e43e7        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_bg.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_bg.bmp]
+087f35ce66c59bb756c8b48f81090f194d67909065ee0b139c745954b1031ad1        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_ld.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_ld.bmp]
+c1e79da1e901082e55799b483257ef75c53570c1231e4b9e2b4f6132a67ad750        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_lm.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_lm.bmp]
+ddf96ea411347414d9a8b30a954c514079e9a7fdc18ef563064de99a4ec01cce        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_lu.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_lu.bmp]
+7a86b3c00e91e516ab4d2876dc3aaac898f4bf6d72a5cf508c034790e50d4c0b        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_md.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_md.bmp]
+3a07058629e5338e2ccf5a4193d39f2059ec197a81af1c889c1d536fe61da91e        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_mu.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_mu.bmp]
+caad2173905a79d1aacd9c4df6cca933b3f21fdf124753efc540ea14e28b8ffe        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_rd.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_rd.bmp]
+46979682f5d4285d5d3f4f36f4fb2cecdd9fea2bf53ecac05648a43f4ac1d4a7        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_rm.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_rm.bmp]
+9476ca162e7dc499f9303dbb75252b4503a00f278ad747d12d289252510d00ef        672  WOERO.rar!WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_ru.bmp    [= WOERO/skin/scribbling kid/basic_interface/sysbox_comparison_ru.bmp]
+2cd76c7dbb22815eece362cbde4b3eb079d1e892c8052ce5edf1a6f2a45bd3df       3128  WOERO.rar!WOERO/skin/scribbling kid/colorchip.bmp    [= WOERO/skin/scribbling kid/colorchip.bmp]
+3b5133e0592288e0bc22c9705688a54ede96cb5c9c4f8f9eca1dc52cb58ee363        296  WOERO.rar!WOERO/skin/scribbling kid/sysbox_bg.bmp    [= WOERO/skin/scribbling kid/sysbox_bg.bmp]
+4b8de1fff1fd235beafc444f0eb5719a70c7242025ee8b5114b8a876515f9ec2        100  WOERO.rar!WOERO/SMALL_RESOLUTION_FIX.cmd    [= WOERO/SMALL_RESOLUTION_FIX.cmd]
+4e9abfe88551594c343334f3ed6702400ef4aac2da154a6524532fc99323bbee      46673  WOERO.rar!WOERO/System/Font/NHCgogo_10.eot    [= WOERO/System/Font/NHCgogo_10.eot]
+e0fbb58aa5fdc974446ed7558d5669c0409d63c30aaf0f5100aa2a7193c4a9e7      51867  WOERO.rar!WOERO/System/Font/NHCgogo_12.eot    [= WOERO/System/Font/NHCgogo_12.eot]
+84a8f4987c31833362b8517e3ced3e121a02ae76a29bea8dfd7b49fd94c7f8b1      41775  WOERO.rar!WOERO/System/Font/RixDiary_10.eot    [= WOERO/System/Font/RixDiary_10.eot]
+1f39ba39b92b98b4cdd0050a6a263d9d85b6b67ba3feaae32ce3fd3b14d4d807      40277  WOERO.rar!WOERO/System/Font/RixFreshman_10.eot    [= WOERO/System/Font/RixFreshman_10.eot]
+8786df95dd23837fcc3b9b74c18621e226a4d90baffa2a6134e6459df62155f1      38396  WOERO.rar!WOERO/System/Font/RixJJangu_10.eot    [= WOERO/System/Font/RixJJangu_10.eot]
+765b1b8cb327c639931abf5f3f6757b9cfe3535b2066cabbc91493d10b359544      38534  WOERO.rar!WOERO/System/Font/RixKid_10.eot    [= WOERO/System/Font/RixKid_10.eot]
+68732ae1cff8cae6046cc309787c77d8c9b3c7aaeb5549b8f577340e153b8ae9      40190  WOERO.rar!WOERO/System/Font/RixLoveangel_10.eot    [= WOERO/System/Font/RixLoveangel_10.eot]
+1a69a0421819b8e6d81dbf135a0d8a9755976c605d8a5537726d16fb34348d2b      47196  WOERO.rar!WOERO/System/Font/RixLoveangel_12.eot    [= WOERO/System/Font/RixLoveangel_12.eot]
+d9bc08b5671dc7f4f02a22545de6da26302f5ba9ae861096cfa70c3d68fe70dd      45347  WOERO.rar!WOERO/System/Font/RixMagic_10.eot    [= WOERO/System/Font/RixMagic_10.eot]
+0d37f04a313e1390d907a925ed328091d919d8182802cada72ef6fb1752a096a      41273  WOERO.rar!WOERO/System/Font/RixMiniHeart_10.eot    [= WOERO/System/Font/RixMiniHeart_10.eot]
+71c51e9435295c07e749160bc0e567ab154c18a55fe6b0d4581c6a12c60412f5      46253  WOERO.rar!WOERO/System/Font/RixNHCgogo_10.eot    [= WOERO/System/Font/RixNHCgogo_10.eot]
+636fa9199b594e5ff93e0ff0248c46aa858fb372b025687073ba4e84bf5bf0ce      42850  WOERO.rar!WOERO/System/Font/RixSquirrel_10.eot    [= WOERO/System/Font/RixSquirrel_10.eot]
+f8ec59c3f0883a84128e28b2bc139bd73d0a120394f3d4bf944c47182c21a526      46460  WOERO.rar!WOERO/System/Font/RixSquirrel_12.eot    [= WOERO/System/Font/RixSquirrel_12.eot]
+773983bfac129d10f10e9f0a8ae16b31a8d375a67a95744d6fce817087600243       2625  WOERO.rar!WOERO/System/LuaFiles514/MsgString.lub    [= WOERO/System/LuaFiles514/MsgString.lub]
+6496eae9d6d4b9100b685bf1e033ceee95eaa2780ed466d7a66c0b635fbf22f6       4034  WOERO.rar!WOERO/System/LuaFiles514/OptionInfo.lub    [= WOERO/System/LuaFiles514/OptionInfo.lub]
+4979984b24b584c8f17893ac9d2119f068bd82eefb93f34adca64e97629c1b1b      55319  WOERO.rar!WOERO/System/monster_size_effect.lub    [= WOERO/System/monster_size_effect.lub]
+c1e3f2990b72ee3ec4e26f4d6852bf5308612bf5e2cec74e8ce5d9df8a7f8d0b       2152  WOERO.rar!WOERO/System/MsgString.lub    [= WOERO/System/MsgString.lub]
+84c5dbf77c62a4a52e658ca7c67801e2c16e9eff6f90832585b20f62dcca2524       1099  WOERO.rar!WOERO/System/OptionInfo.lub    [= WOERO/System/OptionInfo.lub]
+4a296b77743acf94a1daf3bdfec7dfa8f8b6d2eb73ca2c3bc822a9524291dd0b      24015  WOERO.rar!WOERO/System/ShadowTable.lub    [= WOERO/System/ShadowTable.lub]
+9bcf6a299fd74e568ebce26249ad5f496ab228819fb906c0d3fb0193b3983830      21706  WOERO.rar!WOERO/System/Towninfo.lub    [= WOERO/System/Towninfo.lub]
+6b108154a7d888e3b887d04ac32cdaa966c527d414238550d12d98bee3235ac4         61  WOERO.rar!WOERO/woe.ini    [= WOERO/woe.ini]
+358afb212b75e131610bed3ba7ad75f196b7b3ac00f33f1cdb3605b894ea1f87    3990430  WOERO.rar!WOERO/woero.exe    [= WOERO/woero.exe]
+efc7a20403314023e99907053ebb7297356f3a0b16120327e3abb4494d8235c7   46399732  WOERO.rar!WOERO/woero.grf    [= WOERO/woero.grf]
+5c59071c1c658d360cc927137a009e75c71c51b5bdaae84f49add9dc8b07df76    3477949  WOERO.rar!WOERO/woerol.grf    [= WOERO/woerol.grf]
+2112f0287b6cafeb9e8208c99873a7a58baba1df8d09c2b16dcf622700d02198    4431124  WOERO.rar!WOERO/woerop.grf    [= WOERO/woerop.grf]
+
+## embedded payloads (measured in memory, not written to disk)
+4f5e2b54c5cca45cc2c44a87b3f0bf2a4544bfc29264374b3b6d3235726f1dcc     843240  Class_DD/DD/32/ddx32.dll#RT_HTML/9001 (x86 kernel driver dd71800x32)
+6c81e777b04a48687518fe7baefe639093959142bfc456bc65f58db38f8f68b7    1270648  Class_DD/DD/64/ddx64.32.dll#RT_HTML/9001 (x64 kernel driver dd71800x64)
+6c81e777b04a48687518fe7baefe639093959142bfc456bc65f58db38f8f68b7    1270648  Class_DD/DD/64/ddx64.64.dll#RT_HTML/9001 (same x64 driver)
+
+## legit client (allowlist)
+4d0026381f94d7de3d4bb2b8ca3179ea0ecbd80b5fceb1079ec3ab0c86d0ea72       9728  client-dev/ragnarok/ijl15r.dll
+334aa12f7dee453d1c6cb1b661a3bb3494d3e4cc9c2ff3f9002064c78404e43a     372736  client-dev/ragnarok/ijl15x.dll
+d0a969fb4b83ac80bb2728d00f0a2c08cafc986f1d166f9b6d54e10217fd8246     485376  client-dev/ragnarok/ddraw.dll
+aaa7027e1b8c0c1dcb81d570d460409cea78b49f769737b7c4b69d7ee2451646    8000000  client-dev/ragnarok/dxwrapper.dll
+05c07da4cdaa940d5fd3c48080d639963fb00064f9ed422ba10602697aedd725       4016  client-dev/ragnarok/dxwrapper.ini
+104d13b1936c1a58e908bd491eb8f81bae27533553022d7b5df151122006147b       2368  client-dev/ragnarok/dinput.ini
+d392adf06d75fad891bf92085c3cd536bb54c14c7e3d086ad9dd78662a117447     346624  client-dev/ragnarok/Mss32.dll
+0f0fd127278e80f74832003518688859b5e4e17820206224ea145a6f17352a4e      79360  client-dev/ragnarok/cps.dll
+befa33fb43f03c6d0b9cbb302bfd7eb7efa2ba8ec682f75f63ac5cd03653570d     230455  client-dev/ragnarok/granny2.dll
+48b7566c3d94d1dff2866517586b40397ed57f8f238587feadf667a2db8cb995     188416  client-dev/ragnarok/binkw32.dll
+f328d32208562535cf364abe37d878cd0bad997ad055bd0705625e5338ae029a     268288  client-dev/ragnarok/libcurl.dll
+287bd98054c5d2c4126298ee50a2633edc745bc76a1ce04e980f3ecc577ce943    1156600  client-dev/ragnarok/mfc90.dll
+4f7ed27b532888ce72b96e52952073eab2354160d1156924489054b7fa9b0b1a     568832  client-dev/ragnarok/msvcp90.dll
+ed0170d3de86da33e02bfa1605eec8ff6010583481b1c530843867c1939d2185     655872  client-dev/ragnarok/msvcr90.dll
+8793353461826fbd48f25ea8b835be204b758ce7510db2af631b28850355bd18     773968  client-dev/ragnarok/msvcr100.dll
+c8d5572ca8d7624871188f0acabc3ae60d4c5a4f6782d952b9038de3bc28b39a     535008  client-dev/ragnarok/msvcp110.dll
+b30160e759115e24425b9bcdf606ef6ebce4657487525ede7f1ac40b90ff7e49     875472  client-dev/ragnarok/msvcr110.dll
+d3f3217fac27bcaf06bd47174eac0f20f0b00b71d96762962d141f646308a5a6     125952  client-dev/ragnarok/Mp3dec.asi
+031a18c4f272dbe9c19c4e5a8be732309165c05f4898728cf1bd02b9bff22b5c      62976  client-dev/ragnarok/Mssfast.m3d
+9e0220511d4ebdb014cc17ecb8319d57e3b0fea09681a80d8084aa8647196582        524  client-dev/ragnarok/Microsoft.VC90.CRT.manifest
+f7205c5c0a629d0cc60e30e288e339f08616be67b55757d4a403a2b54e23922b        548  client-dev/ragnarok/Microsoft.VC90.MFC.manifest
+faf7a41fa2df56cf98e95a98597271563c39528c733f38ea5f13095982f32f36      10752  client-dev/ragnarok/ijl15.dll
+a06e9cfafac335107f486410682a1af2beaf202e9fa3a45989dffcd79581420a    1010688  client-dev/ragnarok/odinguard.dll
+cc0f830827bf9468316e4c56a727140ebf9034c7be17ee282c6b073c843d5737  2540347209  client-dev/ragnarok/data.grf
+cd782a7fc93a403bf5fa38eedd5e6c206ba59886efa0e55623ca7885110766f3   53882613  client-dev/ragnarok/core.grf
+4ef61473da8610a2e97e3a63ace27b9835b5fb3995fb469eb2cb744e7893300e   51977898  client-dev/ragnarok/cdata.grf
+943a76286bd8e909587efd9fa3bf809c1b6f88e87358a493a0318f10ff9cc1ee   14789586  client-dev/ragnarok/cpal.grf
+
+## references
+04e7ed042187e35f28d3d8d1d583899e0f59ec738020590130736f6617edcfbc  3845198853  /Users/k/Downloads/RO/1 CLIENT-SIDE/0 GRFs/data kro latest.grf    [vanilla reference]
+256361214271fd380b73de15ffa0bc06e541572cc541037494b09f9c68615aa6  901601287  /Users/k/Downloads/RO/1 CLIENT-SIDE/0 GRFs/official_data (chris).grf    [official reference]
+9f7a0e09d782746a666cae275ffcbc47b11814c9f8887262ffba71c9e249b127   20819968  /Users/k/Downloads/RO/1 CLIENT-SIDE/client-dev/ragnarok/alpha.exe    [game exe of client-dev]

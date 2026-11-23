@@ -93,3 +93,21 @@ int og_sha256_file(const char *path, char hex[65])
     og_hex(out, 32, hex);
     return 1;
 }
+
+int og_unhex(const char *hex, uint8_t *out, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++) {
+        int v = 0, k;
+        for (k = 0; k < 2; k++) {
+            char c = hex[i * 2 + k];
+            v <<= 4;
+            if (c >= '0' && c <= '9') v |= c - '0';
+            else if (c >= 'a' && c <= 'f') v |= c - 'a' + 10;
+            else if (c >= 'A' && c <= 'F') v |= c - 'A' + 10;
+            else return 0;
+        }
+        out[i] = (uint8_t)v;
+    }
+    return 1;
+}

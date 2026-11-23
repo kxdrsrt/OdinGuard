@@ -1,0 +1,22 @@
+[package]
+name = "og-cli"
+description = "OdinGuard Anti Cheat Studio command line (headless builds, CI)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "og"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+og-core = { path = "../og-core" }
+clap = { version = "4", features = ["derive"] }
+serde_json = "1"
+serde = "1"
+hex = "0.4"

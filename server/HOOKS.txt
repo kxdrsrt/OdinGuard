@@ -12,39 +12,85 @@ src/common/socket.cpp:791: og_session_free(fd);
 src/common/socket.cpp:1436:	og_final();
 src/common/socket.cpp:1667:	og_init();
 src/common/socket.hpp:115:	void* og; // OdinGuard connection state (odinguard.cpp)
-src/common/Makefile.in:4:	conf.o msg_conf.o cli.o sql.o database.o odinguard.o og_crypto.o
+src/common/Makefile.in:4:	conf.o msg_conf.o cli.o sql.o database.o odinguard.o og_crypto.o og_wire.o
+src/common/Makefile.in:6:COMMON_H = $(shell ls ../common/*.hpp) ../common/og_proto.h ../common/og_wire.h ../common/og_wire.c
 src/common/CMakeLists.txt:96:	"${COMMON_SOURCE_DIR}/odinguard.hpp"
+src/common/CMakeLists.txt:124:	"${COMMON_SOURCE_DIR}/og_wire.cpp"
 src/login/login.cpp:824:	og_login_final();
 src/login/login.cpp:880:	og_login_init();
 src/login/loginclif.cpp:64:	if( int32 og_result = og_login_check( fd, sd->account_id, sd->userid ); og_result != 0 ){
 src/char/char_clif.cpp:12:#include <common/odinguard.hpp>
 src/char/char_clif.cpp:861: if( og_required() && !og_session_active( fd ) ){
 src/map/clif.cpp:20:#include <common/odinguard.hpp>
-src/map/clif.cpp:5580:	if( header == 0x09ca && visible && unit_id == UNT_DUMMYSKILL && og_lgp_unit( unit->group->skill_id ) != 0 ){
-src/map/clif.cpp:5584: uint16 lite = og_map_lgp_unit( viewer, l->skill_id );
-src/map/clif.cpp:5592: og_map_send_area( *bl, buf, len, set, &lgp );
-src/map/clif.cpp:6306:	} else if( og_lgp_unit( skill_id ) != 0 ){
-src/map/clif.cpp:6308: og_map_send_area( bl, &packet, sizeof( packet ), []( map_session_data* viewer, const block_list&, void* ctx ){
-src/map/clif.cpp:6309: return og_map_lgp_unit( viewer, *static_cast<uint16*>( ctx ) ) == 0;
-src/map/clif.cpp:10927:	if( og_required() && !og_session_active( fd ) ){
-src/map/clif.cpp:11053:	og_map_on_load( sd, sd->state.connect_new );
-src/map/clif.cpp:11768:	if( og_map_chat_command( sd, message ) )
-src/map/clif.cpp:21949:	if( target == SELF && og_map_hides_auras( BL_CAST( BL_PC, &tbl ), bl ) ){
-src/map/clif.cpp:21968: og_map_send_area( tbl, p, p->packetLength, []( map_session_data* viewer, const block_list& src, void* ) { return !og_map_hides_auras( viewer, src ); }, nullptr );
-src/map/clif.cpp:21993:	og_map_send_area( bl, p, p->packetLength, []( map_session_data* viewer, const block_list& src, void* ) { return !og_map_hides_auras( viewer, src ); }, nullptr );
+src/map/clif.cpp:3787: og_map_hp_update( &sd );
+src/map/clif.cpp:5610:	if( header == 0x09ca && visible && unit_id == UNT_DUMMYSKILL && og_lgp_unit( unit->group->skill_id ) != 0 ){
+src/map/clif.cpp:5614: uint16 lite = og_map_lgp_unit( viewer, l->skill_id );
+src/map/clif.cpp:5622: og_map_send_area( *bl, buf, len, set, &lgp );
+src/map/clif.cpp:6336:	} else if( og_lgp_unit( skill_id ) != 0 ){
+src/map/clif.cpp:6338: og_map_send_area( bl, &packet, sizeof( packet ), []( map_session_data* viewer, const block_list&, void* ctx ){
+src/map/clif.cpp:6339: return og_map_lgp_unit( viewer, *static_cast<uint16*>( ctx ) ) == 0;
+src/map/clif.cpp:10957:	if( og_required() && !og_session_active( fd ) ){
+src/map/clif.cpp:11083:	og_map_on_load( sd, sd->state.connect_new );
+src/map/clif.cpp:11084:	og_map_honeypot_spawn( sd );
+src/map/clif.cpp:11799:	if( og_map_chat_command( sd, message ) )
+src/map/clif.cpp:12001:	if( og_map_honeypot_hit( &sd, target_id ) )
+src/map/clif.cpp:12404:	og_map_item_used( sd, n );
+src/map/clif.cpp:13241:	if( og_map_honeypot_hit( sd, target_id ) )
+src/map/clif.cpp:13243:	og_map_skill_used( sd );
+src/map/clif.cpp:13250: og_map_skill_refused( sd );
+src/map/clif.cpp:13367: og_map_skill_refused( &sd );
+src/map/clif.cpp:21988:	if( target == SELF && og_map_hides_auras( BL_CAST( BL_PC, &tbl ), bl ) ){
+src/map/clif.cpp:22007: og_map_send_area( tbl, p, p->packetLength, []( map_session_data* viewer, const block_list& src, void* ) { return !og_map_hides_auras( viewer, src ); }, nullptr );
+src/map/clif.cpp:22032:	og_map_send_area( bl, p, p->packetLength, []( map_session_data* viewer, const block_list& src, void* ) { return !og_map_hides_auras( viewer, src ); }, nullptr );
+src/map/clif.cpp:26269:	og_map_packet( fd, sd, cmd );
 src/map/map.cpp:2239: og_map_on_quit(sd);
 src/map/map.cpp:5436:	og_map_init();
 src/map/pc.cpp:2115:	if (!changing_mapservers && !og_map_machine_limit(sd)) {
 src/map/atcommand.cpp:12:#include <common/odinguard.hpp>
-src/map/atcommand.cpp:8774:	og_map_toggle_auras(sd);
-src/map/atcommand.cpp:8782:	og_map_toggle_lgp(sd);
-src/map/atcommand.cpp:8794: for (const auto& a : og_auras()) {
-src/map/atcommand.cpp:8811:	int32 id = !strcmpi(aura, "off") ? 0 : og_map_aura_by_name(aura);
-src/map/atcommand.cpp:8812:	if (id < 0 || !og_map_set_aura(pl, id)) {
-src/map/atcommand.cpp:8844:	og_map_set_namecolor(pl, rgb);
-src/map/atcommand.cpp:8869:	if (!og_map_ban(pl, sd->status.name, *reason ? reason : "GM ban")) {
-src/map/atcommand.cpp:8887:	safesnprintf(out, sizeof(out), "%d machine ban(s) lifted.", og_map_unban_account(account_id));
-src/map/atcommand.cpp:8902:	og_map_info(pl, out, sizeof(out));
+src/map/atcommand.cpp:8774:	if (!og_map_command_allowed(sd, "showauras", 1000))
+src/map/atcommand.cpp:8776:	og_map_toggle_auras(sd);
+src/map/atcommand.cpp:8781:static int32 og_lgp_acmd(map_session_data* sd, const char* command, const char* message, int32 kind) {
+src/map/atcommand.cpp:8783:	if (!og_map_command_allowed(sd, ids[kind], 1000))
+src/map/atcommand.cpp:8786:	og_map_lgp_command(sd, kind, message ? message : "");
+src/map/atcommand.cpp:8789:ACMD_FUNC(lgp) { nullpo_retr(-1, sd); return og_lgp_acmd(sd, command, message, 0); }
+src/map/atcommand.cpp:8790:ACMD_FUNC(square) { nullpo_retr(-1, sd); return og_lgp_acmd(sd, command, message, 1); }
+src/map/atcommand.cpp:8791:ACMD_FUNC(circle) { nullpo_retr(-1, sd); return og_lgp_acmd(sd, command, message, 2); }
+src/map/atcommand.cpp:8792:ACMD_FUNC(aoes) { nullpo_retr(-1, sd); return og_lgp_acmd(sd, command, message, 3); }
+src/map/atcommand.cpp:8799:	if (!og_map_command_allowed(sd, "aura", 2000))
+src/map/atcommand.cpp:8809:	og_aura_command(sd, aura, pl);
+src/map/atcommand.cpp:8818:	if (!og_map_command_allowed(sd, "auraunlock", 0))
+src/map/atcommand.cpp:8829:	int32 r = og_aura_unlock(pl, trim(aura), "gm");
+src/map/atcommand.cpp:8858:	og_map_set_namecolor(pl, rgb);
+src/map/atcommand.cpp:8883:	if (!og_map_ban(pl, sd->status.name, *reason ? reason : "GM ban")) {
+src/map/atcommand.cpp:8901:	safesnprintf(out, sizeof(out), "%d machine ban(s) lifted.", og_map_unban_account(account_id));
+src/map/atcommand.cpp:8920:	og_map_flags_text(account_id, lines);
+src/map/atcommand.cpp:8934:	int32 n = og_map_banwave(dry, &lines);
+src/map/atcommand.cpp:8953:	og_map_info(pl, out, sizeof(out));
+src/map/script.cpp:13585:/// OdinGuard: ogauraunlock "<aura>"{,"<source>"}; returns 1 new, 0 already unlocked, -1 unknown aura or module off
+src/map/script.cpp:13586:BUILDIN_FUNC(ogauraunlock)
+src/map/script.cpp:13594:	script_pushint(st, og_aura_unlock(sd, script_getstr(st, 2), source));
+src/map/script.cpp:13598:/// OdinGuard: ogauracheck("<type>",<count>) unlocks every catalog aura "<type>:<n>" with n <= count (mvp, bg_wins,
+src/map/script.cpp:13599:/// woe_castles); ogauracheck("event:<name>") unlocks the event auras. Returns the number of new unlocks.
+src/map/script.cpp:13600:BUILDIN_FUNC(ogauracheck)
+src/map/script.cpp:13609: std::string names = og_aura_list(sd, type);
+src/map/script.cpp:13614: if (og_aura_unlock(sd, one.c_str(), type) > 0) n++;
+src/map/script.cpp:13620:	script_pushint(st, og_aura_check(sd, type, script_getnum(st, 3)));
+src/map/script.cpp:13624:/// OdinGuard: ogauralist$("<unlock>") -> names of the catalog auras with this unlock condition the attached player
+src/map/script.cpp:13626:BUILDIN_FUNC(ogauralist)
+src/map/script.cpp:13630:	script_pushstrcopy(st, og_aura_list(sd, script_getstr(st, 2)).c_str());
+src/map/script.cpp:13634:/// OdinGuard: ogaurahas("<aura>") -> 1 when the attached player has unlocked the aura
+src/map/script.cpp:13635:BUILDIN_FUNC(ogaurahas)
+src/map/script.cpp:13642:	script_pushint(st, og_aura_unlocked(sd, script_getstr(st, 2)) ? 1 : 0);
+src/map/script.cpp:28763:	BUILDIN_DEF(ogauraunlock,"s?"),
+src/map/script.cpp:28764:	BUILDIN_DEF(ogaurahas,"s"),
+src/map/script.cpp:28765:	BUILDIN_DEF(ogauracheck,"s?"),
+src/map/script.cpp:28766:	BUILDIN_DEF2(ogauralist,"ogauralist$","s"),
+npc/battleground/bg_common.txt:536:	if (getarg(2)) callfunc "F_OG_BG_Wins"; // OdinGuard aura milestones (npc/added/odinguard_auras.txt)
+npc/scripts_added.conf:29:npc: npc/added/odinguard_auras.txt
 
 conf/groups.yml:83:      showauras: true
 conf/groups.yml:84:      lgp: true
+conf/groups.yml:85:      square: true
+conf/groups.yml:86:      circle: true
+conf/groups.yml:87:      aoes: true
+conf/groups.yml:88:      aura: true

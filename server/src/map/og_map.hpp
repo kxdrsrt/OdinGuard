@@ -31,11 +31,42 @@ uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id);
 void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
 /// @showauras, @lgp (player commands)
 void og_map_toggle_auras(map_session_data* sd);
-void og_map_toggle_lgp(map_session_data* sd);
+/// @lgp (kind 0), @square (1), @circle (2), @aoes (3); arg "", "on", "off" or a colour set 1-14
+void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg);
 /// @aura: sets the permanent aura of a character (0 = none), @return false for an unknown aura
 bool og_map_set_aura(map_session_data* sd, int32 aura);
 int32 og_map_aura_by_name(const char* name);
 /// @namecolor: permanent name colour of a character (-1 = none)
 void og_map_set_namecolor(map_session_data* sd, int32 rgb);
+
+// server-side protection modules (og_map_guard.cpp)
+#include <string>
+#include <vector>
+void og_map_guard_init();
+void og_map_guard_quit(map_session_data* sd);
+void og_map_flag(map_session_data* sd, const char* uid, const char* rule, int32 score, bool ban, const char* detail);
+int32 og_map_banwave(bool dry, std::vector<std::string>* report);
+void og_map_flags_text(uint32 account_id, std::vector<std::string>& out);
+void og_map_packet(int32 fd, map_session_data* sd, uint16 cmd);
+void og_map_skill_refused(map_session_data* sd);
+void og_map_skill_used(map_session_data* sd);
+void og_map_item_used(map_session_data* sd, int32 index);
+void og_map_hp_update(map_session_data* sd);
+void og_map_honeypot_spawn(map_session_data* sd);
+bool og_map_honeypot_hit(map_session_data* sd, int32 target_id);
+/// command registry: enabled, group, rate limit (og_cmd_*, og_cmdgroup_*, og_cmdrate_*)
+bool og_map_command_allowed(map_session_data* sd, const char* id, int32 def_rate_ms);
+const char* og_map_command_name(const char* id);
+
+// aura unlocks (og_map_auras.cpp)
+bool og_aura_unlocked(map_session_data* sd, const char* name);
+/// @return 1 newly unlocked, 0 already unlocked, -1 unknown aura or module off
+int32 og_aura_unlock(map_session_data* sd, const char* name, const char* source);
+void og_aura_unlocked_list(map_session_data* sd, std::vector<std::string>& out);
+bool og_aura_gm(map_session_data* sd);
+void og_aura_command(map_session_data* sd, const char* aura, map_session_data* target);
+bool og_aura_valid_on_load(map_session_data* sd, int32 effect);
+int32 og_aura_check(map_session_data* sd, const char* type, int32 count);
+std::string og_aura_list(map_session_data* sd, const char* unlock);
 
 #endif /* OG_MAP_HPP */

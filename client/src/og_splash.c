@@ -1,5 +1,6 @@
 /* Start splash: the OdinGuard card fades in on top of the screen while the client loads, then fades out.
- * Layered, topmost, no taskbar entry, never takes the focus. Also provides the branded message box. */
+ * Layered, topmost, no taskbar entry, never takes the focus. The operator name of the profile is drawn onto the
+ * card at run time, so one splash bitmap serves every operator. */
 #include "og.h"
 
 #define SPLASH_BITMAP 100
@@ -12,6 +13,54 @@ static void blend(HWND w, HDC mem, SIZE sz, BYTE alpha)
     BLENDFUNCTION bf = { AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA };
     POINT src = { 0, 0 };
     UpdateLayeredWindow(w, NULL, NULL, &sz, mem, &src, 0, &bf, ULW_ALPHA);
+}
+
+/* draws the operator name into the premultiplied 32-bit DIB: GDI writes into a grey mask, the mask becomes the
+   alpha of a gold colour that is blended over the card */
+static void draw_operator(HBITMAP bmp, const BITMAP *bm)
+{
+    BITMAPINFO bi;
+    uint8_t *mask = NULL, *dst = (uint8_t *)bm->bmBits;
+    HDC dc;
+    HBITMAP mb;
+    HFONT font, oldf;
+    HGDIOBJ oldb;
+    RECT r;
+    int x, y, w = bm->bmWidth, h = bm->bmHeight;
+    (void)bmp;
+    if (!dst || bm->bmBitsPixel != 32) return;
+    ZeroMemory(&bi, sizeof bi);
+    bi.bmiHeader.biSize = sizeof bi.bmiHeader;
+    bi.bmiHeader.biWidth = w;
+    bi.bmiHeader.biHeight = h;
+    bi.bmiHeader.biPlanes = 1;
+    bi.bmiHeader.biBitCount = 32;
+    dc = CreateCompatibleDC(NULL);
+    mb = CreateDIBSection(dc, &bi, DIB_RGB_COLORS, (void **)&mask, NULL, 0);
+    if (!mb) { DeleteDC(dc); return; }
+    oldb = SelectObject(dc, mb);
+    font = CreateFontA(-17, 0, 0, 0, FW_SEMIBOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, ANTIALIASED_QUALITY, 0, "Georgia");
+    oldf = (HFONT)SelectObject(dc, font);
+    SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc, RGB(255, 255, 255));
+    SetRect(&r, 250, h - 74, w - 30, h - 40);
+    DrawTextA(dc, OG_PROFILE_OPERATOR, -1, &r, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
+    GdiFlush();
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        uint8_t *m = mask + (y * w + x) * 4, *d = dst + (y * w + x) * 4;
+        unsigned a = m[1];
+        if (!a) continue;
+        /* gold (BGR 0x50, 0xC8, 0xF0), premultiplied, over the card */
+        d[0] = (uint8_t)((0x50 * a + d[0] * (255 - a)) / 255);
+        d[1] = (uint8_t)((0xC8 * a + d[1] * (255 - a)) / 255);
+        d[2] = (uint8_t)((0xF0 * a + d[2] * (255 - a)) / 255);
+        d[3] = (uint8_t)(a + d[3] * (255 - a) / 255);
+    }
+    SelectObject(dc, oldf);
+    DeleteObject(font);
+    SelectObject(dc, oldb);
+    DeleteObject(mb);
+    DeleteDC(dc);
 }
 
 static DWORD WINAPI splash_thread(LPVOID p)
@@ -32,6 +81,7 @@ static DWORD WINAPI splash_thread(LPVOID p)
     GetObjectA(bmp, sizeof bm, &bm);
     sz.cx = bm.bmWidth;
     sz.cy = bm.bmHeight;
+    draw_operator(bmp, &bm);
 
     ZeroMemory(&wc, sizeof wc);
     wc.lpfnWndProc = DefWindowProcA;
@@ -74,17 +124,4 @@ void og_splash_show(HINSTANCE inst, DWORD hold_ms)
 {
     g_inst = inst;
     if (hold_ms) CloseHandle(CreateThread(NULL, 0, splash_thread, (LPVOID)(UINT_PTR)hold_ms, 0, NULL));
-}
-
-int og_message(const char *text, UINT type)
-{
-    MSGBOXPARAMSA p;
-    ZeroMemory(&p, sizeof p);
-    p.cbSize = sizeof p;
-    p.hInstance = g_inst;
-    p.lpszText = text;
-    p.lpszCaption = "OdinGuard";
-    p.dwStyle = (type & ~MB_ICONMASK) | MB_USERICON | MB_TOPMOST | MB_SETFOREGROUND;
-    p.lpszIcon = MAKEINTRESOURCEA(SPLASH_ICON);
-    return MessageBoxIndirectA(&p);
 }

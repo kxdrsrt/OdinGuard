@@ -1,0 +1,184 @@
+# OdinGuard Anti Cheat – command registry. The Studio lets operators enable, rename and limit every command;
+# the server config (conf/odinguard_commands.conf) and the command reference are generated from this file.
+#
+# kind    server (@ command) | client (! command, typed in chat, answered by the guard)
+# group   lowest group level that may use it (0 = players)
+# rate_ms minimum time between two uses per character (0 = no limit)
+
+schema = 1
+
+[[command]]
+id = "ping"
+kind = "client"
+name = "ping"
+module = "client-commands"
+group = 0
+rate_ms = 2000
+params = ""
+help_en = "Shows the latency to the server."
+help_de = "zeigt die Verbindungszeit zum Server"
+
+[[command]]
+id = "vsync"
+kind = "client"
+name = "vsync"
+module = "client-commands"
+group = 0
+rate_ms = 1000
+params = "[on|off]"
+help_en = "Removes or restores the frame limit."
+help_de = "Bildraten-Begrenzung aus/an"
+
+[[command]]
+id = "crash"
+kind = "client"
+name = "crash"
+module = "client-commands"
+group = 0
+rate_ms = 60000
+params = ""
+help_en = "Writes a diagnostic report (odinguard-crash folder) for bug reports."
+help_de = "schreibt einen Fehlerbericht (Ordner odinguard-crash) für Bug-Meldungen"
+
+[[command]]
+id = "lgp"
+kind = "server"
+name = "lgp"
+module = "lgp"
+group = 0
+rate_ms = 1000
+params = "[on|off]"
+help_en = "Lite ground skills: Storm Gust, Lord of Vermilion, Meteor Storm and more as flat cell tiles."
+help_de = "Lite Ground Skills: Storm Gust, Lord of Vermilion, Meteor Storm u. a. als flache Zellkacheln"
+
+[[command]]
+id = "square"
+kind = "server"
+name = "square"
+module = "lgp"
+group = 0
+rate_ms = 1000
+params = "[on|off|1-14]"
+help_en = "Lite ground skills with square tiles; a number picks the colour set."
+help_de = "LGP mit Quadrat-Kacheln; eine Zahl wählt das Farbset"
+
+[[command]]
+id = "circle"
+kind = "server"
+name = "circle"
+module = "lgp"
+group = 0
+rate_ms = 1000
+params = "[on|off]"
+help_en = "Lite ground skills with round tiles."
+help_de = "LGP mit runden Kacheln"
+
+[[command]]
+id = "aoes"
+kind = "server"
+name = "aoes"
+module = "lgp"
+group = 0
+rate_ms = 1000
+params = "[on|off]"
+help_en = "Coloured areas only for Storm Gust, Lord of Vermilion and Meteor Storm."
+help_de = "farbige Flächen nur für Storm Gust, Lord of Vermilion und Meteor Storm"
+
+[[command]]
+id = "showauras"
+kind = "server"
+name = "showauras"
+module = "auras"
+group = 0
+rate_ms = 1000
+params = ""
+help_en = "Hides or shows the auras of other players (your own stays visible)."
+help_de = "Auren anderer Spieler aus-/einblenden (die eigene bleibt sichtbar)"
+
+[[command]]
+id = "aura"
+kind = "server"
+name = "aura"
+module = "auras"
+group = 0
+rate_ms = 2000
+params = "[name|off]"
+help_en = "Lists your unlocked auras or wears one. GMs: @aura <name>, <character> sets any aura."
+help_de = "zeigt deine freigespielten Auren oder legt eine an. GMs: @aura <Name>, <Charakter> setzt jede Aura"
+
+[[command]]
+id = "auraunlock"
+kind = "server"
+name = "auraunlock"
+module = "auras"
+group = 60
+rate_ms = 0
+params = "<aura>, <character>"
+help_en = "Unlocks an aura for a character (source: gm)."
+help_de = "schaltet eine Aura für einen Charakter frei (Quelle: gm)"
+
+[[command]]
+id = "namecolor"
+kind = "server"
+name = "namecolor"
+module = "colors"
+group = 60
+rate_ms = 0
+params = "<RRGGBB|off>[, character]"
+help_en = "Permanent name colour."
+help_de = "dauerhafte Namensfarbe"
+
+[[command]]
+id = "ogban"
+kind = "server"
+name = "ogban"
+module = "hwid"
+group = 60
+rate_ms = 0
+params = "<character>[, reason]"
+help_en = "Bans the machine of an online character and kicks it."
+help_de = "sperrt den Rechner eines Online-Charakters und kickt ihn"
+
+[[command]]
+id = "ogunban"
+kind = "server"
+name = "ogunban"
+module = "hwid"
+group = 60
+rate_ms = 0
+params = "<account id>"
+help_en = "Lifts the machine bans of all machines the account used."
+help_de = "hebt die Rechner-Sperren des Accounts auf"
+
+[[command]]
+id = "oginfo"
+kind = "server"
+name = "oginfo"
+module = "core"
+group = 40
+rate_ms = 0
+params = "[character]"
+help_en = "Guard version, build, machine and exe hash of a character."
+help_de = "Guard-Version, Build, Rechner-ID und EXE-Hash"
+
+[[command]]
+id = "ogflags"
+kind = "server"
+name = "ogflags"
+module = "ban-system"
+group = 60
+rate_ms = 0
+params = "[character]"
+help_en = "Open flags (rule, score, time) of a player, or the most flagged accounts."
+help_de = "offene Flags (Regel, Punkte, Zeit) eines Spielers oder die meistgeflaggten Accounts"
+
+[[command]]
+id = "ogbanwave"
+kind = "server"
+name = "ogbanwave"
+module = "ban-system"
+group = 99
+rate_ms = 0
+params = "[dry]"
+help_en = "Runs the ban wave now (dry = only list who would be banned)."
+help_de = "führt die Ban-Welle jetzt aus (dry = nur auflisten)"

@@ -7,17 +7,22 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 X=${1:-${XATHENA:-$ROOT/../xAthena-HR}}
 [ -f "$X/src/common/odinguard.cpp" ] || { echo "no OdinGuard module in $X" >&2; exit 1; }
 
-if ! cmp -s "$X/src/common/og_proto.h" "$ROOT/proto/og_proto.h"; then
-	echo "proto/og_proto.h and $X/src/common/og_proto.h differ - copy the protocol first" >&2
-	exit 1
-fi
+for f in og_proto.h og_wire.h og_wire.c; do
+	if ! cmp -s "$X/src/common/$f" "$ROOT/proto/$f"; then
+		echo "proto/$f and $X/src/common/$f differ - copy the protocol first" >&2
+		exit 1
+	fi
+done
 
 S=$ROOT/server
-rm -rf "$S/src" "$S/conf"
-mkdir -p "$S/src/common" "$S/src/login" "$S/src/map" "$S/conf"
-cp "$X"/src/common/odinguard.cpp "$X"/src/common/odinguard.hpp "$X"/src/common/og_crypto.cpp "$X"/src/common/og_proto.h "$S/src/common/"
+rm -rf "$S/src" "$S/conf" "$S/npc" "$S/db"
+mkdir -p "$S/src/common" "$S/src/login" "$S/src/map" "$S/conf" "$S/npc/added" "$S/db/import"
+cp "$X"/src/common/odinguard.cpp "$X"/src/common/odinguard.hpp "$X"/src/common/og_crypto.cpp "$X"/src/common/og_proto.h \
+	"$X"/src/common/og_wire.h "$X"/src/common/og_wire.c "$X"/src/common/og_wire.cpp "$S/src/common/"
 cp "$X"/src/login/og_login.cpp "$X"/src/login/og_login.hpp "$S/src/login/"
-cp "$X"/src/map/og_map.cpp "$X"/src/map/og_map.hpp "$S/src/map/"
+cp "$X"/src/map/og_map.cpp "$X"/src/map/og_map.hpp "$X"/src/map/og_map_guard.cpp "$X"/src/map/og_map_auras.cpp "$S/src/map/"
+cp "$X/npc/added/odinguard_auras.txt" "$S/npc/added/"
+grep -A20 "^Body:" "$X/db/import/quest_db.yml" > "$S/db/import/quest_db_odinguard.yml"
 cp "$X/conf/odinguard_athena.conf" "$S/conf/"
 
 {
@@ -25,12 +30,13 @@ cp "$X/conf/odinguard_athena.conf" "$S/conf/"
 	echo "See server/README.md for what each hook does."
 	echo
 	cd "$X"
-	grep -rn -E "(^|[^A-Za-z_])og_[a-z_]+\(|odinguard\.(hpp|o)|og_crypto\.o|void\* og;" \
+	grep -rn -E "(^|[^A-Za-z_])og_[a-z_]+\(|odinguard\.(hpp|o)|og_crypto\.o|og_wire|void\* og;|ogaura|F_OG_|odinguard_auras" \
 		src/common/socket.cpp src/common/socket.hpp src/common/Makefile.in src/common/CMakeLists.txt \
 		src/login/login.cpp src/login/loginclif.cpp src/char/char_clif.cpp \
-		src/map/clif.cpp src/map/map.cpp src/map/pc.cpp src/map/atcommand.cpp \
+		src/map/clif.cpp src/map/clif.hpp src/map/map.cpp src/map/pc.cpp src/map/atcommand.cpp src/map/script.cpp \
+		npc/battleground/bg_common.txt npc/scripts_added.conf \
 		| sed 's/[[:space:]]\{2,\}/ /g' | cut -c1-200
 	echo
-	grep -n -E "^\s+(showauras|lgp):" conf/groups.yml | sed 's/^/conf\/groups.yml:/'
+	grep -n -E "^\s+(showauras|lgp|square|circle|aoes|aura):" conf/groups.yml | sed 's/^/conf\/groups.yml:/'
 } > "$S/HOOKS.txt"
 echo "server/ synced from $X ($(grep -c . "$S/HOOKS.txt") hook lines)"

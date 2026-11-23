@@ -1,5 +1,6 @@
 #include <winver.h>
-#include "../src/og_version.h"
+#include "og_version.h"
+#include "og_profile.h"
 
 1 ICON "odinguard.ico"
 100 BITMAP "splash.bmp"
@@ -14,13 +15,13 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "CompanyName", "BurningRO"
-            VALUE "FileDescription", "OdinGuard client protection"
+            VALUE "CompanyName", OG_PROFILE_OPERATOR
+            VALUE "FileDescription", "OdinGuard Anti Cheat"
             VALUE "FileVersion", OG_VERSION_STR
             VALUE "InternalName", "odinguard"
-            VALUE "LegalCopyright", "BurningRO"
+            VALUE "LegalCopyright", "OdinGuard Anti Cheat"
             VALUE "OriginalFilename", "odinguard.dll"
-            VALUE "ProductName", "OdinGuard"
+            VALUE "ProductName", "OdinGuard Anti Cheat"
             VALUE "ProductVersion", OG_VERSION_STR
         END
     END

@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 A = os.path.join(ROOT, "assets")
-VERSION = sys.argv[1] if len(sys.argv) > 1 else "0.3"
+VERSION = sys.argv[1] if len(sys.argv) > 1 else "1.0"
 TITLE_FONT = os.path.join(A, "fonts", "CinzelDecorative-Bold.ttf")
 TEXT_FONT = os.path.join(A, "fonts", "Philosopher-Bold.ttf")
 
@@ -96,7 +96,7 @@ def make_icon(emblem):
 def make_logo(emblem):
     em = emblem.resize((int(emblem.width * 420 / emblem.height), 420), Image.LANCZOS)
     title = gradient_text(0, "OdinGuard", ImageFont.truetype(TITLE_FONT, 170), (255, 236, 160), GOLD_DARK, stroke=6)
-    sub = gradient_text(0, "Client Protection  ·  BurningRO", ImageFont.truetype(TEXT_FONT, 44), CREAM, (230, 190, 120), stroke=3)
+    sub = gradient_text(0, "Anti Cheat  ·  Ragnarok Online", ImageFont.truetype(TEXT_FONT, 44), CREAM, (230, 190, 120), stroke=3)
     w = em.width + 40 + max(title.width, sub.width) + 40
     h = max(em.height, title.height + sub.height + 20) + 40
     logo = Image.new("RGBA", (w, h), (0, 0, 0, 0))
@@ -141,10 +141,10 @@ def make_splash(emblem):
     img.alpha_composite(title, (x, 102))
     f = ImageFont.truetype(TEXT_FONT, 17)
     dr = ImageDraw.Draw(img)
-    dr.text((x + 4, 102 + title.height + 8), "Client protection for BurningRO", font=f, fill=CREAM + (255,))
+    dr.text((x + 4, 102 + title.height + 8), "Anti Cheat", font=f, fill=CREAM + (255,))
     dr.line([(x + 4, 102 + title.height + 36), (W - 34, 102 + title.height + 36)], fill=GOLD_DARK + (255,), width=1)
     small = ImageFont.truetype(TEXT_FONT, 13)
-    dr.text((x + 4, 102 + title.height + 44), f"Version {VERSION}  ·  Ragnarok Online", font=small, fill=(230, 190, 130, 255))
+    dr.text((x + 4, 102 + title.height + 44), f"Version {VERSION}", font=small, fill=(230, 190, 130, 255))
     del runes, rune_font
     img.save(os.path.join(A, "splash", "splash.png"))
     return img

@@ -1,0 +1,60 @@
+# OdinGuard Anti Cheat profile (schema 2). Secrets are only referenced by path.
+schema_version = 2
+modules = [
+    "rate-limit", "behaviour", "ch-nonce", "ch-code", "ch-time", "ch-file", "ch-honeypot",
+    "core",
+    "hwid",
+    "multi-client",
+    "heartbeat",
+    "integrity",
+    "cheat-signatures",
+    "grf-rules",
+    "input-filter",
+    "crash-report",
+    "client-commands",
+    "colors",
+    "branding",
+    "lgp",
+    "auras",
+    "ban-system",
+]
+aura_catalog = ""
+output = "../dist/e2e"
+
+[general]
+id = "e2e"
+operator = "E2E Test Server"
+client_build = "2018-06-20"
+ports = [
+    6900,
+    6121,
+    5121,
+]
+splash_ms = 1800
+variation_seed = "514d8a558d6d4fd7d1b4f80a4ada9826"
+hwid_salt = "cd6bb31e495ddd61432559a2"
+
+[keys]
+server_seed = "keys/server.seed"
+signing_seed = "keys/signing.seed"
+build_secret = "keys/build.secret"
+
+[params]
+
+[commands]
+
+[signatures]
+sources = ["../signatures/signatures.toml"]
+allowlist = ["../signatures/allowlist.toml"]
+max_action = "flagban"
+version = 1
+
+[assets]
+competitive_pack = ""
+
+[assets.odin_grf]
+lgp = "../assets/odin-grf/lgp"
+
+[rollout]
+stage = 1
+reviewed_rules = []

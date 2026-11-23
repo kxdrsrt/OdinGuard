@@ -1,0 +1,1724 @@
+# OdinGuard cheat signatures, generated 2026-11-23 by static analysis only (no execution).
+# Source material: "/Users/k/Downloads/RANDOM RESOURCES/RO CHEAT SOFTWARE and CHEAT GRFs etc".
+# Generator: analysis/_work/cheatsig/gen.py (work folder is git-ignored).
+#
+# Pattern conventions (all comparisons case-insensitive unless a hash):
+#   process        exact lower-case image file name
+#   window_class   exact window class name; window_title: substring of the title
+#   module         exact lower-case module file name. Never use a generic name (dinput.dll, ddraw.dll)
+#                  alone - those are only listed as file_sha256.
+#   file_name      exact lower-case file name (client folder unless the note says otherwise)
+#   file_sha256 / grf_sha256   lower-case hex SHA-256 of the whole file
+#   grf_entry      '<lower-case path as stored in the GRF, CP949 decoded to UTF-8, backslashes>|<md5 of
+#                  decoded content>'. '*|<md5>' = the same content under any path (content-class rule).
+#   import_pattern 'exports:a,b,c' = module exports all names; ';verinfo:Key=Value' = plus version string
+#   string_pattern 'ascii:<text>' / 'utf16:<text>' = bytes in the module/process image or file,
+#                  'section:<name>' = PE section name
+#   driver         service / driver name; registry: key path
+# Mapping to og_proto.h kinds: process=1, window_title=2, module=3, window_class=7, file_name=8,
+# file_sha256=9, driver=10, grf_sha256=11. grf_entry, import_pattern, string_pattern and registry have
+# no wire kind yet (OG_KIND_GRF=5 is report-only) and need a client extension.
+# confidence: high = exact hash or tool-unique string; medium = specific but renamable or generic tool;
+# low = context only. action is the default suggestion.
+
+schema = 1
+
+[[signature]]
+id = "OG-APOT-001"
+source = "Autopot Fresh (autopot.exe, compiled AutoHotkey 1.1.26.01 x64)"
+kind = "file_sha256"
+pattern = "fac12a429ffe3eaf207622d99125ccfe179887c8d1cf0f7869cbd60708edb7b7"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Exact hash of the compiled autopot (AHK RCDATA '>AHK WITH ICON<'). Reads HP/SP of the client window and sends hotkeys."
+
+[[signature]]
+id = "OG-APOT-002"
+source = "Autopot Fresh (autopot.exe, compiled AutoHotkey 1.1.26.01 x64)"
+kind = "process"
+pattern = "autopot.exe"
+confidence = "medium"
+severity = "high"
+action = "kick"
+note = "Process name of the distributed build; trivially renamed, use together with OG-APOT-001/OG-AHK-*."
+
+[[signature]]
+id = "OG-APOT-003"
+source = "Autopot Fresh (autopot.ahk)"
+kind = "file_sha256"
+pattern = "4101b61444b302ceafb33ab78fafd9a52b5af6488ee18ad443903dfcfd0bdaf9"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Plain AHK source of the same autopot (run with AutoHotkey.exe)."
+
+[[signature]]
+id = "OG-APOT-004"
+source = "Autopot Fresh (ragnapot.ini)"
+kind = "file_name"
+pattern = "ragnapot.ini"
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Config file of the autopot (keys HpThreshold/SpThreshold/HpKey/SpKey/StatusKey). Only meaningful in or near the client folder."
+
+[[signature]]
+id = "OG-APOT-005"
+source = "Autopot Fresh (ragnapot.ini)"
+kind = "file_sha256"
+pattern = "19f8bc1bd6cc11623e5304c682afc68c32698333a5266b67b6f5c321e46f008c"
+confidence = "high"
+severity = "medium"
+action = "flag"
+note = "Default config shipped with the autopot."
+
+[[signature]]
+id = "OG-APOT-006"
+source = "Autopot Fresh (autopot.exe, compiled AutoHotkey 1.1.26.01 x64)"
+kind = "string_pattern"
+pattern = "ascii:InStr(Title, \"Ragnaclan\")"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Embedded script text of this build (window-title gate for another server). Scan of process image / RCDATA."
+
+[[signature]]
+id = "OG-AHK-001"
+source = "AutoHotkey runtime (used by Autopot Fresh and Class_DD scripts)"
+kind = "window_class"
+pattern = "AutoHotkey"
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Hidden main window class of every running AHK v1 script (AutoHotkey.exe or compiled). Legit uses exist -> flag, decide server-side."
+
+[[signature]]
+id = "OG-AHK-002"
+source = "AutoHotkey runtime (used by Autopot Fresh and Class_DD scripts)"
+kind = "window_title"
+pattern = " - AutoHotkey v"
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Default title of the hidden AHK main window: '<script path> - AutoHotkey v<version>'."
+
+[[signature]]
+id = "OG-AHK-003"
+source = "AutoHotkey runtime (used by Autopot Fresh and Class_DD scripts)"
+kind = "string_pattern"
+pattern = "utf16:>AUTOHOTKEY SCRIPT<"
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Resource name of the embedded script; present in AHK v1 runtime images (interpreter and compiled scripts)."
+
+[[signature]]
+id = "OG-AHK-004"
+source = "AutoHotkey runtime (used by Autopot Fresh and Class_DD scripts)"
+kind = "string_pattern"
+pattern = "utf16:>AHK WITH ICON<"
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Alternative RCDATA name used by Ahk2Exe with custom icon; measured as the actual script resource in autopot.exe."
+
+[[signature]]
+id = "OG-AHK-005"
+source = "AutoHotkey runtime (used by Autopot Fresh and Class_DD scripts)"
+kind = "window_class"
+pattern = "AutoHotkeyGUI"
+confidence = "low"
+severity = "low"
+action = "log"
+note = "Class of AHK Gui windows (not used by the analysed scripts; generic AHK indicator)."
+
+[[signature]]
+id = "OG-DD-001"
+source = "Class_DD (DD/32/ddx32.dll)"
+kind = "file_sha256"
+pattern = "baaa42821f4774b1f56f1962ab8a583b048855874f3a90bcaf0f874e7236f85b"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "DD user-mode DLL (x86). Embeds kernel driver dd71800x32.sys (RT_HTML 9001). Signed 'Wang Zhen' via WoSign."
+
+[[signature]]
+id = "OG-DD-002"
+source = "Class_DD (DD/64/ddx64.32.dll)"
+kind = "file_sha256"
+pattern = "c1601352b45fc22b370280f405db1c7297d1bce4545117c445e97399356075af"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "DD user-mode DLL (x86 host, x64 driver dd71800x64.sys embedded)."
+
+[[signature]]
+id = "OG-DD-003"
+source = "Class_DD (DD/64/ddx64.64.dll)"
+kind = "file_sha256"
+pattern = "6d32fa338d8a4955dc63204211c3dc402661686bb352bfbe913d94a9ce112440"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "DD user-mode DLL (x64 host, x64 driver dd71800x64.sys embedded)."
+
+[[signature]]
+id = "OG-DD-004"
+source = "Class_DD (embedded driver in ddx32.dll)"
+kind = "file_sha256"
+pattern = "4f5e2b54c5cca45cc2c44a87b3f0bf2a4544bfc29264374b3b6d3235726f1dcc"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Embedded x86 kernel driver image (843240 bytes, native subsystem, imports ntoskrnl/HAL). Match on dropped .sys or loaded driver image."
+
+[[signature]]
+id = "OG-DD-005"
+source = "Class_DD (embedded driver in ddx64.*.dll)"
+kind = "file_sha256"
+pattern = "6c81e777b04a48687518fe7baefe639093959142bfc456bc65f58db38f8f68b7"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Embedded x64 kernel driver image (1270648 bytes, native subsystem)."
+
+[[signature]]
+id = "OG-DD-006"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "driver"
+pattern = "dd71800x32"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Service/driver name (also device \\\\.\\dd71800x32, display name Display_dd71800x32). Kernel-level synthetic input bypasses LLMHF_INJECTED."
+
+[[signature]]
+id = "OG-DD-007"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "driver"
+pattern = "dd71800x64"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Service/driver name (also device \\\\.\\dd71800x64, display name Display_dd71800x64)."
+
+[[signature]]
+id = "OG-DD-008"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "registry"
+pattern = "HKLM\\SOFTWARE\\DD XOFT"
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Registry key referenced by the driver (\\Registry\\Machine\\Software\\DD XOFT\\). May persist after use -> flag only."
+
+[[signature]]
+id = "OG-DD-009"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "import_pattern"
+pattern = "exports:DD_btn,DD_key,DD_mov,DD_movR,DD_whl,DD_str,DD_todc"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Export set of the DD DLL in any process (host is usually AutoHotkey). x86 build additionally exports DD_ReadMem/DD_WriteMem."
+
+[[signature]]
+id = "OG-DD-010"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "module"
+pattern = "ddx32.dll"
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Module name of the x86 DD DLL inside a helper process; confirm with OG-DD-001..003 hash."
+
+[[signature]]
+id = "OG-DD-011"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "module"
+pattern = "ddx64.64.dll"
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Module name of the x64 DD DLL; confirm with hash."
+
+[[signature]]
+id = "OG-DD-012"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "module"
+pattern = "ddx64.32.dll"
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Module name of the DD DLL variant; confirm with hash."
+
+[[signature]]
+id = "OG-DD-013"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "string_pattern"
+pattern = "ascii:C:\\dd71800x32\\output\\Drv_dll.pdb"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "PDB path in all three DD DLLs (internal name Drv_dll.dll)."
+
+[[signature]]
+id = "OG-DD-014"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "file_name"
+pattern = "dd71800x64.sys"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Driver file name dropped by the DLL (x64). Check system drive root and drivers folder."
+
+[[signature]]
+id = "OG-DD-015"
+source = "Class_DD (DD/ddxoft virtual keyboard/mouse library + kernel driver)"
+kind = "file_name"
+pattern = "dd71800x32.sys"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Driver file name dropped by the DLL (x86)."
+
+[[signature]]
+id = "OG-DD-016"
+source = "Class_DD (Class_DD.ahk)"
+kind = "file_sha256"
+pattern = "eeefd669c2d5913f9f50e6c1092c4189a6dade90ac493e3afb825598b8cccbf6"
+confidence = "high"
+severity = "medium"
+action = "flag"
+note = "AHK wrapper class for the DD DLL (v1.32)."
+
+[[signature]]
+id = "OG-ROMED-001"
+source = "RoMedic (RoMedic.exe, .NET 2.0 WPF, SmartAssembly 5.5)"
+kind = "file_sha256"
+pattern = "abbae13412ac78c63ccb384b3ed45f25d178a3a53280f2f5157a81e2927f4f16"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Exact hash. P/Invokes OpenProcess/ReadProcessMemory/WriteProcessMemory/FindWindow/PostMessageA."
+
+[[signature]]
+id = "OG-ROMED-002"
+source = "RoMedic (RoMedic.exe, .NET 2.0 WPF, SmartAssembly 5.5)"
+kind = "process"
+pattern = "romedic.exe"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Process name (OriginalFilename RoMedic.exe)."
+
+[[signature]]
+id = "OG-ROMED-003"
+source = "RoMedic (RoMedic.exe, .NET 2.0 WPF, SmartAssembly 5.5)"
+kind = "window_title"
+pattern = "RoMedic"
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Assumed window title (product name); not statically confirmed because the UI resources are obfuscated."
+
+[[signature]]
+id = "OG-ROMED-004"
+source = "RoMedic (RoMedic.exe, .NET 2.0 WPF, SmartAssembly 5.5)"
+kind = "string_pattern"
+pattern = "utf16:{eb872c90-33ae-46cc-85e0-bac478268086}"
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "GUID string from the SmartAssembly resource loader of this build."
+
+[[signature]]
+id = "OG-RCX-001"
+source = "RCX (WOERO/RCX/RCXDraw.exe)"
+kind = "process"
+pattern = "rcxdraw.exe"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Overlay helper; loads RCXDraw.dll and calls InstallHook (global window hook into the client)."
+
+[[signature]]
+id = "OG-RCX-002"
+source = "RCX (WOERO/RCX/RCXDrawLauncher.exe)"
+kind = "process"
+pattern = "rcxdrawlauncher.exe"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Launcher variant of RCXDraw (same hook flow)."
+
+[[signature]]
+id = "OG-RCX-003"
+source = "RCX (WOERO/RCX/RCX.exe)"
+kind = "process"
+pattern = "rcx.exe"
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Main RCX process (MPRESS packed). Short generic name -> confirm with OG-RCX-010."
+
+[[signature]]
+id = "OG-RCX-004"
+source = "RCX (WOERO/RCX/RCXDraw.dll)"
+kind = "module"
+pattern = "rcxdraw.dll"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Hook DLL (exports HookProc/InstallHook/RemoveHook, MPRESS packed) mapped into the client window process."
+
+[[signature]]
+id = "OG-RCX-005"
+source = "RCX (WOERO/RCX, 'Ragnarok Online Support Soft', redchat 2004-2010)"
+kind = "window_class"
+pattern = "RCXDraw"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "String pushed for RegisterClassExA/CreateWindowExA/CreateMutexA/FindWindowA in RCXDraw(.exe|Launcher)."
+
+[[signature]]
+id = "OG-RCX-006"
+source = "RCX (WOERO/RCX, 'Ragnarok Online Support Soft', redchat 2004-2010)"
+kind = "window_title"
+pattern = "RCXDraw"
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Same string is also used as window name (read from code)."
+
+[[signature]]
+id = "OG-RCX-007"
+source = "RCX (WOERO/RCX, 'Ragnarok Online Support Soft', redchat 2004-2010)"
+kind = "window_title"
+pattern = "RCX - GPS"
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Dialog/window title from RCXJPN.dll resources (GPS/map share feature)."
+
+[[signature]]
+id = "OG-RCX-008"
+source = "RCX (WOERO/RCX, 'Ragnarok Online Support Soft', redchat 2004-2010)"
+kind = "module"
+pattern = "rcxjpn.dll"
+confidence = "high"
+severity = "medium"
+action = "flag"
+note = "Resource-only UI DLL of RCX."
+
+[[signature]]
+id = "OG-RCX-009"
+source = "RCX (WOERO/RCX, 'Ragnarok Online Support Soft', redchat 2004-2010)"
+kind = "string_pattern"
+pattern = "utf16:Ragnarok Online Support Soft"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "VS_VERSION_INFO FileDescription of RCX.exe and RCXJPN.dll (LegalCopyright 'Copyright (C) 2004-2010 redchat')."
+
+[[signature]]
+id = "OG-RCX-010"
+source = "RCX (WOERO/RCX/RCX.exe)"
+kind = "file_sha256"
+pattern = "b1516729065d9bf84e2fb9a8963cc4fad604e22a1fd0ca37cfc41a87e3cae4b6"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "RCX main executable 0.0.1.8."
+
+[[signature]]
+id = "OG-RCX-011"
+source = "RCX (WOERO/RCX/RCXDraw.dll)"
+kind = "file_sha256"
+pattern = "d35831f923df06dc79fd7de9f9c965b309b71f75b7e1bfb64a9eafa6af88063a"
+confidence = "high"
+severity = "critical"
+action = "kick"
+note = "Hook/overlay DLL."
+
+[[signature]]
+id = "OG-RCX-012"
+source = "RCX (WOERO/RCX/RCXDraw.exe)"
+kind = "file_sha256"
+pattern = "9d9166772d9fb042d010f515e41845cd7df5fc8f5e93cef26f958452f31b9ae4"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "RCXDraw 1.2.0.1 (redchat 2009)."
+
+[[signature]]
+id = "OG-RCX-013"
+source = "RCX (WOERO/RCX/RCXDrawLauncher.exe)"
+kind = "file_sha256"
+pattern = "558a9b031b02c3b023467e375b4b013414ca4135a25bb06c373db4c34367e0da"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "RCXDraw Launcher (2012 build)."
+
+[[signature]]
+id = "OG-RCX-014"
+source = "RCX (WOERO/RCX/RCXJPN.dll)"
+kind = "file_sha256"
+pattern = "692f455aae4d19d747141d348a91a40a017bde79e426fa1172d9ef6304a05688"
+confidence = "high"
+severity = "medium"
+action = "flag"
+note = "RCX UI resource DLL."
+
+[[signature]]
+id = "OG-RCX-015"
+source = "RCX (WOERO/RCX/RCX.ini)"
+kind = "file_name"
+pattern = "rcx.ini"
+confidence = "low"
+severity = "medium"
+action = "log"
+note = "RCX config (sections [GroupieEX],[MOBInfo],[SkillTimer],[RoChaOption] with ROWindowClass/APIHookType). Generic name."
+
+[[signature]]
+id = "OG-RCX-016"
+source = "RCX (WOERO/RCX, 'Ragnarok Online Support Soft', redchat 2004-2010)"
+kind = "file_name"
+pattern = "mobinfo_prer.ini"
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "RCX monster info table shipped next to RCX.exe."
+
+[[signature]]
+id = "OG-RCX-017"
+source = "RCX (WOERO/RCX, 'Ragnarok Online Support Soft', redchat 2004-2010)"
+kind = "import_pattern"
+pattern = "exports:HookProc,InstallHook,RemoveHook"
+confidence = "low"
+severity = "medium"
+action = "log"
+note = "Export shape of RCXDraw.dll; generic hook-DLL names, only meaningful for modules inside the client process."
+
+[[signature]]
+id = "OG-RCX-018"
+source = "RCX (WOERO/RCX, 'Ragnarok Online Support Soft', redchat 2004-2010)"
+kind = "string_pattern"
+pattern = "section:.MPRESS1"
+confidence = "low"
+severity = "medium"
+action = "log"
+note = "MPRESS packer section in RCX.exe/RCXDraw.dll; any MPRESS-packed module inside the client is suspicious."
+
+[[signature]]
+id = "OG-ROEXT-001"
+source = "RoExt (RoExt/dinput.dll, ROExt 2010.2.17 as dinput proxy; identical copy in WOERO/)"
+kind = "file_sha256"
+pattern = "3d8d3f03f96cd859f587afe6bcb7beb7915b1a35044a58be324c779c1e42e878"
+confidence = "high"
+severity = "medium"
+action = "kick"
+note = "Old ROExt as dinput.dll (exports only DirectInputCreateA, internal name ROExt.dll). Not the allowed ijl15r.dll build."
+
+[[signature]]
+id = "OG-ROEXT-002"
+source = "RoExt (RoExt/dinput.dll, ROExt 2010.2.17 as dinput proxy; identical copy in WOERO/)"
+kind = "import_pattern"
+pattern = "exports:DirectInputCreateA;verinfo:FileDescription=Ragnarok Extension"
+confidence = "high"
+severity = "medium"
+action = "kick"
+note = "Any ROExt build loaded as dinput.dll (export + version description). Allowed ROExt is only the ijl15 proxy (see allowlist)."
+
+[[signature]]
+id = "OG-ROEXT-003"
+source = "RoExt (RoExt/dinput.ini)"
+kind = "file_sha256"
+pattern = "6e59a44d4a90378711bef18eafe90a86c18fb1a97a6dfa851fa8c2fd1e6483ba"
+confidence = "high"
+severity = "low"
+action = "log"
+note = "Default ini of the 2010 ROExt (MouseFreedom=1, WindowLock=1)."
+
+[[signature]]
+id = "OG-ROEXT-004"
+source = "RoExt (WOERO/dinput.ini)"
+kind = "file_sha256"
+pattern = "b948521aec7c3f99cf7808865cd82971f681835142a6d9aa8aa74eccf75fd7c5"
+confidence = "high"
+severity = "low"
+action = "log"
+note = "ROExt ini variant shipped with WOERO."
+
+[[signature]]
+id = "OG-WOERO-001"
+source = "WOERO (woero.exe)"
+kind = "file_sha256"
+pattern = "358afb212b75e131610bed3ba7ad75f196b7b3ac00f33f1cdb3605b894ea1f87"
+confidence = "high"
+severity = "low"
+action = "log"
+note = "Foreign 2010 client exe (section .Heler). Not a cheat by itself; indicates a foreign client folder."
+
+[[signature]]
+id = "OG-WOERO-002"
+source = "WOERO (woero.grf)"
+kind = "grf_sha256"
+pattern = "efc7a20403314023e99907053ebb7297356f3a0b16120327e3abb4494d8235c7"
+confidence = "high"
+severity = "low"
+action = "log"
+note = "Foreign server data GRF (not a cheat by itself)."
+
+[[signature]]
+id = "OG-WOERO-003"
+source = "WOERO (woerop.grf)"
+kind = "grf_sha256"
+pattern = "2112f0287b6cafeb9e8208c99873a7a58baba1df8d09c2b16dcf622700d02198"
+confidence = "high"
+severity = "low"
+action = "log"
+note = "Foreign server palette GRF 0x103 (38986 palettes)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-000"
+source = "nodelay.grf (nodelay.grf)"
+kind = "grf_sha256"
+pattern = "0dba7a75f6a5f48c2588fb64387b6529d594e4c0ab04b27879eb4911508c8f11"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act animations of 2nd/trans jobs reduced to single frames (nodelay). Size 2521330 bytes."
+
+[[signature]]
+id = "OG-GRF-THOTH-000"
+source = "Thoth.grf (Thoth.grf)"
+kind = "grf_sha256"
+pattern = "25ca384acb3c9c00b3d7238194ae45def6567f6cc427f8f84c3ecdbd7b35d6d4"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "WoE castle maps (.gat/.gnd/.rsw), effects, MVP sprites and songs modified; 'Compiled by Thoth aka Luned'. Size 9441029 bytes."
+
+[[signature]]
+id = "OG-GRF-WOE-000"
+source = "woe.grf (woe.grf)"
+kind = "grf_sha256"
+pattern = "ce6623a1ac80a7b356c412d8eabcc1cd7631f25dcfc5dccfc0415dd0dcca0af5"
+confidence = "high"
+severity = "medium"
+action = "flag"
+note = "Effect textures (devotion, footprints), status sprites, songs, minimaps modified. Size 18802593 bytes."
+
+[[signature]]
+id = "OG-GRF-WOEBG-000"
+source = "woebg.grf (woebg.grf)"
+kind = "grf_sha256"
+pattern = "cca1d37f20b1ee788b94b4cbbc983b53d95db7048d99de7a24841c8c9efa35dd"
+confidence = "high"
+severity = "medium"
+action = "flag"
+note = "Same family as woe.grf (effects, minimaps, songs, cursors). Size 19039042 bytes."
+
+[[signature]]
+id = "OG-GRF-DARK-000"
+source = "dark.grf (dark.grf)"
+kind = "grf_sha256"
+pattern = "f7baefcdcb8475a4c37e268329cefedcb75357165b7cf1f069c662596ba906ae"
+confidence = "high"
+severity = "high"
+action = "flag"
+note = "~730 maps modified/added, vegetation textures 1x1 transparent, grid textures; fairness rated separately. Size 78113579 bytes."
+
+[[signature]]
+id = "OG-GRF-DARK2-000"
+source = "dark2.grf (dark2.grf)"
+kind = "grf_sha256"
+pattern = "045c71de65804624e28fe0a7c4e8225a6408ead27831911a5f9e1f21daa1a748"
+confidence = "high"
+severity = "high"
+action = "flag"
+note = "dark.grf + many blanked effects; fairness rated separately. Size 78907885 bytes."
+
+[[signature]]
+id = "OG-GRF-DESU-000"
+source = "desu.grf (Desu GRF 3-15-2018/desu.grf)"
+kind = "grf_sha256"
+pattern = "f8e44f945c0dc4952a95c6663ee1bd93ca2319eca49fdec4cbe610518224ba06"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Effects removed/reduced, MVPs enlarged, transparent trees, tile textures (edit log). Size 18435814 bytes."
+
+[[signature]]
+id = "OG-GRF-WOEROL-000"
+source = "woerol.grf (WOERO/woerol.grf)"
+kind = "grf_sha256"
+pattern = "5c59071c1c658d360cc927137a009e75c71c51b5bdaae84f49add9dc8b07df76"
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Effects blanked (empty .str), water/trees replaced (1x1 transparent). Size 3477949 bytes."
+
+[[signature]]
+id = "OG-GRF-NODELAY-001"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\건너_남.act|991d9cfa5d164605aff5a018e99d4ee4'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-002"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\닌자_남.act|a70488d1e7a2fdc27b330494d476f04a'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-003"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\로드나이트_남.act|cd019f06985fcd22ecbb77c00db69923'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-004"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\로드페코_남.act|45ba40527ecb1a71f2380b481040bb83'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-005"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\소울링커_남.act|bbf6f05dedc0e3803ea3c9aee8117c86'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-006"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\스나이퍼_남.act|7bf4b785e7ab63ee79c11ae8ac733d4c'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-007"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\스토커_남.act|c08069f749818db287a6240a7330a25c'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-008"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\어쌔신크로스_남.act|27b6fd4ca0125113fd8207a3b436d390'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-009"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\챔피온_남.act|62ef9873ce5c9fb15bbbbaf6be157c22'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-010"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\크리에이터_남.act|09abf51f1b1a000e72e3689eeea5afd2'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-011"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\클라운_남.act|44f8e49adb2a26af3a48157009d23f0d'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-012"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\페코팔라딘_남.act|e50f8d5448a7b9abdfb09618604e23c7'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-013"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\프로페서_남.act|48623c5c25a2652235676c40fb5c7b96'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-014"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\하이위저드_남.act|8302b804e4bdc4f1277a1d9c54750a1b'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-015"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\하이프리_남.act|336c1f59b98a8ffac8107df547d517a3'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-016"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\남\화이트스미스_남.act|d887bbc7eadfe27126c3a5667046c181'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-017"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\로드나이트_여.act|0841c361910ff6bbb9c64debf43fa65b'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-018"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\로드페코_여.act|f54d6a14c2c6d8c594badfd7184e4bc0'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-019"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\스나이퍼_여.act|165a1cc7d07bb9b7df68aef49c4d2cee'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-020"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\스토커_여.act|d37e3b8c54a16ca7b5647978d0268254'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-021"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\어쌔신크로스_여.act|8ed4acbea32d1355e8b41da4ba84cdfd'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-022"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\집시_여.act|eb724dc1bfa3bf4f9247313dfcf3d2c1'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-023"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\챔피온_여.act|ac1cf57bbacd0a4ea6aca3db499376e4'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-024"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\크리에이터_여.act|f743b052f05b30d3821a4fd8eb8f6245'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-025"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\팔라딘_여.act|954957a14b247f96c62d34789c9e90bc'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-026"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\페코팔라딘_여.act|017147b3f903229564a344d3a623984b'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-027"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\프로페서_여.act|6dcf65f708f54b13c2d7fc50cf56321c'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-028"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\하이위저드_여.act|6651c2a359cc320505c3b6773b9e8c02'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-NODELAY-029"
+source = "nodelay.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\인간족\몸통\여\하이프리_여.act|6656bb74be4278955cf03cec1aea85fd'
+confidence = "high"
+severity = "high"
+action = "kick"
+note = "Body .act with attack/cast/pickup actions reduced to 1 frame (measured vs. kRO)."
+
+[[signature]]
+id = "OG-GRF-BLANK-001"
+source = "content class (Thoth,dark,dark2,desu,woerol)"
+kind = "grf_entry"
+pattern = '*|17b4908f42d673d69b67d72687ce6db3'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "1x1 8-bit BMP, pixel 0xFF00FF (fully transparent); replaces tree/vegetation textures. Any path; 49 entries in Thoth,dark,dark2,desu,woerol. Not present in kRO/client-dev/official refs."
+
+[[signature]]
+id = "OG-GRF-BLANK-002"
+source = "content class (dark2,desu,woerol)"
+kind = "grf_entry"
+pattern = '*|099538022d00fe3e70073f90041bb2fd'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "1x1 24-bit BMP 0xFF00FF (transparent); blanks effect textures. Any path; 165 entries in dark2,desu,woerol. Not present in kRO/client-dev/official refs."
+
+[[signature]]
+id = "OG-GRF-BLANK-003"
+source = "content class (dark,dark2,desu,woerol)"
+kind = "grf_entry"
+pattern = '*|24e8a726cf699dc7a9112c772dd690ec'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "1x1 24-bit BMP 0xFF00FF (transparent, other header); blanks map/effect textures. Any path; 37 entries in dark,dark2,desu,woerol. Not present in kRO/client-dev/official refs."
+
+[[signature]]
+id = "OG-GRF-BLANK-004"
+source = "content class (dark2,woerol)"
+kind = "grf_entry"
+pattern = '*|0298c1b867805a7482cdd21625d260a8'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "1x1 TGA 0xFF00FF; blanks effect textures. Any path; 104 entries in dark2,woerol. Not present in kRO/client-dev/official refs."
+
+[[signature]]
+id = "OG-GRF-BLANK-005"
+source = "content class (dark2,woerol)"
+kind = "grf_entry"
+pattern = '*|a63b34b0ec66bf76aa21df54b7a475e2'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Empty .str effect (STRM header, 0 layers); removes skill effects. Any path; 34 entries in dark2,woerol. Not present in kRO/client-dev/official refs."
+
+[[signature]]
+id = "OG-GRF-THOTH-001"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\_readme.txt|b9bf8f6637790d0d9cb49e31c7fbcf81'
+confidence = "high"
+severity = "medium"
+action = "kick"
+note = "Marker text file of the Thoth GRF."
+
+[[signature]]
+id = "OG-GRF-THOTH-002"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\compiled by thoth aka luned.txt|5893181aa52f49ba10f855d532fd2768'
+confidence = "high"
+severity = "medium"
+action = "kick"
+note = "Marker text file of the Thoth GRF."
+
+[[signature]]
+id = "OG-GRF-THOTH-003"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.gat|57f51f18f4e9aa131092709577e7ca6d'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map (not in any reference GRF)."
+
+[[signature]]
+id = "OG-GRF-THOTH-004"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.gnd|9ea81f16447ff497922181e07f05e7f8'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map (not in any reference GRF)."
+
+[[signature]]
+id = "OG-GRF-THOTH-005"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.rsw|f4d7586778e227829ac9903dee824eb9'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map (not in any reference GRF)."
+
+[[signature]]
+id = "OG-GRF-THOTH-006"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.gat|64247ef1c284fe221a4cdfb3c83a7b12'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map (not in any reference GRF). Same content also in: dark,dark2."
+
+[[signature]]
+id = "OG-GRF-THOTH-007"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.gnd|c9a187cfc579b1eb2bbcc3230766b784'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map (not in any reference GRF)."
+
+[[signature]]
+id = "OG-GRF-THOTH-008"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.rsw|65f27a7e1fde859e17e133aa9a697c87'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map (not in any reference GRF)."
+
+[[signature]]
+id = "OG-GRF-THOTH-009"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\몬스터\apocalips_h.act|f44b6a2bf418f377703ffe47d1ca401e'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified monster animation (MVP enlargement). Same content also in: dark,dark2,desu."
+
+[[signature]]
+id = "OG-GRF-THOTH-010"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\몬스터\barricade.act|4fa21fee15127c63a8c06123f007cb66'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified monster animation (MVP enlargement)."
+
+[[signature]]
+id = "OG-GRF-THOTH-011"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\몬스터\dark_illusion.act|3bd9be88a8bd8a5d3cd41d0d59c886fc'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified monster animation (MVP enlargement). Same content also in: dark,dark2,desu."
+
+[[signature]]
+id = "OG-GRF-THOTH-012"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\crashearth.str|22db7aae18df5da50ef3b9f0035f6339'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect."
+
+[[signature]]
+id = "OG-GRF-THOTH-013"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\fire dragon.str|7de97f7efe55eb6bc1445a6a2b4e29dd'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect."
+
+[[signature]]
+id = "OG-GRF-THOTH-014"
+source = "Thoth.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\firehit.str|41ca96bacf3ce015bf744b28cb7a204e'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect."
+
+[[signature]]
+id = "OG-GRF-WOE-001"
+source = "woe.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\devotion_1.bmp|dcbaccef38f1e14ed8e6c80f2fb531db'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Added effect texture (devotion line). Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-WOE-002"
+source = "woe.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\devotion_2.bmp|d175b21dadea5371645d51c55c875253'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Added effect texture (devotion line). Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-WOE-003"
+source = "woe.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\devotion_3.bmp|90566a647701aced0ea29b28a4fc515f'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Added effect texture (devotion line). Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-WOE-004"
+source = "woe.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\devotion.str|e3d6b01e08fb9a4a4fdc4ab289edb1ad'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-WOE-005"
+source = "woe.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\pneuma1.str|bfd4dd6887bb04123494c9b5c34d5f6c'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect. Same content also in: dark,dark2,desu."
+
+[[signature]]
+id = "OG-GRF-WOE-006"
+source = "woe.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\pneuma2.str|bfd4dd6887bb04123494c9b5c34d5f6c'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect. Same content also in: dark,dark2,desu."
+
+[[signature]]
+id = "OG-GRF-WOE-007"
+source = "woe.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\foot_l.tga|f8e34cc638ea05636c9bba50a000e0b0'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified footprint texture. Same content also in: dark,dark2."
+
+[[signature]]
+id = "OG-GRF-WOE-008"
+source = "woe.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\foot_l2.tga|da19dfe3c03df734d38efa25860fbe9f'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified footprint texture. Same content also in: dark,dark2."
+
+[[signature]]
+id = "OG-GRF-WOEBG-001"
+source = "woebg.grf"
+kind = "grf_entry"
+pattern = 'credits.txt|695718ffc9e84c24f1a0fb5968cf863a'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Marker file in GRF root."
+
+[[signature]]
+id = "OG-GRF-WOEBG-002"
+source = "woebg.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\spiderweb.tga|dc87e517c41ba17f8fef51db6277bf0a'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified effect file. Same content also in: dark2,woe."
+
+[[signature]]
+id = "OG-GRF-WOEBG-003"
+source = "woebg.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\tarot01.tga|d257dac353d591f6d682cda524438a07'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified effect file."
+
+[[signature]]
+id = "OG-GRF-WOEBG-004"
+source = "woebg.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\tarot02.tga|687bc8bc4a5eb6053a85edfb2a704815'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified effect file. Same content also in: woe."
+
+[[signature]]
+id = "OG-GRF-WOEBG-005"
+source = "woebg.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\tarot03.tga|8d2e785d30cf902018eaa2cbd181da5a'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified effect file. Same content also in: woe."
+
+[[signature]]
+id = "OG-GRF-DARK-001"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.gat|08847d8e7f8679e6f12998e7c947ad55'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-002"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.gnd|00856f8f4c261cea95c48b8d79b97067'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-003"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.rsw|9c207b0e18a2dc4f7382402290b288e0'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-004"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.gat|64247ef1c284fe221a4cdfb3c83a7b12'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: Thoth,dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-005"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.gnd|46eeba0b98a0b7cac3beea4cb042e605'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-006"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.rsw|953f66aa3f8f8060643655cadb984375'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-007"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\texture\c-1c-1c-1c-1.bmp|3ffdb4fe790923c1ecc57225b90801ca'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Added grid/tile ground texture. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-008"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\texture\c-1c-1c-1c0.bmp|2aae15d5423ceb2ea725de2a11a02a0a'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Added grid/tile ground texture. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-009"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\texture\c-1c-1c-1c1.bmp|a34bfed2ccec95abdb4a10baafb385f7'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Added grid/tile ground texture. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-010"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\texture\points\1111.bmp|1a93ce7fe081dd22e68402c844f79e6a'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Added marker texture (points). Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-011"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\texture\points\2222.bmp|bcd9853d22311d3049856257e9ab5540'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Added marker texture (points). Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-012"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\texture\woe\1.bmp|828075e9ab16c39d33fdf32a592be0b6'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Added WoE marker texture. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK-013"
+source = "dark.grf"
+kind = "grf_entry"
+pattern = 'data\texture\woe\10.bmp|39fa114e09389114c9036a8fb8aa800c'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Added WoE marker texture. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DARK2-001"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.gat|08847d8e7f8679e6f12998e7c947ad55'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-002"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.gnd|00856f8f4c261cea95c48b8d79b97067'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-003"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas01.rsw|9c207b0e18a2dc4f7382402290b288e0'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-004"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.gat|64247ef1c284fe221a4cdfb3c83a7b12'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: Thoth,dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-005"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.gnd|46eeba0b98a0b7cac3beea4cb042e605'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-006"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\aldeg_cas02.rsw|953f66aa3f8f8060643655cadb984375'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Modified WoE castle map. Same content also in: dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-007"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\texture\c-1c-1c-1c-1.bmp|3ffdb4fe790923c1ecc57225b90801ca'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Added grid/tile ground texture. Same content also in: dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-008"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\texture\c-1c-1c-1c0.bmp|2aae15d5423ceb2ea725de2a11a02a0a'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Added grid/tile ground texture. Same content also in: dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-009"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\texture\c-1c-1c-1c1.bmp|a34bfed2ccec95abdb4a10baafb385f7'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Added grid/tile ground texture. Same content also in: dark."
+
+[[signature]]
+id = "OG-GRF-DARK2-010"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\angelus.str|faf8ed1bc1282e80fca79794769fe670'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified/blanked skill effect. Same content also in: desu."
+
+[[signature]]
+id = "OG-GRF-DARK2-011"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\aspersio.str|737fd3d23f45d47f0f1eeac9d45a3dc6'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified/blanked skill effect. Same content also in: desu."
+
+[[signature]]
+id = "OG-GRF-DARK2-012"
+source = "dark2.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\asum.str|9b825c91261afc1e55233802f8c84e2b'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified/blanked skill effect. Same content also in: desu."
+
+[[signature]]
+id = "OG-GRF-DESU-001"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\texture\desu\desu1.bmp|cfe0f9f88858466fe3a6c0953288904e'
+confidence = "high"
+severity = "medium"
+action = "kick"
+note = "Marker texture folder of the Desu GRF."
+
+[[signature]]
+id = "OG-GRF-DESU-002"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\texture\desu\desu2.bmp|56198459b74bb1cc57128c1b89566327'
+confidence = "high"
+severity = "medium"
+action = "kick"
+note = "Marker texture folder of the Desu GRF."
+
+[[signature]]
+id = "OG-GRF-DESU-003"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\texture\desu\desusave.bmp|2865429d5367c0cbc19c01c1aa1538c6'
+confidence = "high"
+severity = "medium"
+action = "kick"
+note = "Marker texture folder of the Desu GRF."
+
+[[signature]]
+id = "OG-GRF-DESU-004"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\몬스터\amon_ra.act|dd599ea8e258af49ba706d33f82749e4'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified monster animation (MVP/mini-boss enlargement, edit log)."
+
+[[signature]]
+id = "OG-GRF-DESU-005"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\몬스터\angeling.act|ecba30a05c93ad7c726d0e5bd7147f41'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified monster animation (MVP/mini-boss enlargement, edit log)."
+
+[[signature]]
+id = "OG-GRF-DESU-006"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\몬스터\apocalips_h.act|f44b6a2bf418f377703ffe47d1ca401e'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified monster animation (MVP/mini-boss enlargement, edit log). Same content also in: Thoth,dark,dark2."
+
+[[signature]]
+id = "OG-GRF-DESU-007"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\몬스터\archangeling.act|268be34fc68de382b07bbc589d99b90c'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified monster animation (MVP/mini-boss enlargement, edit log)."
+
+[[signature]]
+id = "OG-GRF-DESU-008"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\angelus.str|faf8ed1bc1282e80fca79794769fe670'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DESU-009"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\aspersio.str|737fd3d23f45d47f0f1eeac9d45a3dc6'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DESU-010"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\asum.str|9b825c91261afc1e55233802f8c84e2b'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified skill effect. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-DESU-011"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\texture\c-1c-1c-1c-1.bmp|8c75a9379831bb1ff1130740b6f9d5d7'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Added grid/tile ground texture."
+
+[[signature]]
+id = "OG-GRF-DESU-012"
+source = "desu.grf"
+kind = "grf_entry"
+pattern = 'data\texture\c-1c-1c-1c0.bmp|a1ee99ab67d08dc25564aab52a2f6fd9'
+confidence = "medium"
+severity = "high"
+action = "flag"
+note = "Added grid/tile ground texture."
+
+[[signature]]
+id = "OG-GRF-WOEROL-001"
+source = "woerol.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\asum.str|f809b22b38b088425caf35e1cf30659b'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified/blanked skill effect."
+
+[[signature]]
+id = "OG-GRF-WOEROL-002"
+source = "woerol.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\autocounter.str|780b3aff34024cd6f313c292266d1619'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified/blanked skill effect. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-WOEROL-003"
+source = "woerol.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\benedictio.str|2f37fe973178979dfa26f83c209c5593'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified/blanked skill effect. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-WOEROL-004"
+source = "woerol.grf"
+kind = "grf_entry"
+pattern = 'data\texture\effect\black_maxmize.str|bb50780dfd9f78bf1e42830a6a5145f2'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified/blanked skill effect. Same content also in: dark2."
+
+[[signature]]
+id = "OG-GRF-WOEROL-005"
+source = "woerol.grf"
+kind = "grf_entry"
+pattern = 'data\texture\워터\water000.jpg|4e35e08bdf39f7bab613f3784f4c430c'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Replaced water texture."
+
+[[signature]]
+id = "OG-GRF-WOEROL-006"
+source = "woerol.grf"
+kind = "grf_entry"
+pattern = 'data\texture\워터\water001.jpg|4e35e08bdf39f7bab613f3784f4c430c'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Replaced water texture."
+
+[[signature]]
+id = "OG-GRF-WOEROL-007"
+source = "woerol.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\이팩트\status-curse.act|e17bf145c5c0be1997fdbc8d466aa358'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified status effect animation."
+
+[[signature]]
+id = "OG-GRF-WOEROL-008"
+source = "woerol.grf"
+kind = "grf_entry"
+pattern = 'data\sprite\이팩트\status-sleep.act|06990012c9185785ad89a59521afaf25'
+confidence = "medium"
+severity = "medium"
+action = "flag"
+note = "Modified status effect animation."

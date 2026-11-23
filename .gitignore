@@ -8,3 +8,7 @@ __pycache__/
 keys/
 odinguard-crash/
 dist/
+analysis/_work/
+studio/target/
+studio/apps/studio/node_modules/
+keys/

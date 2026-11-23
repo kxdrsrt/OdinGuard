@@ -2,7 +2,6 @@
  * alpha.exe resolves send/recv with GetProcAddress and calls them through pointers; inline hooks in ws2_32
  * catch these calls without changing the pointers the client checks. */
 #include "og.h"
-#include "og_pubkey.h"
 #include "../../third_party/monocypher.h"
 #include "../../third_party/minhook/include/MinHook.h"
 #include <stdio.h>
@@ -11,6 +10,8 @@
 
 #define MAX_SOCKS 16
 #define HANDSHAKE_TIMEOUT_MS 10000
+
+static const uint8_t og_server_pubkey[32] = OG_PROFILE_SERVER_PUBKEY;
 
 enum { S_FREE = 0, S_NEW, S_ACTIVE, S_FAILED };
 
@@ -76,6 +77,29 @@ static void make_nonce(uint8_t nonce[24], uint64_t ctr)
     int i;
     memset(nonce, 0, 24);
     for (i = 0; i < 8; i++) nonce[i] = (uint8_t)(ctr >> (8 * i));
+}
+
+/* key rotation (og_proto.h): before record c (c > 0, c % OG_REKEY_RECORDS == 0) */
+static void rekey(uint8_t key[32], uint64_t ctr)
+{
+    static const char label[] = "OdinGuard/rekey";
+    crypto_blake2b_ctx c;
+    uint8_t next[32];
+    if (ctr == 0 || ctr % OG_REKEY_RECORDS) return;
+    crypto_blake2b_init(&c, 32);
+    crypto_blake2b_update(&c, key, 32);
+    crypto_blake2b_update(&c, (const uint8_t *)label, sizeof label - 1);
+    crypto_blake2b_final(&c, next);
+    memcpy(key, next, 32);
+    crypto_wipe(next, 32);
+}
+
+int og_random(void *p, size_t n)
+{
+    typedef BOOLEAN (WINAPI *rtlgenrandom_t)(PVOID, ULONG);
+    static rtlgenrandom_t gen;
+    if (!gen) gen = (rtlgenrandom_t)GetProcAddress(LoadLibraryA("advapi32.dll"), "SystemFunction036");
+    return gen && gen(p, (ULONG)n);
 }
 
 /* ---------- socket table ---------- */
@@ -193,6 +217,7 @@ static void seal(og_sock *k, uint8_t type, const uint8_t *p, size_t n)
         plain[0] = type;
         if (chunk) memcpy(plain + 1, p, chunk);
         wr16(head, (uint16_t)(chunk + 1));
+        rekey(k->k_c2s, k->ctr_c2s);
         make_nonce(nonce, k->ctr_c2s++);
         pos = k->out_len;
         if (!buf_append(&k->out, &k->out_len, &k->out_cap, head, 18)) break;
@@ -223,39 +248,50 @@ static void control(og_sock *k, const uint8_t *msg, size_t n)
     flush_out(k);
 }
 
+static void on_sig(void *ctx, uint16_t id, uint8_t kind, const char *pat, size_t len)
+{
+    og_signature *sg;
+    (void)ctx;
+    if (og_policy.nsig >= OG_MAX_SIGS) return;
+    sg = &og_policy.sig[og_policy.nsig++];
+    sg->id = id;
+    sg->kind = kind;
+    memcpy(sg->pattern, pat, len);
+    sg->pattern[len] = 0;
+}
+
 static void handle_control(og_sock *k, const uint8_t *p, size_t n)
 {
     if (!n) return;
     switch (p[0]) {
     case OG_S_POLICY: {
-        size_t pos = 9;
-        int i, cnt;
-        if (n < 9) return;
+        og_policy_msg m;
+        if (og_wire_policy(p, n, &m) < 0) return;
         EnterCriticalSection(&og_policy_lock);
-        og_policy.block_vm = p[1];
-        og_policy.max_windows = p[2];
-        og_policy.alive_interval = rd16(p + 3);
-        og_policy.input_filter = p[5];
-        og_policy.grf_strict = p[6];
-        cnt = rd16(p + 7);
-        og_policy.nsig = 0;
-        for (i = 0; i < cnt && og_policy.nsig < 256 && pos + 4 <= n; i++) {
-            og_signature *s = &og_policy.sig[og_policy.nsig];
-            uint8_t len = p[pos + 3];
-            if (pos + 4 + len > n) break;
-            s->id = rd16(p + pos);
-            s->kind = p[pos + 2];
-            memcpy(s->pattern, p + pos + 4, len);
-            s->pattern[len] = 0;
-            og_policy.nsig++;
-            pos += 4 + len;
-        }
+        og_policy.block_vm = m.block_vm;
+        og_policy.max_windows = m.max_windows;
+        og_policy.alive_interval = m.alive_interval;
+        og_policy.input_filter = m.input_filter;
+        og_policy.grf_strict = m.grf_strict;
         LeaveCriticalSection(&og_policy_lock);
         InterlockedExchange(&og_policy.received, 1);
         og_guard_new_connection();
-        og_log("policy: vm=%d windows=%d alive=%ds input=%d grf=%d signatures=%d", og_policy.block_vm, og_policy.max_windows,
-               og_policy.alive_interval, og_policy.input_filter, og_policy.grf_strict, og_policy.nsig);
-        og_input_enable(og_policy.input_filter);
+        og_log("policy: vm=%d windows=%d alive=%ds input=%d grf=%d", m.block_vm, m.max_windows, m.alive_interval,
+               m.input_filter, m.grf_strict);
+        og_input_enable(m.input_filter);
+        break;
+    }
+    case OG_S_SIGS: {
+        uint8_t op;
+        int cnt;
+        if (og_wire_sigs(p, n, &op, NULL, NULL) < 0) { og_log("signature list malformed"); return; }
+        EnterCriticalSection(&og_policy_lock);
+        if (op == OG_SIGS_REPLACE) og_policy.nsig = 0;
+        cnt = og_wire_sigs(p, n, &op, on_sig, NULL);
+        LeaveCriticalSection(&og_policy_lock);
+        og_detect_reset();
+        og_log("signatures: %d received, %d active", cnt, og_policy.nsig);
+        og_guard_new_connection();
         break;
     }
     case OG_S_PING: {
@@ -266,9 +302,19 @@ static void handle_control(og_sock *k, const uint8_t *p, size_t n)
         control(k, m, 5);
         break;
     }
-    case OG_S_COLORS:
-        if (n >= 5) og_colors_update(p[1], p[2], p + 5, n - 5);
+    case OG_S_COLORS: {
+        uint8_t kind, op;
+        if (og_wire_colors(p, n, &kind, &op, NULL, NULL) >= 0) og_colors_update(kind, op, p + 5, n - 5);
         break;
+    }
+    case OG_S_CHALLENGE: {
+        og_challenge_msg c;
+        uint8_t r[OG_RESPONSE_LEN];
+        if (og_wire_challenge(p, n, &c) < 0) return;
+        og_challenge_handle(&c, r);
+        control(k, r, sizeof r);
+        break;
+    }
     case OG_S_COMMAND: {
         char cmd[64], reply[256];
         uint8_t m[257];
@@ -294,14 +340,16 @@ static int open_records(og_sock *k)
     size_t pos = 0;
     int ok = 1;
     uint8_t *plain = NULL;
-    while (k->in_len - pos >= 2) {
+    for (;;) {
         const uint8_t *r = k->in + pos;
-        uint16_t blen = rd16(r);
+        uint16_t blen = 0;
         uint8_t nonce[24];
-        if (!blen) { ok = 0; break; }
-        if (k->in_len - pos < (size_t)18 + blen) break;
+        int st = og_wire_record(r, k->in_len - pos, &blen);
+        if (st == 0) break;
+        if (st < 0) { ok = 0; break; }
         plain = (uint8_t *)realloc(plain, blen);
         if (!plain) { ok = 0; break; }
+        rekey(k->k_s2c, k->ctr_s2c);
         make_nonce(nonce, k->ctr_s2c);
         if (crypto_aead_unlock(plain, r + 2, k->k_s2c, nonce, r, 2, r + 18, blen) != 0) {
             og_log("record from server failed authentication");
@@ -327,7 +375,7 @@ static int open_records(og_sock *k)
 static int handshake(og_sock *k)
 {
     uint8_t hello[OG_CLIENT_HELLO_FIXED + OG_MAX_COMPONENTS * (OG_COMPONENT_NAME + 32)];
-    uint8_t e_sec[32], e_pub[32], nonce_c[32], shared[32], keys[64], transcript[64];
+    uint8_t e_sec[32], e_pub[32], nonce_c[32], shared[32], keys[64], transcript[64], salt[OG_SALT_LEN];
     uint8_t sh[OG_SERVER_HELLO_FIXED + 512];
     og_component comp[OG_MAX_COMPONENTS];
     int ncomp = 0, i;
@@ -336,7 +384,8 @@ static int handshake(og_sock *k)
     DWORD deadline = GetTickCount() + HANDSHAKE_TIMEOUT_MS;
     crypto_blake2b_ctx bc;
     static const uint8_t zero[32];
-    static const char label[] = "OdinGuard/v1";
+    static const char label[] = "OdinGuard/v2";
+    og_server_hello h;
     char why[64];
 
     if (!og_random(e_sec, 32) || !og_random(nonce_c, 32)) return 0;
@@ -348,8 +397,10 @@ static int handshake(og_sock *k)
     hello[5] = (uint8_t)((og_is_vm(why, sizeof why) ? OG_FLAG_VM : 0) | (IsDebuggerPresent() ? OG_FLAG_DEBUGGER : 0));
     memcpy(hello + 6, e_pub, 32);
     memcpy(hello + 38, nonce_c, 32);
-    og_identity(hello + 70, hello + 102, comp, &ncomp);
+    og_identity(hello + 70, comp, &ncomp);
+    og_hash_module_code(GetModuleHandleA(NULL), OG_CANON_CODE, hello + 102);
     strncpy((char *)hello + 134, og_cfg.build, 16);
+    og_profile_tag(hello + 150);
     if (ncomp > OG_MAX_COMPONENTS) ncomp = OG_MAX_COMPONENTS;
     hello[OG_CLIENT_HELLO_FIXED - 1] = (uint8_t)ncomp;
     for (i = 0; i < ncomp; i++) {
@@ -370,6 +421,7 @@ static int handshake(og_sock *k)
     slen = rd16(sh + 2);
     if (rd16(sh) != OG_HELLO_ID || slen < OG_SERVER_HELLO_FIXED || slen > sizeof sh) { og_log("handshake: bad server hello"); goto fail; }
     if (!recv_exact(k->s, sh + 4, slen - 4, deadline)) { og_log("handshake: server hello truncated"); goto fail; }
+    if (og_wire_server_hello(sh, slen, &h) <= 0) { og_log("handshake: bad server hello"); goto fail; }
 
     crypto_blake2b_init(&bc, 64);
     crypto_blake2b_update(&bc, hello, len);
@@ -379,6 +431,7 @@ static int handshake(og_sock *k)
         og_log("handshake: server signature invalid (wrong server or man in the middle)");
         goto fail;
     }
+    if (h.version < OG_PROTO_MIN) { og_log("handshake: server protocol %d too old (downgrade refused)", h.version); goto fail; }
     if (sh[5] != OG_STATUS_OK) {
         char msg[513];
         size_t ml = slen - OG_SERVER_HELLO_FIXED;
@@ -393,6 +446,9 @@ static int handshake(og_sock *k)
     if (crypto_verify32(shared, zero) == 0) goto fail;
     crypto_blake2b_init(&bc, 64);
     crypto_blake2b_update(&bc, (const uint8_t *)label, sizeof label - 1);
+    og_profile_proto_salt(salt);
+    crypto_blake2b_update(&bc, salt, OG_SALT_LEN);
+    crypto_wipe(salt, OG_SALT_LEN);
     crypto_blake2b_update(&bc, shared, 32);
     crypto_blake2b_update(&bc, e_pub, 32);
     crypto_blake2b_update(&bc, sh + 6, 32);

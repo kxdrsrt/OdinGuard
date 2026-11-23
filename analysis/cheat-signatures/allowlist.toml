@@ -1,0 +1,230 @@
+# OdinGuard allowlist, generated 2026-11-23 (static measurements only).
+# Same conventions as signatures.toml. kind = "rule" describes a generic condition that needs client logic
+# (no single wire kind); file_sha256 maps to OG_KIND_ALLOW_SHA256 (64).
+# Legit client: "/Users/k/Downloads/RO/1 CLIENT-SIDE/client-dev/ragnarok".
+
+schema = 1
+
+[[allow]]
+id = "OG-ALLOW-001"
+source = "client-dev/ragnarok/ijl15r.dll"
+kind = "file_sha256"
+pattern = "4d0026381f94d7de3d4bb2b8ca3179ea0ecbd80b5fceb1079ec3ab0c86d0ea72"
+note = "ROExt (legit build 2026.01.18.0) as ijl15 proxy, FileDescription 'Ragnarok Extension', LegalCopyright 'Ruri'; exports ijlInit/ijlFree/ijlRead/ijlWrite forwarded to ijl15x and compress/uncompress forwarded to cpsx; reads .\\dinput.ini [ROExt] incl. MinimizeKey/DisableVSync/DisableFadeInOut; no DirectInputCreateA export."
+
+[[allow]]
+id = "OG-ALLOW-002"
+source = "client-dev/ragnarok/ijl15x.dll"
+kind = "file_sha256"
+pattern = "334aa12f7dee453d1c6cb1b661a3bb3494d3e4cc9c2ff3f9002064c78404e43a"
+note = "Original Intel JPEG Library 1.5.4.36 (renamed, OriginalFilename ijl15.dll), PE timestamp 2000-09-15."
+
+[[allow]]
+id = "OG-ALLOW-003"
+source = "client-dev/ragnarok/ddraw.dll"
+kind = "file_sha256"
+pattern = "d0a969fb4b83ac80bb2728d00f0a2c08cafc986f1d166f9b6d54e10217fd8246"
+note = "DxWrapper stub 1.7.8400.25 ('Stub for DxWrapper', OriginalFilename Stub.dll, Sadrate Presents)."
+
+[[allow]]
+id = "OG-ALLOW-004"
+source = "client-dev/ragnarok/dxwrapper.dll"
+kind = "file_sha256"
+pattern = "aaa7027e1b8c0c1dcb81d570d460409cea78b49f769737b7c4b69d7ee2451646"
+note = "DxWrapper 1.7.8400.25 (elishacloud), unsigned; embeds D3DX9D/d3dcompiler_47 resources."
+
+[[allow]]
+id = "OG-ALLOW-005"
+source = "client-dev/ragnarok/dxwrapper.ini"
+kind = "file_sha256"
+pattern = "05c07da4cdaa940d5fd3c48080d639963fb00064f9ed422ba10602697aedd725"
+note = "Shipped DxWrapper config (LoadCustomDllPath empty, LoadPlugins = 0). Users may edit -> see OG-ALLOW-RULE-002."
+
+[[allow]]
+id = "OG-ALLOW-006"
+source = "client-dev/ragnarok/dinput.ini"
+kind = "file_sha256"
+pattern = "104d13b1936c1a58e908bd491eb8f81bae27533553022d7b5df151122006147b"
+note = "Shipped ROExt config for ijl15r.dll (contains also legacy keys MouseFreedom/KeyRemap that this build ignores)."
+
+[[allow]]
+id = "OG-ALLOW-007"
+source = "client-dev/ragnarok/Mss32.dll"
+kind = "file_sha256"
+pattern = "d392adf06d75fad891bf92085c3cd536bb54c14c7e3d086ad9dd78662a117447"
+note = "Miles Sound System 6.1a (RAD Game Tools)."
+
+[[allow]]
+id = "OG-ALLOW-008"
+source = "client-dev/ragnarok/cps.dll"
+kind = "file_sha256"
+pattern = "0f0fd127278e80f74832003518688859b5e4e17820206224ea145a6f17352a4e"
+note = "Gravity compression helper (no version resource, 2014-05-21)."
+
+[[allow]]
+id = "OG-ALLOW-009"
+source = "client-dev/ragnarok/granny2.dll"
+kind = "file_sha256"
+pattern = "befa33fb43f03c6d0b9cbb302bfd7eb7efa2ba8ec682f75f63ac5cd03653570d"
+note = "Granny 2.1.0.5 (RAD Game Tools)."
+
+[[allow]]
+id = "OG-ALLOW-010"
+source = "client-dev/ragnarok/binkw32.dll"
+kind = "file_sha256"
+pattern = "48b7566c3d94d1dff2866517586b40397ed57f8f238587feadf667a2db8cb995"
+note = "RAD Video Tools 1.100r."
+
+[[allow]]
+id = "OG-ALLOW-011"
+source = "client-dev/ragnarok/libcurl.dll"
+kind = "file_sha256"
+pattern = "f328d32208562535cf364abe37d878cd0bad997ad055bd0705625e5338ae029a"
+note = "libcurl 7.46.0."
+
+[[allow]]
+id = "OG-ALLOW-012"
+source = "client-dev/ragnarok/mfc90.dll"
+kind = "file_sha256"
+pattern = "287bd98054c5d2c4126298ee50a2633edc745bc76a1ce04e980f3ecc577ce943"
+note = "MSVC 2008 MFC runtime 9.00.21022.08 (Microsoft signed)."
+
+[[allow]]
+id = "OG-ALLOW-013"
+source = "client-dev/ragnarok/msvcp90.dll"
+kind = "file_sha256"
+pattern = "4f7ed27b532888ce72b96e52952073eab2354160d1156924489054b7fa9b0b1a"
+note = "MSVC 2008 C++ runtime 9.00.21022.8."
+
+[[allow]]
+id = "OG-ALLOW-014"
+source = "client-dev/ragnarok/msvcr90.dll"
+kind = "file_sha256"
+pattern = "ed0170d3de86da33e02bfa1605eec8ff6010583481b1c530843867c1939d2185"
+note = "MSVC 2008 C runtime 9.00.21022.8."
+
+[[allow]]
+id = "OG-ALLOW-015"
+source = "client-dev/ragnarok/msvcr100.dll"
+kind = "file_sha256"
+pattern = "8793353461826fbd48f25ea8b835be204b758ce7510db2af631b28850355bd18"
+note = "MSVC 2010 C runtime 10.00.40219.325 (Microsoft signed)."
+
+[[allow]]
+id = "OG-ALLOW-016"
+source = "client-dev/ragnarok/msvcp110.dll"
+kind = "file_sha256"
+pattern = "c8d5572ca8d7624871188f0acabc3ae60d4c5a4f6782d952b9038de3bc28b39a"
+note = "MSVC 2012 C++ runtime 11.00.51106.1."
+
+[[allow]]
+id = "OG-ALLOW-017"
+source = "client-dev/ragnarok/msvcr110.dll"
+kind = "file_sha256"
+pattern = "b30160e759115e24425b9bcdf606ef6ebce4657487525ede7f1ac40b90ff7e49"
+note = "MSVC 2012 C runtime 11.00.51106.1."
+
+[[allow]]
+id = "OG-ALLOW-018"
+source = "client-dev/ragnarok/Mp3dec.asi"
+kind = "file_sha256"
+pattern = "d3f3217fac27bcaf06bd47174eac0f20f0b00b71d96762962d141f646308a5a6"
+note = "Miles MP3 decoder plugin."
+
+[[allow]]
+id = "OG-ALLOW-019"
+source = "client-dev/ragnarok/Mssfast.m3d"
+kind = "file_sha256"
+pattern = "031a18c4f272dbe9c19c4e5a8be732309165c05f4898728cf1bd02b9bff22b5c"
+note = "Miles 3D provider."
+
+[[allow]]
+id = "OG-ALLOW-020"
+source = "client-dev/ragnarok/Microsoft.VC90.CRT.manifest"
+kind = "file_sha256"
+pattern = "9e0220511d4ebdb014cc17ecb8319d57e3b0fea09681a80d8084aa8647196582"
+note = "VC90 CRT manifest."
+
+[[allow]]
+id = "OG-ALLOW-021"
+source = "client-dev/ragnarok/Microsoft.VC90.MFC.manifest"
+kind = "file_sha256"
+pattern = "f7205c5c0a629d0cc60e30e288e339f08616be67b55757d4a403a2b54e23922b"
+note = "VC90 MFC manifest."
+
+[[allow]]
+id = "OG-ALLOW-022"
+source = "client-dev/ragnarok/ijl15.dll"
+kind = "file_sha256"
+pattern = "faf7a41fa2df56cf98e95a98597271563c39528c733f38ea5f13095982f32f36"
+note = "OdinGuard loader (ijl15 proxy). BUILD-SPECIFIC hash: update on every OdinGuard release."
+
+[[allow]]
+id = "OG-ALLOW-023"
+source = "client-dev/ragnarok/odinguard.dll"
+kind = "file_sha256"
+pattern = "a06e9cfafac335107f486410682a1af2beaf202e9fa3a45989dffcd79581420a"
+note = "OdinGuard 0.3.0 client (BurningRO). BUILD-SPECIFIC hash: update on every OdinGuard release."
+
+[[allow]]
+id = "OG-ALLOW-GRF-001"
+source = "client-dev/ragnarok/data.grf"
+kind = "grf_sha256"
+pattern = "cc0f830827bf9468316e4c56a727140ebf9034c7be17ee282c6b073c843d5737"
+note = "Client data GRF (dev build) - update with every patch."
+
+[[allow]]
+id = "OG-ALLOW-GRF-002"
+source = "client-dev/ragnarok/core.grf"
+kind = "grf_sha256"
+pattern = "cd782a7fc93a403bf5fa38eedd5e6c206ba59886efa0e55623ca7885110766f3"
+note = "Server core GRF (dev build) - update with every patch."
+
+[[allow]]
+id = "OG-ALLOW-GRF-003"
+source = "client-dev/ragnarok/cdata.grf"
+kind = "grf_sha256"
+pattern = "4ef61473da8610a2e97e3a63ace27b9835b5fb3995fb469eb2cb744e7893300e"
+note = "Server custom data GRF (dev build) - update with every patch."
+
+[[allow]]
+id = "OG-ALLOW-GRF-004"
+source = "client-dev/ragnarok/cpal.grf"
+kind = "grf_sha256"
+pattern = "943a76286bd8e909587efd9fa3bf809c1b6f88e87358a493a0318f10ff9cc1ee"
+note = "Server palette GRF (dev build) - update with every patch."
+
+[[allow]]
+id = "OG-ALLOW-RULE-001"
+source = "ROExt legit (generic)"
+kind = "rule"
+pattern = "module=ijl15r.dll;exports:ijlInit,ijlFree,ijlRead,ijlWrite;verinfo:FileDescription=Ragnarok Extension"
+note = "ROExt is allowed only as the ijl15 proxy with an allowlisted hash. The same FileDescription/LegalCopyright ('Ruri') as dinput.dll (export DirectInputCreateA) is NOT allowed (OG-ROEXT-*)."
+
+[[allow]]
+id = "OG-ALLOW-RULE-002"
+source = "DxWrapper (generic)"
+kind = "rule"
+pattern = "module=ddraw.dll|dxwrapper.dll;sha256 in allowlist;dxwrapper.ini:LoadCustomDllPath=;dxwrapper.ini:LoadPlugins=0"
+note = "DxWrapper can load extra DLLs (LoadCustomDllPath, plugins). Allow only with allowlisted hashes and with these ini values; otherwise report the loaded custom DLL."
+
+[[allow]]
+id = "OG-ALLOW-RULE-003"
+source = "Microsoft runtimes (generic)"
+kind = "rule"
+pattern = "authenticode:O=Microsoft Corporation"
+note = "MSVC runtimes in other versions are acceptable when Microsoft-signed; unsigned copies only by hash."
+
+[[allow]]
+id = "OG-ALLOW-RULE-004"
+source = "OdinGuard (generic)"
+kind = "rule"
+pattern = "module=odinguard.dll|ijl15.dll;hash from OdinGuard release manifest"
+note = "Prefer the signed release manifest (tools/make_manifest.py) over fixed hashes for OdinGuard's own files."
+
+[[allow]]
+id = "OG-ALLOW-RULE-005"
+source = "AzzyAI / homunculus AI (context)"
+kind = "rule"
+pattern = "path=AI\\USER_AI\\*.lua"
+note = "Homunculus/mercenary AI Lua scripts are a client feature; do not treat AI folders as cheats (WOERO ships AzzyAI-style files and lua.exe)."

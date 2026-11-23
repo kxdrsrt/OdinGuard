@@ -1,0 +1,216 @@
+# OdinGuard Anti Cheat – aura catalog (module "auras"). Operators can add their own auras: the Studio checks that
+# the effect exists in the client or in odin.grf (tools/check_auras.py) before it is written to the server config.
+#
+# name     @aura name (lower case, no spaces)
+# effect   hat effect id (HatEffectInfo.lub of the client)
+# file     .str file under data\texture\effect\ (checked with all its textures); empty = effect built into the exe
+#          (only ids tested in game: 25, 26, 27, 29 on the 2018-06-20 client)
+# rarity   common | uncommon | rare | epic | legendary
+# unlock   quest:<id> (npc/added/shared/odinguard_auras.txt) | mvp:<kills> | bg_wins:<wins> | woe_castles:<castles held
+#          at the end of WoE> | event:<name> (F_OG_Milestone "event","<name>" from an event script) | gm
+# Auras are never sold for real money.
+
+schema = 1
+
+[[aura]]
+name = "green"
+effect = 25
+file = ""
+rarity = "common"
+unlock = "quest:aura_t1"
+
+[[aura]]
+name = "yellow"
+effect = 27
+file = ""
+rarity = "common"
+unlock = "quest:aura_t1"
+
+[[aura]]
+name = "circle"
+effect = 26
+file = ""
+rarity = "common"
+unlock = "quest:aura_t1"
+
+[[aura]]
+name = "violet"
+effect = 29
+file = ""
+rarity = "common"
+unlock = "quest:aura_t1"
+
+[[aura]]
+name = "blossom"
+effect = 1
+file = "efst_blossom_fluttering\\sakura.str"
+rarity = "uncommon"
+unlock = "quest:aura_t2"
+
+[[aura]]
+name = "feathers"
+effect = 39
+file = "efst_feather_fluttering\\feath.str"
+rarity = "uncommon"
+unlock = "quest:aura_t2"
+
+[[aura]]
+name = "butterfly"
+effect = 12
+file = "efst_Flutter_Butterfly\\Flutter_Butterfly.str"
+rarity = "uncommon"
+unlock = "quest:aura_t2"
+
+[[aura]]
+name = "floral"
+effect = 44
+file = "efst_Floral_Waltz\\Floral_Waltz.str"
+rarity = "uncommon"
+unlock = "quest:aura_t2"
+
+[[aura]]
+name = "snowflake"
+effect = 91
+file = "efst_SnowFlake_Tiara\\nnnaaa.str"
+rarity = "uncommon"
+unlock = "quest:aura_t2"
+
+[[aura]]
+name = "stars"
+effect = 81
+file = "efst_ManyStars\\hikariga.str"
+rarity = "uncommon"
+unlock = "quest:aura_t2"
+
+[[aura]]
+name = "firework"
+effect = 51
+file = "efst_firework\\firework.str"
+rarity = "uncommon"
+unlock = "quest:aura_t2"
+
+[[aura]]
+name = "magicfeather"
+effect = 45
+file = "efst_magical_feather\\magical_feather.str"
+rarity = "uncommon"
+unlock = "quest:aura_t2"
+
+[[aura]]
+name = "banish"
+effect = 3
+file = "rl_banishing_buster\\vanishing1.str"
+rarity = "rare"
+unlock = "bg_wins:25"
+
+[[aura]]
+name = "ljosalfar"
+effect = 4
+file = "efst_ljosalfar\\ljosalfar.str"
+rarity = "rare"
+unlock = "bg_wins:100"
+
+[[aura]]
+name = "valhalla"
+effect = 18
+file = "efst_valhalla_idol\\odl2.str"
+rarity = "rare"
+unlock = "woe_castles:3"
+
+[[aura]]
+name = "angelstairs"
+effect = 19
+file = "efst_Angel_Stairs\\Angel_Stairs.str"
+rarity = "rare"
+unlock = "mvp:25"
+
+[[aura]]
+name = "newyear"
+effect = 20
+file = "efst_GlowOfNewYear\\halo.str"
+rarity = "rare"
+unlock = "mvp:100"
+
+[[aura]]
+name = "glory"
+effect = 92
+file = "efst_Midgarts_Glory\\halo_2.str"
+rarity = "epic"
+unlock = "woe_castles:10"
+
+[[aura]]
+name = "angelfeather"
+effect = 13
+file = "efst_Angel_Fluttering\\Angel_Fluttering.str"
+rarity = "epic"
+unlock = "mvp:250"
+
+[[aura]]
+name = "angelblessing"
+effect = 14
+file = "efst_blessing_of_angels\\tensi3.str"
+rarity = "epic"
+unlock = "bg_wins:250"
+
+[[aura]]
+name = "magiccircle"
+effect = 56
+file = "efst_Magiccircle\\mc.str"
+rarity = "epic"
+unlock = "woe_castles:25"
+
+[[aura]]
+name = "rainbowcircle"
+effect = 90
+file = "efst_MagiccircleRainbow\\mcr.str"
+rarity = "legendary"
+unlock = "mvp:500"
+
+[[aura]]
+name = "fluffywing"
+effect = 95
+file = "efst_FluffyWing\\ypen.str"
+rarity = "legendary"
+unlock = "bg_wins:500"
+
+[[aura]]
+name = "poring"
+effect = 97
+file = "efst_C_Popping_Poring_Aura\\C_Popping_Poring_Aura.str"
+rarity = "legendary"
+unlock = "event:poring"
+
+[[aura]]
+name = "blackbutterfly"
+effect = 53
+file = "efst_FlutterButterfly_BL\\Flutter_Butterfly.str"
+rarity = "legendary"
+unlock = "event:halloween"
+
+[[aura]]
+name = "cherrytree"
+effect = 79
+file = "efst_Full_BloomCherry_Tree\\Full_BloomCherry_Tree.str"
+rarity = "legendary"
+unlock = "event:spring"
+
+[[aura]]
+name = "scaraba"
+effect = 54
+file = "EFST_Qscaraba\\Qscaraba.str"
+rarity = "legendary"
+unlock = "event:lms"
+
+[[aura]]
+name = "taego"
+effect = 98
+file = "efst_ResonateTaego\\youmei.str"
+rarity = "legendary"
+unlock = "event:invasion"
+
+[[aura]]
+name = "water"
+effect = 122
+file = "efst_Waterfield2\\waterfield3.str"
+rarity = "legendary"
+unlock = "event:summer"
