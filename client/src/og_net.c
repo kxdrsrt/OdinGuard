@@ -266,6 +266,9 @@ static void handle_control(og_sock *k, const uint8_t *p, size_t n)
         control(k, m, 5);
         break;
     }
+    case OG_S_COLORS:
+        if (n >= 5) og_colors_update(p[1], p[2], p + 5, n - 5);
+        break;
     case OG_S_COMMAND: {
         char cmd[64], reply[256];
         uint8_t m[257];
@@ -382,7 +385,7 @@ static int handshake(og_sock *k)
         memcpy(msg, sh + OG_SERVER_HELLO_FIXED, ml);
         msg[ml] = 0;
         og_log("handshake: refused (%d) %s", sh[5], msg);
-        MessageBoxA(NULL, ml ? msg : "The server refused the connection.", "OdinGuard", MB_OK | MB_ICONWARNING | MB_TOPMOST);
+        og_message(ml ? msg : "The server refused the connection.", MB_OK | MB_ICONWARNING);
         goto fail;
     }
 

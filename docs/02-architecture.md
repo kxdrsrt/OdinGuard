@@ -92,9 +92,19 @@ Phases are O0–O6 from `docs/estland-rebuild/15-odinguard.md`; this table is th
 
 ## 5. Server data model (`server/sql/odinguard.sql`)
 
-`og_client` (unique id ↔ account/last seen), `og_component` (component hashes per unique id),
-`og_ban`, `og_manifest` (allowed exe/DLL hashes per build), `og_signature` (tool detection
-list), `og_event` (detections/crashes), `og_session`.
+`og_client` (machine ↔ account, last seen, build, exe code hash), `og_component` (salted component
+hashes per machine, for fuzzy bans), `og_ban` (machine bans), `og_event` (detections and actions).
+Signatures, allowed exe hashes, policy, colours, auras and LGP skills are in
+`conf/odinguard_athena.conf` (no tables). Colour and aura choices of characters are char regs
+(`og_namecolor`, `og_aura`, `og_flags`).
+
+## 5a. Display features (v0.3)
+
+Server driven, so no client files are needed:
+- **Colour nicks / items:** the map-server sends colour lists (`OG_S_COLORS`) at load and on changes; the
+  DLL recolours matching texts in the exe's outline text function and in GDI `TextOutW`.
+- **Auras:** hat effects from an allow list; `@showauras` filters the hat-effect packets per viewer.
+- **LGP:** per viewer flat ground units instead of the skill's dummy unit, heavy animation left out.
 
 ## 6. Risks and honest limits
 

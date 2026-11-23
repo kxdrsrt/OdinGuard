@@ -8,8 +8,9 @@
 
 #include "../../proto/og_proto.h"
 
+#include "og_version.h"
+
 #define OG_ABI_VERSION 1
-#define OG_VERSION_STR "0.1.0"
 
 #ifdef OG_BUILD
 #define OG_API __declspec(dllexport)
@@ -90,6 +91,13 @@ void og_cmd_handle(const char *cmd, char *reply, size_t cap);
 int  og_cmds_init(void);
 void og_input_enable(int on);
 int  og_assets_check(char *detail, size_t cap);   /* 1 = violation */
+
+/* branding, text colours */
+void og_splash_show(HINSTANCE inst, DWORD hold_ms);
+int  og_message(const char *text, UINT type);
+int  og_text_init(void);
+void og_ui_init(void);
+void og_colors_update(uint8_t kind, uint8_t op, const uint8_t *p, size_t n);
 
 /* identity used by the hello */
 void og_identity(uint8_t uid[32], uint8_t exe_code[32], og_component *comp, int *ncomp);

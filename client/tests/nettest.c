@@ -113,9 +113,17 @@ int main(int argc, char **argv)
                 send(m, (const char *)ack, 2, 0);
                 recv_some(m, buf, sizeof buf, 2000);
                 {
-                    static const char *cmds[] = { "!ping", "!vsync off", "!vsync on", "!crash" };
-                    int c;
-                    for (c = 0; c < 4; c++) {
+                    static const char *defcmds[] = { "!ping", "!vsync off", "!vsync on", "!crash" };
+                    const char *cmds[16];
+                    int c, ncmd = 0;
+                    char envbuf[1024], *tok, *ctx = NULL;
+                    /* OG_CHAT="cmd1;cmd2;..." replaces the default commands, OG_HOLD = seconds to stay afterwards */
+                    if (GetEnvironmentVariableA("OG_CHAT", envbuf, sizeof envbuf)) {
+                        for (tok = strtok_r(envbuf, ";", &ctx); tok && ncmd < 16; tok = strtok_r(NULL, ";", &ctx)) cmds[ncmd++] = tok;
+                    } else {
+                        for (c = 0; c < 4; c++) cmds[ncmd++] = defcmds[c];
+                    }
+                    for (c = 0; c < ncmd; c++) {
                         char chat[80], found[200] = "";
                         int k, len = snprintf(chat + 4, sizeof chat - 4, "%s : %s", argc > 7 ? argv[7] : "OgTester", cmds[c]) + 5;
                         chat[0] = (char)0xF3; chat[1] = 0; chat[2] = (char)len; chat[3] = 0;
@@ -130,7 +138,10 @@ int main(int argc, char **argv)
                         printf("MAP: %-10s -> %s\n", cmds[c], found[0] ? found : "(no answer)");
                     }
                 }
-                Sleep(6000); /* heartbeat interval in the test config is 5 s */
+                {
+                    char hold[16];
+                    Sleep(GetEnvironmentVariableA("OG_HOLD", hold, sizeof hold) ? atoi(hold) * 1000 : 6000);
+                }
                 closesocket(m);
             } else {
                 Sleep(1500);

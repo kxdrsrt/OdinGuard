@@ -23,7 +23,7 @@ static void fail(const char *msg)
 {
     og_log("BLOCK: %s%s", msg, og_cfg.log_only ? " (log only)" : "");
     if (og_cfg.log_only) return;
-    MessageBoxA(NULL, msg, "OdinGuard", MB_OK | MB_ICONSTOP | MB_TOPMOST);
+    og_message(msg, MB_OK | MB_ICONSTOP);
     TerminateProcess(GetCurrentProcess(), 1);
 }
 
@@ -97,6 +97,16 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res)
         /* hooks must be in place before the game opens its first connection */
         if (!og_net_init()) og_log("network layer failed to start");
         if (!og_cmds_init()) og_log("command hooks failed");
+        if (!og_text_init()) og_log("text hook failed");
+        og_ui_init();
+#ifdef OG_TEST_CURSOR
+        { void og_test_cursor_init(void); og_test_cursor_init(); }
+#endif
+        {
+            char ini[MAX_PATH];
+            snprintf(ini, sizeof ini, "%s\\odinguard.ini", og_client_dir);
+            og_splash_show(inst, (DWORD)GetPrivateProfileIntA("OdinGuard", "SplashMs", 1800, ini));
+        }
         /* everything else runs off the loader lock */
         CloseHandle(CreateThread(NULL, 0, start_thread, NULL, 0, NULL));
     }

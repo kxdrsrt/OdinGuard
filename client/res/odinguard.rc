@@ -1,0 +1,31 @@
+#include <winver.h>
+#include "../src/og_version.h"
+
+1 ICON "odinguard.ico"
+100 BITMAP "splash.bmp"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION OG_VER_MAJOR, OG_VER_MINOR, OG_VER_PATCH, 0
+PRODUCTVERSION OG_VER_MAJOR, OG_VER_MINOR, OG_VER_PATCH, 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_DLL
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "BurningRO"
+            VALUE "FileDescription", "OdinGuard client protection"
+            VALUE "FileVersion", OG_VERSION_STR
+            VALUE "InternalName", "odinguard"
+            VALUE "LegalCopyright", "BurningRO"
+            VALUE "OriginalFilename", "odinguard.dll"
+            VALUE "ProductName", "OdinGuard"
+            VALUE "ProductVersion", OG_VERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200
+    END
+END

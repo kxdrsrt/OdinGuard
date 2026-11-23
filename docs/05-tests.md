@@ -35,5 +35,27 @@ Live (2026-11-23, after deploy with `ODINGUARD_ENABLE=yes`, `REQUIRED=no`, `LOG_
 plain client and OdinGuard client both reach the HR (6900) and M-LR (6901) login servers; the OdinGuard
 client completes the handshake with the pinned key and receives the policy (22 signatures).
 
-Not tested yet: input filter (needs a desktop session with synthetic input), RCX, Warsaw, alive timeout
-kick, machine limit with two accounts, `@ogban` in game.
+### v0.3 (2026-11-23, same setup, `og_log_only: yes`)
+
+| Test | Result |
+|---|---|
+| Splash screen (layered window, fade) | shown at client start, then the game window |
+| Colour nick (`og_group_namecolor 99`) | name above the character and in the status window gold with black outline |
+| Colour item (`og_item_color 909,FF8000`) | "Jellopy - 2 obtained" with Jellopy in orange |
+| `@aura` (`og_aura`) | aura set, saved in the char reg, shown again after relog; unknown name refused |
+| Aura resources (`tools/check_auras.py`) | 25 `.str` hat effects complete (file + all textures), 12 miss their `.str` |
+| Aura ids in game | 1, 3, 4, 12-14, 18-20, 25-27, 29, 39, 44, 45, 51, 53, 54, 56, 79, 81, 90-92, 95, 97, 98, 122: drawn, no error. 82-84 (`subject_aura`): "Cannot find File" and crash. 59-78, 93, 94, 99-120, 123 (exe effects): nothing drawn |
+| `@showauras` | auras of others hidden for this viewer only, own aura stays |
+| `@lgp` | Storm Gust as light blue cells, characters visible; without `@lgp` the full blizzard |
+| Machine limit (`og_max_per_machine: 1`) | second character from the same machine refused |
+| Alive timeout (firewall blocks `alpha.exe` for 30 s) | `og_event` "alive-timeout", action per `og_log_only` |
+| `@ogban OgPlayer, test ban` | player kicked, `og_ban` row, next login refused (code 4) |
+| `@ogunban 2000001` | ban lifted, login accepted |
+| Release package (`install.bat`, stripped DLL) | installs next to ROExt, splash, handshake, login |
+
+Notes: `NtSuspendProcess` does not stop the emulated x86 process in the ARM VM, so the alive test blocks
+the traffic with a firewall rule instead. Synthetic input (`SendInput`, `SendKeys`) from a scheduled task
+never reaches the guest input queue in Parallels, also not without OdinGuard, so the input filter can
+only be tested on a real Windows machine.
+
+Not tested yet (need real machines): input filter, RCX, Warsaw, VM block on x86 hypervisors.

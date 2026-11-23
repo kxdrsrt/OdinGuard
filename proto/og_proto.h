@@ -58,6 +58,14 @@
                              u16 n, n x { u16 id, u8 kind, u8 len, char pattern[len] } */
 #define OG_S_PING    0x82 /* u32 server_tick */
 #define OG_S_COMMAND 0x83 /* char command[] ("vsync", "crash") */
+#define OG_S_COLORS  0x84 /* u8 kind (OG_COLOR_*), u8 op (OG_COLOR_OP_*), u16 n,
+                             n x { u8 r, u8 g, u8 b, u8 len, char text[len] } – names/items drawn in that colour */
+
+#define OG_COLOR_NAME 1
+#define OG_COLOR_ITEM 2
+#define OG_COLOR_OP_REPLACE 0 /* the list replaces all entries of the kind */
+#define OG_COLOR_OP_SET     1 /* add or change entries */
+#define OG_COLOR_OP_REMOVE  2 /* remove entries (colour ignored) */
 
 /* detection kinds */
 #define OG_KIND_PROCESS 1

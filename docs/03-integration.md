@@ -29,18 +29,16 @@ at first.
 
 ## B. Server (xAthena)
 
-1. `src/map/odinguard.cpp/.hpp` (new): registered in `Makefile.in` / `CMakeLists.txt`.
-2. `conf/import/odinguard.conf` is generated at first start with defaults; the SQL
-   tables come from `og_init()` (`CREATE TABLE IF NOT EXISTS`, same DDL as
-   `server/sql/odinguard.sql`).
-3. Hook points:
-   - `clif.cpp`: packet table entry for `CZ_OG_FRAME`, dispatch to `og_session`.
-   - `login`: ban check by unique id in `login_auth_ok`; `char`: refuse `chr_select`
-     until the handshake is complete when `og_required: true`.
-   - `pc_authok`: attaches session info (already has `max_clients_per_ip`).
-4. Admin: `@ogban <id|char>`, `@ogunban`, `@ogwho`, plus ban list export for the web panel.
-5. Rollout: `og_required: false` + `og_log_only: true` first (collect data), then
-   `og_required: true`.
+Files, hooks, key, environment, rollout and commands: `server/README.md` (exact hook lines in
+`server/HOOKS.txt`). Tables are created at start; the config has working defaults.
+
+## B2. Release package
+
+`sh tools/make_release.sh` builds `dist/OdinGuard-<ver>-client.zip` (loader, guard, ini, install and
+uninstall, README, licences) and `dist/OdinGuard-<ver>-server.zip` (module, config, SQL, setup guide,
+aura check), plus SHA-256 sums. The DLLs are stripped and reproducible. Players install with
+`install.bat <client folder>`; for the patcher, ship `ijl15.dll`, `ijl15r.dll` (ROExt), `odinguard.dll`
+and optionally `odinguard.ini`.
 
 ## C. Order of work (maps to the roadmap)
 
@@ -51,8 +49,9 @@ at first.
 | O2 | Handshake + encrypted records + `!ping`, ws2_32 hooks, server module (login/char/map), bans | **done, tested end to end** |
 | O3 | Tool signatures, injected modules, `!vsync`, `!crash`, Warsaw/RCX tolerance | **done** (RCX/Warsaw untested) |
 | O4 | Input filter, resource rules | **done** (input filter untested) |
-| O4 | LGP, auras, colour nick/item | open: needs render hooks |
-| O5 | Exe import patch, signed releases | open |
+| O4 | LGP, auras, colour nick/item, `@showauras`, splash/branding | **done, tested** (v0.3) |
+| O5 | Release packages (client + server), reproducible builds | **done** |
+| O6 | Exe import patch, signed releases, RCX/Warsaw/input tests on real machines | open |
 
 ## D. Live rollout (2026-11-23)
 

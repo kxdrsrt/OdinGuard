@@ -23,6 +23,7 @@ static void report(const char *what)
     uint8_t m[64];
     size_t n = strlen(what);
     if (now - g_last_report < 60000 && g_last_report) return;
+    og_log("%s", what);
     g_last_report = now;
     m[0] = OG_C_DETECT; m[1] = 0; m[2] = 0; m[3] = OG_KIND_INPUT;
     memcpy(m + 4, what, n);

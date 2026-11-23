@@ -46,9 +46,40 @@ before it looks for `!` commands.
 function). The OdinGuard loader takes its name and forwards the six exports to `ijl15r.dll`
 (ROExt, the previous `ijl15.dll`), which forwards to `ijl15x.dll`.
 
-## Next targets (for O4 visual features)
+## Packing
 
-- ground skill rendering (LGP): find the code that draws skill units (`CSkill`/ground effect
-  textures, strings `effect\\` in the exe); hook point for custom textures from `data\odinguard\`.
-- name rendering for colour nicks: `CGameActor` name balloon (`UINameBalloonText`).
-- item name colour: item window text drawing (`UIItemWnd`).
+`alpha.exe` is packed: its code section is unpacked only after the static imports (`ijl15.dll`) and their
+DLLs have run `DllMain`. Hooks into exe code are therefore installed from a thread that polls up to 60 s
+until the expected bytes appear, and every hook checks a byte signature first (`client/src/og_ui.c`).
+A different exe build simply leaves the hook inactive ("ui hooks: 0 of 1 active" in `odinguard.log`).
+
+## Text drawing (colour nicks and colour items)
+
+| Address | Function | Notes |
+|---|---|---|
+| `0x006fd780` | `UIWindow::TextOutWithOutline` | `thiscall`, `ret 0x24`: x, y, text, len, fg colour, outline colour, font, height, bold. Draws the name above characters and the names in windows. Signature `55 8B EC 6A FF 68 98 92 B8 00 64 A1 00 00 00 00 50 83 EC 24 53 56 57`. |
+| `0x00cf828c` | `UINameBalloonText` vtable | slot 17 = `0x0058a3c0` draws the balloon; colours at `this+0x90` (text) and `+0x94` |
+| `0x0042d6d0` | `TextOutW` wrapper | plain GDI text (chat, item windows, status window) |
+| `0x0042cc40` | `SetTextColor` wrapper | |
+
+OdinGuard hooks `TextOutWithOutline` (names with outline) and GDI `TextOutW` in gdi32 (all other texts).
+Both look the text up in a hash table that the server fills (`OG_S_COLORS`). Item names are matched
+without refine (`+7 `), slots (` [4]`) and amounts (`: 5 ea`); character names up to ` (` (guild/party
+suffix). `TextLog=1` in `odinguard.ini` logs every drawn text to find the exact form of a new text.
+
+## Hat effects (auras)
+
+The client draws hat effect ids from `data\luafiles514\lua files\hateffectinfo\hateffectinfo.lub`
+(the first GRF in DATA.INI wins; ours comes from `core.grf`). An entry is either a `.str` file under
+`data\texture\effect\` or a client effect id built into the exe (`hatEffectID`). Missing files show
+"Cannot find File" and can crash the client at login, so the server only allows ids from its `og_aura`
+list; `tools/check_auras.py <client>` checks every `.str` entry and its textures. Results for our client
+in `05-tests.md`.
+
+## Ground skills (LGP)
+
+No client hook is needed: the map-server sends players with `@lgp` an existing flat ground unit
+(Volcano 0x9a, Deluge 0x9b, Violent Gale 0x9c, Land Protector 0x9d) instead of `UNT_DUMMYSKILL` for the
+cells of Storm Gust, Meteor Storm, Lord of Vermilion, Heaven's Drive and the Ninja ground skills, and
+leaves out the heavy `ZC_NOTIFY_GROUNDSKILL` animation. The textures are in every data.grf, so there are
+no missing-file or BMP errors.
