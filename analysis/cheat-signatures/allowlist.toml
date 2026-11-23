@@ -164,7 +164,7 @@ id = "OG-ALLOW-023"
 source = "client-dev/ragnarok/odinguard.dll"
 kind = "file_sha256"
 pattern = "a06e9cfafac335107f486410682a1af2beaf202e9fa3a45989dffcd79581420a"
-note = "OdinGuard 0.3.0 client (BurningRO). BUILD-SPECIFIC hash: update on every OdinGuard release."
+note = "OdinGuard 0.3.0 reference client (dev build). BUILD-SPECIFIC hash: update on every OdinGuard release."
 
 [[allow]]
 id = "OG-ALLOW-GRF-001"

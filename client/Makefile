@@ -27,7 +27,7 @@ LIBS     = -lws2_32 -liphlpapi -ladvapi32 -luser32 -lgdi32 -lmsimg32 -lssp -lgcc
 KEYS     = ../keys
 RC_DIR  ?= res
 
-all: $(OUT)/odinguard.dll $(OUT)/ijl15.dll $(OUT)/selftest.exe $(OUT)/nettest.exe $(OUT)/inject.exe
+all: $(OUT)/odinguard.dll $(OUT)/ijl15.dll $(OUT)/selftest.exe $(OUT)/nettest.exe $(OUT)/inject.exe $(OUT)/dettest.exe
 
 $(OUT):
 	mkdir -p $(OUT)
@@ -65,6 +65,10 @@ $(OUT)/ijl15.dll: loader/ijl15_loader.c loader/ijl15_loader.def | $(OUT)
 
 $(OUT)/selftest.exe: tests/selftest.c | $(OUT)
 	$(CC) -O2 -Wall -static -o $@ tests/selftest.c
+
+# detection test: og_detect.c with the development profile, no network (see tests/dettest.c)
+$(OUT)/dettest.exe: tests/dettest.c src/og_detect.c src/og_log.c src/og_sha256.c src/og.h | $(OUT)
+	$(CC) -O2 -Wall -Wextra -Wno-format-truncation -std=gnu11 -D_WIN32_WINNT=0x0601 -Isrc -Isrc/dev -static -o $@ tests/dettest.c src/og_detect.c src/og_log.c src/og_sha256.c -ladvapi32 -luser32 -lbcrypt
 
 $(OUT)/nettest.exe: tests/nettest.c | $(OUT)
 	$(CC) -O2 -Wall -static -o $@ tests/nettest.c -lws2_32

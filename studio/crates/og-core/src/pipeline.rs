@@ -147,8 +147,13 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     let d = Derived::new(&p, server_seed, build_secret)?;
 
     // ---- client DLL
-    let gendir = out.join("build/gen");
-    let obj = out.join("build/client");
+    // GNU make cannot handle spaces in paths: build in a fixed space-free work folder in that case
+    let work = if std::path::absolute(&out).unwrap_or_else(|_| out.clone()).to_string_lossy().contains(' ') { std::env::temp_dir().join("odinguard-build").join(&p.general.id) } else { out.join("build") };
+    if work.exists() {
+        io(std::fs::remove_dir_all(&work), &work)?;
+    }
+    let gendir = work.join("gen");
+    let obj = work.join("client");
     generate::write(&gendir.join("og_modules.h"), &generate::modules_h(&p, &reg))?;
     generate::write(&gendir.join("og_modules.mk"), &generate::modules_mk(&p, &reg))?;
     generate::write(&gendir.join("og_profile.h"), &generate::profile_h(&p, &d))?;
@@ -177,7 +182,8 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     copy(&obj.join("odinguard.dll"), &client.join("odinguard.dll"))?;
     copy(&obj.join("ijl15.dll"), &client.join("ijl15.dll"))?;
     copy(&root.join("client/package/odinguard.ini"), &client.join("odinguard.ini"))?;
-    copy(&root.join("client/package/README.txt"), &client.join("README.txt"))?;
+    let readme = std::fs::read_to_string(root.join("client/package/README.txt")).map_err(|e| Error::Io("client/package/README.txt".into(), e))?;
+    generate::write(&client.join("README.txt"), &readme.replace("{operator}", &p.general.operator).replace('\n', "\r\n"))?;
     copy(&root.join("third_party/LICENCE-monocypher.md"), &client.join("LICENSE-monocypher.md"))?;
     copy(&root.join("third_party/minhook/LICENSE.txt"), &client.join("LICENSE-minhook.txt"))?;
     rep.guard_sha256 = sha(&client.join("odinguard.dll"))?;
