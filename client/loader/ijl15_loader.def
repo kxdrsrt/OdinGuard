@@ -1,0 +1,8 @@
+LIBRARY ijl15
+EXPORTS
+    compress=ijl15r.compress
+    uncompress=ijl15r.uncompress
+    ijlInit=ijl15r.ijlInit
+    ijlFree=ijl15r.ijlFree
+    ijlRead=ijl15r.ijlRead
+    ijlWrite=ijl15r.ijlWrite

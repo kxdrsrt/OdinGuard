@@ -1,0 +1,104 @@
+﻿
+FullName                              Length    
+--------                              ------    
+C:\muh\MuhRO                                    
+C:\muh\MuhRO\.muh-helper                        
+C:\muh\MuhRO\AI                                 
+C:\muh\MuhRO\AI_sakray                          
+C:\muh\MuhRO\BGM                                
+C:\muh\MuhRO\savedata                           
+C:\muh\MuhRO\skin                               
+C:\muh\MuhRO\System                             
+C:\muh\MuhRO\addons.grf               62        
+C:\muh\MuhRO\aossdk.dll               254083    
+C:\muh\MuhRO\basesdk.dll              3277696   
+C:\muh\MuhRO\binkw32.dll              188416    
+C:\muh\MuhRO\CDResFileList.dat        10945     
+C:\muh\MuhRO\concrt140.dll            249600    
+C:\muh\MuhRO\custom.grf               62        
+C:\muh\MuhRO\d3dx9_43.dll             2001304   
+C:\muh\MuhRO\ddraw.dll                8921584   
+C:\muh\MuhRO\dgVoodoo.conf            21903     
+C:\muh\MuhRO\dinput.ini               1882      
+C:\muh\MuhRO\dxvk.conf                361       
+C:\muh\MuhRO\FORMAT.CFG               898       
+C:\muh\MuhRO\granny2.dll              230455    
+C:\muh\MuhRO\gray.grf                 62        
+C:\muh\MuhRO\GRF.INI                  68        
+C:\muh\MuhRO\iapsdk.dll               3280256   
+C:\muh\MuhRO\IFU13.inf                46807     
+C:\muh\MuhRO\IFU19.inf                42044     
+C:\muh\MuhRO\IFU7A.inf                41844     
+C:\muh\MuhRO\IFUEC.inf                46821     
+C:\muh\MuhRO\ijl15.dll                9728      
+C:\muh\MuhRO\ijl15x.dll               372736    
+C:\muh\MuhRO\imgui.ini                105       
+C:\muh\MuhRO\Init.exe                 15016     
+C:\muh\MuhRO\libcurl.dll              268288    
+C:\muh\MuhRO\lua.exe                  188416    
+C:\muh\MuhRO\mfc100.dll               4397384   
+C:\muh\MuhRO\mfc100u.dll              4422992   
+C:\muh\MuhRO\mfc110.dll               4421192   
+C:\muh\MuhRO\mfc110u.dll              4456520   
+C:\muh\MuhRO\mfc140.dll               4756736   
+C:\muh\MuhRO\mfc140u.dll              5051648   
+C:\muh\MuhRO\mfc90.dll                1156600   
+C:\muh\MuhRO\mfc90u.dll               1162744   
+C:\muh\MuhRO\mfcm100.dll              81744     
+C:\muh\MuhRO\mfcm100u.dll             81744     
+C:\muh\MuhRO\mfcm140.dll              92416     
+C:\muh\MuhRO\mfcm140u.dll             92208     
+C:\muh\MuhRO\mfcm90.dll               59904     
+C:\muh\MuhRO\mfcm90u.dll              59904     
+C:\muh\MuhRO\mguard1.dat              5153      
+C:\muh\MuhRO\mguard2.dat              1385481   
+C:\muh\MuhRO\monstersizeeffect.dll    103164    
+C:\muh\MuhRO\Mp3dec.asi               125952    
+C:\muh\MuhRO\mss32.dll                347904    
+C:\muh\MuhRO\Mssfast.m3d              62976     
+C:\muh\MuhRO\msvcm90.dll              224768    
+C:\muh\MuhRO\msvcp100.dll             421200    
+C:\muh\MuhRO\msvcp110.dll             535008    
+C:\muh\MuhRO\MSVCP140.dll             448408    
+C:\muh\MuhRO\msvcp140_1.dll           28440     
+C:\muh\MuhRO\msvcp140_2.dll           172824    
+C:\muh\MuhRO\msvcp140_atomic_wait.dll 46488     
+C:\muh\MuhRO\msvcp140_codecvt_ids.dll 30104     
+C:\muh\MuhRO\msvcp60.dll              401462    
+C:\muh\MuhRO\msvcp90.dll              568832    
+C:\muh\MuhRO\msvcr100.dll             773968    
+C:\muh\MuhRO\msvcr110.dll             875472    
+C:\muh\MuhRO\msvcr90.dll              655872    
+C:\muh\MuhRO\muh-generated.grf        111472107 
+C:\muh\MuhRO\Muh.exe                  49823232  
+C:\muh\MuhRO\muh.grf                  4949301778
+C:\muh\MuhRO\MuhExt.dll               3992048   
+C:\muh\MuhRO\MuhExt.ini               555       
+C:\muh\MuhRO\muhguard-reject-paths.v1 563975    
+C:\muh\MuhRO\muhro.ico                4286      
+C:\muh\MuhRO\MuhUI.ini                161       
+C:\muh\MuhRO\muhvault-current.mvm     337919240 
+C:\muh\MuhRO\muhvault-current.mvm.sig 64        
+C:\muh\MuhRO\muhvault-retire.json     73        
+C:\muh\MuhRO\muhvault-signing.public  72        
+C:\muh\MuhRO\Muh_Patcher.dat          25        
+C:\muh\MuhRO\Muh_Patcher.exe          18406896  
+C:\muh\MuhRO\Muh_Patcher.lock         0         
+C:\muh\MuhRO\Muh_Patcher.preload.lock 0         
+C:\muh\MuhRO\muh_splash.bmp           245814    
+C:\muh\MuhRO\npkcrypt.sys             21442     
+C:\muh\MuhRO\npkcrypt.vxd             18562     
+C:\muh\MuhRO\npkcusb.sys              37009     
+C:\muh\MuhRO\NPSCAN.DES               278619    
+C:\muh\MuhRO\opensetup.ini            1791      
+C:\muh\MuhRO\plugin.ini               4836      
+C:\muh\MuhRO\ragnarok.ico             2998      
+C:\muh\MuhRO\RagnarokReplay.exe       181248    
+C:\muh\MuhRO\Resources.cps.dll        73728     
+C:\muh\MuhRO\Resources.lzma.dll       79360     
+C:\muh\MuhRO\v3hunt.dll               131201    
+C:\muh\MuhRO\vccorlib140.dll          269568    
+C:\muh\MuhRO\vcruntime140.dll         90520     
+C:\muh\MuhRO\webview2loader.dll       116184    
+
+

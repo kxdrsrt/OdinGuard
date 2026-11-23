@@ -1,0 +1,9 @@
+analysis/_bin/
+client/build/
+*.o
+*.dll
+*.exe
+*.log
+__pycache__/
+*.key
+keys/
