@@ -19,6 +19,10 @@ enum Cmd {
     New { profile: PathBuf, #[arg(long)] id: String, #[arg(long)] operator: String },
     /// Check a profile against the module registry
     Validate { profile: PathBuf },
+    /// Print the module, command and aura registry as JSON
+    Registry,
+    /// Print a profile (migrated) as JSON
+    Show { profile: PathBuf },
     /// Migrate an older profile to the current schema (keeps a .bak copy)
     Migrate { profile: PathBuf },
     /// What a build would contain
@@ -70,6 +74,8 @@ fn run(cli: Cli) -> Result<()> {
             w.iter().for_each(|w| println!("warning: {w}"));
             println!("ok");
         }
+        Cmd::Registry => print(&reg()?),
+        Cmd::Show { profile } => print(&Profile::load(&profile)?),
         Cmd::Migrate { profile } => {
             let text = std::fs::read_to_string(&profile).map_err(|e| og_core::Error::Io(profile.display().to_string(), e))?;
             let p = Profile::load(&profile)?;

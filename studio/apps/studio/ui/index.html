@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>OdinGuard Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <img src="icon.png" alt="">
+  <div><h1>OdinGuard Studio</h1><span id="ver"></span></div>
+  <div class="grow"></div>
+  <span id="path" class="muted">kein Profil</span>
+  <button id="btn-new">Neu</button>
+  <button id="btn-open">Öffnen</button>
+  <button id="btn-save" class="primary" disabled>Speichern</button>
+</header>
+<nav>
+  <button data-tab="profile" class="active">Profil</button>
+  <button data-tab="modules">Module &amp; Challenges</button>
+  <button data-tab="commands">Commands</button>
+  <button data-tab="auras">Auren</button>
+  <button data-tab="build">Build</button>
+  <button data-tab="rollout">Rollout</button>
+  <button data-tab="updates">Updates</button>
+</nav>
+<div id="status"></div>
+<main>
+  <section id="tab-profile" class="tab active">
+    <p class="muted">Ein Profil ist die einzige Quelle für ein Release: Module, Commands, Signaturen, Branding, Ports, Schlüsselpfade und Rollout-Stufe. Geheimnisse stehen nie im Profil, nur ihre Dateipfade.</p>
+    <div class="grid" id="general"></div>
+  </section>
+  <section id="tab-modules" class="tab"><div id="modules"></div></section>
+  <section id="tab-commands" class="tab"><table id="commands"></table></section>
+  <section id="tab-auras" class="tab"><p class="muted">Katalog aus <code>modules/auras.toml</code> oder dem Profil (<code>aura_catalog</code>). Auren werden nur freigespielt, nie verkauft.</p><table id="auras"></table></section>
+  <section id="tab-build" class="tab">
+    <button id="btn-preview">Vorschau</button> <button id="btn-build" class="primary">Release bauen</button> <button id="btn-verify">Release prüfen</button>
+    <pre id="build-out"></pre>
+  </section>
+  <section id="tab-rollout" class="tab">
+    <p class="muted">Stufe 1 Warnmodus → 2 Kick → 3 Patcher-Auslieferung → 4 Pflicht. Exportiere <code>og_event</code> und <code>og_client</code> (z. B. <code>mysql -B</code>) der letzten Tage.</p>
+    <div class="grid">
+      <label>og_event-Export <input id="ro-events" placeholder="/pfad/og_event.tsv"></label>
+      <label>og_client-Export <input id="ro-clients" placeholder="/pfad/og_client.tsv"></label>
+      <label>Aktive Accounts <input id="ro-active" type="number" min="1"></label>
+      <label>Fehlalarm-Schwelle % <input id="ro-fp" type="number" value="2" step="0.5"></label>
+    </div>
+    <div id="stages"></div>
+    <button id="btn-ro-status">Auswerten</button> <button id="btn-ro-advance" class="primary">Nächste Stufe</button>
+    <pre id="ro-out"></pre>
+  </section>
+  <section id="tab-updates" class="tab">
+    <p class="muted">Studio-Updates kommen signiert (minisign) über https. Core- und Signatur-Updates prüft <code>og update</code> zusätzlich mit signiertem Manifest, verweigert Downgrades und erlaubt Rollback.</p>
+    <button id="btn-upd">Nach Studio-Update suchen</button>
+    <pre id="upd-out"></pre>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

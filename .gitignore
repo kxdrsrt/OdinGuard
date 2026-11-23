@@ -12,3 +12,6 @@ analysis/_work/
 studio/target/
 studio/apps/studio/node_modules/
 keys/
+studio/apps/studio/src-tauri/target/
+studio/apps/studio/src-tauri/gen/
+profiles/keys/

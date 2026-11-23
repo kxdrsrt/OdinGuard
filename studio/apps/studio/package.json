@@ -1,0 +1,14 @@
+{
+  "name": "odinguard-studio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "OdinGuard Anti Cheat Studio (Tauri 2). The UI is plain HTML/CSS/JS, so the only npm package is the Tauri CLI.",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.5"
+  }
+}
