@@ -106,6 +106,54 @@ fn rollout_advance(path: String, events: String, clients: String, active: Option
     Ok(stage)
 }
 
+/// Update endpoint base; `<base>/<channel>.json` plus `<channel>.json.sig`. Overridable for staging/tests.
+fn update_base() -> String {
+    std::env::var("OG_STUDIO_UPDATE_ENDPOINT").unwrap_or_else(|_| "https://updates.odinguard.invalid/studio".into())
+}
+
+/// The minisign key line from the updater plugin config (Tauri stores the .pub file base64 encoded).
+fn updater_pubkey(app: &tauri::AppHandle) -> Res<String> {
+    let b64 = app.config().plugins.0.get("updater").and_then(|u| u.get("pubkey")).and_then(|k| k.as_str()).ok_or("updater pubkey missing")?;
+    og_core::update::minisign_key_line(b64).ok_or_else(|| "updater pubkey has no minisign key line".into())
+}
+
+#[derive(Serialize)]
+struct UpdateInfo {
+    version: String,
+    notes: String,
+    channel: String,
+}
+
+/// Step 1 (og-core): signed channel manifest, downgrade refusal and manifest pinning.
+/// Step 2 (Tauri updater plugin, same manifest URL): artifact signature check and installation.
+#[tauri::command]
+async fn studio_update(app: tauri::AppHandle, channel: String, install: bool) -> Res<Option<UpdateInfo>> {
+    use tauri::Manager;
+    use tauri_plugin_updater::UpdaterExt;
+    if !matches!(channel.as_str(), "stable" | "beta") {
+        return Err(format!("unknown channel {channel}"));
+    }
+    let base = update_base();
+    let dir = app.path().app_data_dir().map_err(err)?.join("updates");
+    let u = og_core::update::Updater { endpoint: base.clone(), channel: channel.clone(), public_key: updater_pubkey(&app)?, dir, allow_loopback_http: false };
+    let current = app.package_info().version.to_string();
+    let checked = tauri::async_runtime::spawn_blocking(move || u.check("studio", &current).map(|m| (m, u)).map_err(err)).await.map_err(err)??;
+    let (Some(m), u) = checked else { return Ok(None) };
+    let info = UpdateInfo { version: m.version.clone(), notes: m.notes.clone(), channel: channel.clone() };
+    if !install {
+        return Ok(Some(info));
+    }
+    let url = tauri::Url::parse(&format!("{}/{channel}.json", base.trim_end_matches('/'))).map_err(err)?;
+    let update = app.updater_builder().endpoints(vec![url]).map_err(err)?.build().map_err(err)?.check().await.map_err(err)?;
+    let Some(update) = update else { return Err("updater plugin found no newer version".into()) };
+    if update.version != m.version {
+        return Err(format!("manifest changed during the update ({} vs {})", update.version, m.version));
+    }
+    update.download_and_install(|_, _| {}, || {}).await.map_err(err)?;
+    u.record_installed("studio", &m).map_err(err)?;
+    Ok(Some(info))
+}
+
 #[tauri::command]
 fn studio_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
@@ -128,6 +176,7 @@ pub fn run() {
             rollout_status,
             rollout_advance,
             studio_version,
+            studio_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running OdinGuard Studio");

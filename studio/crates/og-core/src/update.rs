@@ -151,6 +151,19 @@ impl Updater {
         Ok(file)
     }
 
+    /// Records a version installed by another installer (the Tauri updater plugin) as accepted and pinned, so a later
+    /// manifest cannot offer an older one.
+    pub fn record_installed(&self, key: &str, m: &UpdateManifest) -> Result<()> {
+        let mut s = self.state();
+        if let Some(cur) = s.current.get(key).cloned() {
+            s.previous.insert(key.into(), cur);
+        }
+        s.current.insert(key.into(), m.version.clone());
+        s.accepted.insert(key.into(), m.version.clone());
+        s.pinned.push(hex::encode(Sha256::digest(serde_json::to_vec(m).unwrap_or_default())));
+        self.save(&s)
+    }
+
     /// Switches back to the previous locally kept version (explicit operator action).
     pub fn rollback(&self, key: &str) -> Result<String> {
         let mut s = self.state();
@@ -180,6 +193,49 @@ pub fn manifest_for(version: &str, notes: &str, artifacts: &[(&str, &str, &str)]
         pub_date: String::new(),
         platforms: artifacts.iter().map(|(t, url, sig)| (t.to_string(), Platform { url: url.to_string(), signature: sig.to_string() })).collect(),
     }
+}
+
+/// The minisign key line ("RW...") from a key line, a minisign .pub file or its base64 form (Tauri config).
+pub fn minisign_key_line(any: &str) -> Option<String> {
+    let find = |t: &str| t.lines().map(str::trim).find(|l| l.starts_with("RW") && l.len() == 56).map(str::to_string);
+    find(any).or_else(|| decode_b64(any.trim()).and_then(|b| String::from_utf8(b).ok()).and_then(|t| find(&t)))
+}
+
+/// Writes `<channel>.json` for a release folder: every artifact must have its minisign `.sig` next to it
+/// (as `tauri build` with a signing key or `tauri signer sign` writes it). The manifest itself is signed afterwards.
+pub fn write_manifest(version: &str, notes: &str, base_url: &str, artifacts: &[(String, PathBuf)], out: &Path) -> Result<UpdateManifest> {
+    if !base_url.starts_with("https://") {
+        return Err(Error::Invalid(format!("base url {base_url} must be https")));
+    }
+    let mut list = Vec::new();
+    for (target, file) in artifacts {
+        let sig_path = PathBuf::from(format!("{}.sig", file.display()));
+        let sig = std::fs::read_to_string(&sig_path).map_err(|e| Error::Io(sig_path.display().to_string(), e))?;
+        let name = file.file_name().and_then(|n| n.to_str()).ok_or_else(|| Error::Invalid(format!("{}", file.display())))?;
+        list.push((target.clone(), format!("{}/{name}", base_url.trim_end_matches('/')), sig.trim().to_string()));
+    }
+    let mut m = manifest_for(version, notes, &list.iter().map(|(a, b, c)| (a.as_str(), b.as_str(), c.as_str())).collect::<Vec<_>>());
+    m.pub_date = std::env::var("SOURCE_DATE_EPOCH").unwrap_or_default();
+    std::fs::write(out, serde_json::to_vec_pretty(&m).unwrap_or_default()).map_err(|e| Error::Io(out.display().to_string(), e))?;
+    Ok(m)
+}
+
+/// Offline check of a release folder before publishing: manifest signature and every artifact signature against the
+/// files in the same folder.
+pub fn verify_local(manifest: &Path, public_key: &str) -> Result<UpdateManifest> {
+    let body = std::fs::read(manifest).map_err(|e| Error::Io(manifest.display().to_string(), e))?;
+    let sig_path = PathBuf::from(format!("{}.sig", manifest.display()));
+    let sig = std::fs::read_to_string(&sig_path).map_err(|e| Error::Io(sig_path.display().to_string(), e))?;
+    let key = minisign_key_line(public_key).ok_or_else(|| Error::Signature("public key not recognised".into()))?;
+    verify_minisign(&key, &body, &sig)?;
+    let m: UpdateManifest = serde_json::from_slice(&body).map_err(|e| Error::Parse(manifest.display().to_string(), e.to_string()))?;
+    let dir = manifest.parent().unwrap_or(Path::new("."));
+    for (target, p) in &m.platforms {
+        let name = p.url.rsplit('/').next().unwrap_or_default();
+        let data = std::fs::read(dir.join(name)).map_err(|e| Error::Io(format!("{target}: {name}"), e))?;
+        verify_minisign(&key, &data, &p.signature).map_err(|e| Error::Signature(format!("{target}: {e}")))?;
+    }
+    Ok(m)
 }
 
 pub fn is_newer(candidate: &str, current: &str) -> bool {
@@ -297,6 +353,13 @@ mod tests {
         assert_eq!(u.rollback("studio").unwrap(), "1.0.0");
         assert_eq!(std::fs::read(u.current_file("studio").unwrap()).unwrap(), b"old build");
 
+        // a version installed by the Tauri plugin is pinned as well
+        publish(&files, &k, "1.0.5", b"plugin build", &base);
+        let m = u.check("studio", "1.0.1").unwrap().unwrap();
+        u.record_installed("studio", &m).unwrap();
+        publish(&files, &k, "1.0.4", b"older", &base);
+        assert!(u.check("studio", "1.0.5").is_err());
+
         // foreign key
         let other = keys();
         let u2 = Updater { public_key: other.pk, ..u };
@@ -308,6 +371,23 @@ mod tests {
     fn only_https_outside_tests() {
         let u = Updater { endpoint: "http://example.com".into(), channel: "stable".into(), public_key: String::new(), dir: PathBuf::from("/tmp"), allow_loopback_http: true };
         assert!(u.check("studio", "1.0.0").is_err());
+    }
+
+    #[test]
+    fn release_folder_roundtrip_and_tamper() {
+        let k = keys();
+        let d = tempfile::tempdir().unwrap();
+        let art = d.path().join("OdinGuard Studio.app.tar.gz");
+        std::fs::write(&art, b"bundle").unwrap();
+        std::fs::write(d.path().join("OdinGuard Studio.app.tar.gz.sig"), b64(&sign(&k, b"bundle"))).unwrap();
+        let out = d.path().join("stable.json");
+        assert!(write_manifest("1.0.1", "n", "http://x", &[("darwin-aarch64".into(), art.clone())], &out).is_err());
+        write_manifest("1.0.1", "n", "https://u.example/studio", &[("darwin-aarch64".into(), art.clone())], &out).unwrap();
+        std::fs::write(d.path().join("stable.json.sig"), b64(&sign(&k, &std::fs::read(&out).unwrap()))).unwrap();
+        let pubfile = b64(&format!("untrusted comment: minisign public key\n{}\n", k.pk));
+        assert_eq!(verify_local(&out, &pubfile).unwrap().version, "1.0.1");
+        std::fs::write(&art, b"bundle!").unwrap();
+        assert!(verify_local(&out, &k.pk).is_err());
     }
 
     #[test]

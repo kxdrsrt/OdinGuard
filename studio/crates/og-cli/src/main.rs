@@ -39,8 +39,20 @@ enum Cmd {
     Docs { profile: PathBuf, #[arg(long, default_value = "de")] lang: String },
     /// Rollout status and gate from database exports
     Rollout { profile: PathBuf, #[arg(long)] events: PathBuf, #[arg(long)] clients: PathBuf, #[arg(long)] active: Option<usize>, #[arg(long, default_value_t = 2.0)] fp_percent: f64, #[arg(long)] advance: bool, #[arg(long)] force: bool },
+    /// Write `<channel>.json` for a release folder (artifacts need their .sig next to them); sign it afterwards
+    UpdateManifest { #[arg(long)] version: String, #[arg(long, default_value = "")] notes: String, #[arg(long)] base_url: String, #[arg(long = "artifact", value_parser = parse_artifact)] artifacts: Vec<(String, PathBuf)>, #[arg(long)] out: PathBuf },
+    /// Offline check of a release folder: manifest signature and artifact signatures
+    UpdateVerify { manifest: PathBuf, #[arg(long)] pubkey: String },
     /// Check an update channel (Studio, core or signatures) and optionally install
     Update { #[arg(long)] endpoint: String, #[arg(long, default_value = "stable")] channel: String, #[arg(long)] pubkey: String, #[arg(long, default_value = "studio")] key: String, #[arg(long)] current: String, #[arg(long)] target: String, #[arg(long)] dir: PathBuf, #[arg(long)] install: bool, #[arg(long)] rollback: bool },
+}
+
+fn parse_artifact(s: &str) -> std::result::Result<(String, PathBuf), String> {
+    s.split_once('=').map(|(t, f)| (t.to_string(), PathBuf::from(f))).ok_or_else(|| "expected <target>=<file>".into())
+}
+
+fn read_pubkey(arg: &str) -> String {
+    std::fs::read_to_string(arg).unwrap_or_else(|_| arg.to_string())
 }
 
 fn reg() -> Result<Registry> {
@@ -114,8 +126,17 @@ fn run(cli: Cli) -> Result<()> {
                 println!("profile is now at stage {stage}; rebuild and deploy the server config");
             }
         }
+        Cmd::UpdateManifest { version, notes, base_url, artifacts, out } => {
+            let m = update::write_manifest(&version, &notes, &base_url, &artifacts, &out)?;
+            println!("{} written: {} {} platform(s)", out.display(), m.version, m.platforms.len());
+        }
+        Cmd::UpdateVerify { manifest, pubkey } => {
+            let m = update::verify_local(&manifest, &read_pubkey(&pubkey))?;
+            println!("ok: {} {}, {} platform(s), manifest and artifact signatures valid", manifest.display(), m.version, m.platforms.len());
+        }
         Cmd::Update { endpoint, channel, pubkey, key, current, target, dir, install, rollback } => {
-            let u = update::Updater { endpoint, channel, public_key: pubkey, dir, allow_loopback_http: false };
+            let pk = update::minisign_key_line(&read_pubkey(&pubkey)).unwrap_or(pubkey);
+            let u = update::Updater { endpoint, channel, public_key: pk, dir, allow_loopback_http: false };
             if rollback {
                 println!("rolled back to {}", u.rollback(&key)?);
             } else {

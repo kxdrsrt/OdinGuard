@@ -211,12 +211,15 @@ $("#btn-ro-advance").addEventListener("click", async () => {
   catch (e) { status(String(e), false); }
 });
 $("#btn-upd").addEventListener("click", async () => {
+  const channel = $("#upd-channel").value;
   try {
-    const u = await T.updater.check();
-    if (!u) { $("#upd-out").textContent = "Aktuell."; return; }
-    $("#upd-out").textContent = `Version ${u.version} verfügbar:\n${u.body || ""}`;
-    if (confirm(`Studio ${u.version} installieren?`)) await u.downloadAndInstall();
-  } catch (e) { $("#upd-out").textContent = "Update-Prüfung fehlgeschlagen: " + e; }
+    const u = await invoke("studio_update", { channel, install: false });
+    if (!u) { $("#upd-out").textContent = `Aktuell (Kanal ${channel}).`; return; }
+    $("#upd-out").textContent = `Version ${u.version} (${u.channel}) verfügbar, Manifest-Signatur gültig:\n${u.notes || ""}`;
+    if (!confirm(`Studio ${u.version} installieren?`)) return;
+    await invoke("studio_update", { channel, install: true });
+    $("#upd-out").textContent += "\nInstalliert. Studio neu starten.";
+  } catch (e) { $("#upd-out").textContent = "Update abgelehnt oder fehlgeschlagen: " + e; }
 });
 
 (async () => {
