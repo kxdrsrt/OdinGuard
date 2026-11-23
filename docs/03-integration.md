@@ -47,7 +47,18 @@ at first.
 | Phase | Deliverable | Status |
 |---|---|---|
 | O0 | Repo, reference analysis, architecture, build toolchain | **done** |
-| O1 | Guard skeleton: integrity, hwid, VM, window limit, crash log, manifest tool, SQL | **client skeleton done and tested in the VM**; server module open |
-| O2 | Handshake + framed channel + `!ping`, ws2_32 hooks, server module | next |
-| O3 | Tool signatures, RCX/Warsaw fixes, import patch, `!vsync` | planned |
-| O4 | Input filter, no-delay, asset/GRF policy, LGP, auras, colour nick/item | planned |
+| O1 | Guard: integrity, hwid, VM, window limit, crash log, manifest tool, SQL | **done** |
+| O2 | Handshake + encrypted records + `!ping`, ws2_32 hooks, server module (login/char/map), bans | **done, tested end to end** |
+| O3 | Tool signatures, injected modules, `!vsync`, `!crash`, Warsaw/RCX tolerance | **done** (RCX/Warsaw untested) |
+| O4 | Input filter, resource rules | **done** (input filter untested) |
+| O4 | LGP, auras, colour nick/item | open: needs render hooks |
+| O5 | Exe import patch, signed releases | open |
+
+## D. Live rollout (2026-11-23)
+
+- Easypanel (both services): `ODINGUARD_KEY`, `ODINGUARD_ENABLE=yes`, `ODINGUARD_REQUIRED=no`,
+  `ODINGUARD_LOG_ONLY=yes`. Clients without OdinGuard keep working; clients with it talk encrypted.
+- Dev client `client-dev/ragnarok` has the loader installed; package in `client-dev/odinguard/`
+  (`install.bat` / `uninstall.bat`).
+- Next steps: test with the dev client, read `og_event`, then `ODINGUARD_LOG_ONLY=no`, ship the DLLs
+  with the patcher, finally `ODINGUARD_REQUIRED=yes`.

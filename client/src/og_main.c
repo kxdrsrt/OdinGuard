@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
-og_config og_cfg = { 0, 0, 1, "odinguard-default-salt" };
+og_config og_cfg = { 0, 0, 1, "BurningRO", "2018-06-20", "6900,6121,5121,6901,6122,5122" };
 char og_client_dir[MAX_PATH];
+DWORD og_main_thread;
 
 static volatile LONG g_started;
 
@@ -14,7 +15,8 @@ void og_config_load(const char *dir)
     og_cfg.max_windows = GetPrivateProfileIntA("OdinGuard", "MaxWindows", og_cfg.max_windows, p);
     og_cfg.block_vm = GetPrivateProfileIntA("OdinGuard", "BlockVM", og_cfg.block_vm, p);
     og_cfg.log_only = GetPrivateProfileIntA("OdinGuard", "LogOnly", og_cfg.log_only, p);
-    GetPrivateProfileStringA("OdinGuard", "Salt", og_cfg.salt, og_cfg.salt, sizeof og_cfg.salt, p);
+    GetPrivateProfileStringA("OdinGuard", "Build", og_cfg.build, og_cfg.build, sizeof og_cfg.build, p);
+    GetPrivateProfileStringA("OdinGuard", "Ports", og_cfg.ports, og_cfg.ports, sizeof og_cfg.ports, p);
 }
 
 static void fail(const char *msg)
@@ -47,6 +49,11 @@ OG_API int OdinGuard_Report(char *out, size_t cap)
     for (i = 0; i < n; i++)
         used += snprintf(out + used, cap - used, "component.%s=%s\n", comp[i].name, comp[i].hex);
     used += snprintf(out + used, cap - used, "vm=%d %s\n", og_is_vm(why, sizeof why), why);
+    {
+        char detail[MAX_PATH + 64] = "";
+        int bad = og_assets_check(detail, sizeof detail);
+        used += snprintf(out + used, cap - used, "assets=%s %s\n", bad ? "violation" : "ok", detail);
+    }
     og_scan_files(og_client_dir, files, 65536);
     used += snprintf(out + used, cap - used, "[files]\n%s", files);
     og_scan_modules(mods, 16384, &unk);
@@ -63,12 +70,11 @@ OG_API int OdinGuard_Start(void)
     char why[64];
     if (InterlockedExchange(&g_started, 1)) return 1;
     og_crash_install();
-    if (!og_window_slot_acquire(og_cfg.max_windows))
-        fail("Maximum number of game windows on this computer reached.");
     if (og_cfg.block_vm && og_is_vm(why, sizeof why)) {
         og_log("vm detected: %s", why);
         fail("Running in a virtual machine is not allowed on this server.");
     }
+    og_guard_start();
     og_log("started, client dir %s", og_client_dir);
     return 1;
 }
@@ -81,12 +87,17 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res)
     if (reason == DLL_PROCESS_ATTACH) {
         char *s;
         DisableThreadLibraryCalls(inst);
+        og_main_thread = GetCurrentThreadId();
         GetModuleFileNameA(NULL, og_client_dir, sizeof og_client_dir);
         s = strrchr(og_client_dir, '\\');
         if (s) *s = 0;
         og_config_load(og_client_dir);
         og_log_open(og_client_dir);
-        /* heavy work is done off the loader lock */
+        InitializeCriticalSection(&og_policy_lock);
+        /* hooks must be in place before the game opens its first connection */
+        if (!og_net_init()) og_log("network layer failed to start");
+        if (!og_cmds_init()) og_log("command hooks failed");
+        /* everything else runs off the loader lock */
         CloseHandle(CreateThread(NULL, 0, start_thread, NULL, 0, NULL));
     }
     return TRUE;

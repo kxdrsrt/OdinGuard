@@ -6,6 +6,9 @@
 #define PKT_RING 32
 static struct { uint16_t id; uint16_t len; uint8_t dir; DWORD tick; } g_ring[PKT_RING];
 static volatile LONG g_ring_pos;
+static char g_last_file[64];
+
+const char *og_crash_last_file(void) { return g_last_file; }
 
 /* Called by the network hooks (O2): keeps the last packet headers for the crash log. */
 void og_crash_note_packet(int outbound, uint16_t id, uint16_t len)
@@ -42,7 +45,8 @@ void og_crash_write(EXCEPTION_POINTERS *ep, const char *reason)
     GetLocalTime(&t);
     snprintf(dir, sizeof dir, "%s\\odinguard-crash", og_client_dir);
     CreateDirectoryA(dir, NULL);
-    snprintf(path, sizeof path, "%s\\crash-%04d%02d%02d-%02d%02d%02d.txt", dir, t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
+    snprintf(g_last_file, sizeof g_last_file, "crash-%04d%02d%02d-%02d%02d%02d.txt", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
+    snprintf(path, sizeof path, "%s\\%s", dir, g_last_file);
     f = fopen(path, "w");
     if (!f) return;
 

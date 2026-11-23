@@ -3,8 +3,28 @@
 #include <string.h>
 #include <intrin.h>
 
+static int reg_contains(const char *key, const char *val, const char **needles, char *hit, size_t cap)
+{
+    HKEY k;
+    char buf[256];
+    DWORD type, sz = sizeof buf - 1;
+    int i, found = 0;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &k) != ERROR_SUCCESS) return 0;
+    if (RegQueryValueExA(k, val, NULL, &type, (BYTE *)buf, &sz) == ERROR_SUCCESS && type == REG_SZ) {
+        buf[sz] = 0;
+        for (i = 0; needles[i]; i++)
+            if (strstr(buf, needles[i])) { snprintf(hit, cap, "firmware:%s", buf); found = 1; break; }
+    }
+    RegCloseKey(k);
+    return found;
+}
+
+/* CPUID hypervisor bit, and as second source the firmware strings (the bit is not visible under x86
+   emulation on ARM, e.g. Parallels on Apple Silicon) */
 int og_is_vm(char *why, size_t cap)
 {
+    static const char *vendors[] = { "Parallels", "VMware", "VirtualBox", "innotek", "QEMU", "KVM", "Xen", "Bochs",
+                                     "Virtual Machine", "BHYVE", "Hyper-V", NULL };
     int r[4];
     __cpuid(r, 1);
     if (r[2] & (1 << 31)) {
@@ -14,6 +34,10 @@ int og_is_vm(char *why, size_t cap)
         snprintf(why, cap, "hypervisor:%s", v);
         return 1;
     }
+    if (reg_contains("HARDWARE\\DESCRIPTION\\System\\BIOS", "SystemManufacturer", vendors, why, cap) ||
+        reg_contains("HARDWARE\\DESCRIPTION\\System\\BIOS", "SystemProductName", vendors, why, cap) ||
+        reg_contains("HARDWARE\\DESCRIPTION\\System\\BIOS", "BIOSVendor", vendors, why, cap))
+        return 1;
     why[0] = 0;
     return 0;
 }
