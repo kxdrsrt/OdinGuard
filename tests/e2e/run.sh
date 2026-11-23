@@ -27,9 +27,20 @@ restart_map() {
 	for i in $(seq 1 60); do sleep 3; docker exec ogt-srv sh -c 'grep -a -q "Map Server is now online" /tmp/map.log' 2>/dev/null && break; done
 }
 
+# the server picks the challenged protected file at random: up to four sessions until a file challenge failed
+file_challenge_fails() {
+	for i in 1 2 3 4; do
+		nettest ogtest2 OgPlayer '!ping' 45 >/dev/null
+		[ "$(sql "SELECT COUNT(*) FROM og_event WHERE type=\"challenge:file\"")" -ge 1 ] && return 0
+	done
+	return 1
+}
+
 stage_client() {
 	rm -rf "$E2E"; mkdir -p "$E2E"
 	cp "$ROOT/client/build/nettest.exe" "$1/client/odinguard.dll" "$1/client/odin.grf" "$E2E/"
+	[ -f "$1/client/odin-dark.grf" ] && cp "$1/client/odin-dark.grf" "$E2E/"
+	return 0
 }
 
 cat > /tmp/og_e2e.conf <<'EOF'
@@ -114,9 +125,19 @@ sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
 printf 'X' | dd of="$X/conf/odinguard/odin.grf" bs=1 seek=100 conv=notrunc 2>/dev/null
 restart_map
 sql "DELETE FROM og_event"
-nettest ogtest2 OgPlayer '!ping' 45 >/dev/null
-check "modified odin.grf on one side: file challenge fails" '[ "$(sql "SELECT COUNT(*) FROM og_event WHERE type=\"challenge:file\"")" -ge 1 ]'
+check "modified odin.grf on one side: file challenge fails" 'file_challenge_fails'
 cp "$R/server/conf/odinguard/odin.grf" "$X/conf/odinguard/odin.grf"
+restart_map
+
+echo "== 4b competitive pack (optional protected file)"
+sql "DELETE FROM og_event"
+rm -f "$E2E/odin-dark.grf"
+nettest ogtest2 OgPlayer '!ping' 45 >/dev/null
+check "optional pack missing on the client: no file challenge failure" '[ "$(sql "SELECT COUNT(*) FROM og_event WHERE type=\"challenge:file\"")" = 0 ]'
+cp "$R/client/odin-dark.grf" "$E2E/odin-dark.grf"
+printf 'X' | dd of="$E2E/odin-dark.grf" bs=1 seek=60 conv=notrunc 2>/dev/null
+check "manipulated competitive pack on the client: file challenge fails" 'file_challenge_fails'
+cp "$R/client/odin-dark.grf" "$E2E/odin-dark.grf"
 
 if [ -n "$OTHER" ]; then
 	echo "== 5 a client built for another profile"

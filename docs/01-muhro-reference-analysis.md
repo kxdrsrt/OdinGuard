@@ -53,7 +53,7 @@ Key facts:
    crash reports with a schema version).
 5. HTTP (`winhttp`) for updates/reports; signature checks via `wintrust`/`crypt32`/`bcrypt`.
 
-## 3. Our own client today (BurningRO, 2018-06-20 Sakray)
+## 3. Reference client (2018-06-20 Sakray)
 
 * `alpha.exe`: 32-bit, packed/patched, no guard imports.
 * `client-dev/ragnarok/ijl15.dll` is already an **ROExt proxy** (from muhRO, config

@@ -1,63 +1,57 @@
-# 03 – Client and server integration, step by step
+# 03 – Einbindung beim Betreiber
 
-## A. Client (BurningRO 2018-06-20 client)
+Grundsatz: Es gibt kein Spieler-Setup und kein Spieler-`uninstall`. OdinGuard kommt nur über das Release des
+Betreibers (Studio/`og build`) und dessen Patcher zum Spieler.
 
-Goal: `alpha.exe` starts `odinguard.dll` before any game logic, without a patched exe
-at first.
+## 1. Profil anlegen und bauen
 
-1. **Build** the guard: `make -C client` (32-bit, mingw-w64 or MSVC x86). Output
-   `client/build/odinguard.dll`.
-2. **Loader chain (no exe patch).** `alpha.exe` loads `ijl15.dll` by name. Today that is
-   the ROExt proxy. Rename it to `ijl15r.dll` (it still forwards to `ijl15x.dll`) and put
-   OdinGuard's `ijl15.dll` (`client/loader/`) in its place:
-   `alpha.exe → ijl15.dll (loader) ⇒ forwards 6 exports → ijl15r.dll (ROExt) → ijl15x.dll`,
-   and the loader additionally maps `odinguard.dll` from the same folder. Tested: loader
-   and guard build and the guard runs on x86 Windows (see `client/tests`).
-3. **Manifest.** `python tools/make_manifest.py <client-dir> --build 2018-06-20-a`
-   writes `manifest.json` (SHA-256 of `alpha.exe`, all DLLs, GRFs hash tree optional).
-   Import it on the server (`@ogmanifest` or `server/sql/odinguard.sql` insert).
-4. **Pin the server key (O2).** An Ed25519 key pair is generated per deployment
-   (`keys/`, git-ignored). The public key is compiled into `odinguard.dll`, the private key
-   stays on the server (`conf/import/odinguard.conf`, never in git).
-5. **Ship** `odinguard.dll` + `ijl15.dll` (loader) + `ijl15x.dll` + updated `DATA.INI`
-   through the patcher; add the files to the patcher's required list.
-6. **Stage 2 hardening (O3):** patch the exe import table to include `odinguard.dll`
-   (`tools/patch_import.py`, with backup). After that, deleting the proxy no longer
-   removes the guard. Re-run `make_manifest.py` because the exe hash changes.
-7. **Test matrix:** clean Windows 10/11, Wine/Proton, VM (blocked when `og_block_vm`),
-   RCX, Warsaw machine, antivirus on.
+1. `og new <name>.profile.toml --id <id> --operator "<Servername>"` – legt Profil, Server-Schlüssel, Signier-
+   Schlüssel und Build-Secret an (Dateien bleiben lokal, nie committen, sichern).
+2. Module, Parameter, Commands, Auren und Signaturquellen im Studio oder direkt im TOML wählen; `og validate`.
+3. `og build <profil>` → Release-Ordner (Inhalt siehe `docs/02-architecture.md` §8); `og verify-release <ordner>`.
+4. Bestehende Installation weiterführen: `hwid_salt` und `server_seed` **nie ändern** (sonst verlieren alle
+   Rechner-Sperren ihre Wirkung bzw. ausgelieferte Clients passen nicht mehr zum Server).
 
-## B. Server (xAthena)
+## 2. Client
 
-Files, hooks, key, environment, rollout and commands: `server/README.md` (exact hook lines in
-`server/HOOKS.txt`). Tables are created at start; the config has working defaults.
+1. Der vorhandene `ijl15.dll` des Clients (z. B. ROExt) wird zu `ijl15r.dll`; der OdinGuard-Loader wird
+   `ijl15.dll`. Ladekette: `<exe> → ijl15.dll (Loader) → ijl15r.dll (ROExt) → ijl15x.dll`, zusätzlich lädt der
+   Loader `odinguard.dll`.
+2. `odin.grf` (und optional `odin-dark.grf`) in `DATA.INI` **vor** den übrigen GRFs eintragen:
+   `0=odin.grf`, `1=odin-dark.grf`, danach die bisherigen Einträge.
+3. Alle Dateien aus `client/` plus `ijl15r.dll` in die Pflichtliste des Patchers aufnehmen
+   (`patcher/filelist.txt` enthält Namen und SHA-256).
+4. `odinguard.ini` ist optional (Splash-Dauer, Debug-Log).
 
-## B2. Release package
+## 3. Server (rAthena/xAthena)
 
-`sh tools/make_release.sh` builds `dist/OdinGuard-<ver>-client.zip` (loader, guard, ini, install and
-uninstall, README, licences) and `dist/OdinGuard-<ver>-server.zip` (module, config, SQL, setup guide,
-aura check), plus SHA-256 sums. The DLLs are stripped and reproducible. Players install with
-`install.bat <client folder>`; for the patcher, ship `ijl15.dll`, `ijl15r.dll` (ROExt), `odinguard.dll`
-and optionally `odinguard.ini`.
+1. `server/src/*` in den Emulator kopieren, Hook-Zeilen laut `server/HOOKS.txt` (Repository) setzen, bauen
+   (`og_wire.c` muss in `COMMON_H` stehen, sonst baut make das Objekt bei Änderungen nicht neu).
+2. `server/conf/odinguard_athena.conf`, `server/conf/import/odinguard_conf.txt` und `server/conf/odinguard/`
+   (Signaturpaket, Referenz-Images von Guard und GRFs) nach `conf/` kopieren.
+3. Die drei Werte aus `secrets/odinguard.env` als Umgebungsvariablen setzen (`ODINGUARD_KEY`,
+   `ODINGUARD_PROTO_SALT`, `ODINGUARD_BUILD_SECRET`) oder in `conf/import/odinguard_conf.txt` eintragen – nie in git.
+4. Tabellen (`og_client`, `og_component`, `og_ban`, `og_event`, `og_flag`, `og_aura_unlock`) entstehen beim ersten
+   Start (`CREATE TABLE IF NOT EXISTS`, `server/sql/odinguard.sql` zum Nachlesen).
+5. Aura-Quests: `npc/added/odinguard_auras.txt` in `npc/scripts_added.conf` eintragen, Quest-IDs in
+   `db/import/quest_db.yml` (Questlog-Texte brauchen Einträge in der Client-Lub).
 
-## C. Order of work (maps to the roadmap)
+## 4. Rollout-Stufen (im Profil, `[rollout] stage`)
 
-| Phase | Deliverable | Status |
-|---|---|---|
-| O0 | Repo, reference analysis, architecture, build toolchain | **done** |
-| O1 | Guard: integrity, hwid, VM, window limit, crash log, manifest tool, SQL | **done** |
-| O2 | Handshake + encrypted records + `!ping`, ws2_32 hooks, server module (login/char/map), bans | **done, tested end to end** |
-| O3 | Tool signatures, injected modules, `!vsync`, `!crash`, Warsaw/RCX tolerance | **done** (RCX/Warsaw untested) |
-| O4 | Input filter, resource rules | **done** (input filter untested) |
-| O4 | LGP, auras, colour nick/item, `@showauras`, splash/branding | **done, tested** (v0.3) |
-| O5 | Release packages (client + server), reproducible builds | **done** |
-| O6 | Exe import patch, signed releases, RCX/Warsaw/input tests on real machines | open |
+| Stufe | Server-Schalter | Wirkung | Weiter, wenn |
+|---|---|---|---|
+| 1 Warnmodus | `og_required: no`, `og_log_only: yes` | alles wird nur protokolliert; Flags werden gesammelt, Ban-Welle läuft trocken | `og rollout` zeigt keine ungeprüften Regeln über der Fehlalarm-Schwelle |
+| 2 Kick | `og_log_only: no` | Aktionen greifen (Kick, Flag, Ban-Welle), Spieler ohne Guard spielen weiter | Fehlalarm-Quote bleibt niedrig |
+| 3 Patcher | wie 2 | Guard wird an alle Spieler ausgeliefert | Abdeckung (Accounts mit Guard) hoch genug |
+| 4 Pflicht | `og_required: yes` | ohne gültigen Guard kein Login | – |
 
-## D. Live rollout (2026-11-23)
+`og rollout <profil> --events og_event.tsv --clients og_client.tsv [--active N] [--advance]` (oder Tab „Rollout“
+im Studio) prüft das Gate; nach `--advance` Release neu bauen und die Server-Konfig ausrollen.
 
-- Easypanel (both services): `ODINGUARD_KEY`, `ODINGUARD_ENABLE=yes`, `ODINGUARD_REQUIRED=no`,
-  `ODINGUARD_LOG_ONLY=yes`. Clients without OdinGuard keep working; clients with it talk encrypted.
-- Dev client `client-dev/ragnarok` has the loader installed; package in `client-dev/odinguard/`
-  (`install.bat` / `uninstall.bat`).
-- Next steps: test with the dev client, read `og_event`, then `ODINGUARD_LOG_ONLY=no`, ship the DLLs
-  with the patcher, finally `ODINGUARD_REQUIRED=yes`.
+## 5. Updates
+
+- Signaturpaket: Quellen ändern, `[signatures] version` erhöhen, neu bauen, nur `conf/odinguard/odinguard.sigpack`
+  tauschen und den Map-Server neu starten; der Server lehnt ältere Versionen und ungültige Signaturen ab.
+- Guard/Core: neues Release bauen, Server und Patcher gemeinsam aktualisieren (Protokoll-Inkompatibilität meldet das
+  Studio; v1-Clients sind mit v2-Servern nicht kompatibel).
+- Studio: Tab „Updates“ (Kanal stable/beta), siehe `docs/02-architecture.md` §10.

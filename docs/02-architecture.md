@@ -1,123 +1,222 @@
-# 02 – OdinGuard architecture
+# 02 – Architektur von OdinGuard Anti Cheat 1.0
 
-## 1. Principles
+Kennzeichnung: **[gemessen]** = selbst gebaut/getestet, **[gelesen]** = aus Code/Doku belegt,
+**[vermutet]** = plausibel, nicht geprüft, **[Vorschlag]** = Empfehlung.
 
-1. **Server authority.** A client-side check can always be bypassed by someone who
-   controls the machine. The DLL therefore only *collects and reports* signed/MAC'd
-   evidence; the server decides (kick, ban, flag). Client-side checks only raise the
-   cost of cheating and produce evidence.
-2. **Small stable surface** between exe, loader and guard (versioned C ABI).
-3. **No secrets in the repo.** Keys are generated per deployment into `keys/` (git-ignored).
-4. **Own code.** Written from the public requirement list, not derived from any other
-   guard's code, keys or wire format.
-5. **Degrade safely.** If the guard cannot start, the client does not start; if the
-   server module is absent, the client still plays (config `og_required`).
+## 1. Grundsätze
 
-## 2. Components
+1. **Der Server entscheidet.** Ein Client kann nicht beweisen, dass er ehrlich ist. Echte Sicherheit kommt nur aus
+   serverseitigen Prüfungen (Ratenlimits, Delay, Plausibilität, Handshake-Pflicht, Bans). Alles im Client ist eine
+   **Hürde**: es macht Manipulation teurer und erkennbar und liefert Belege (Abschnitt 9).
+2. **Offener Code, geheime Schlüssel.** Sicherheit beruht auf Schlüsseln pro Server (Server-Schlüssel, Build-Secret,
+   Signier-Schlüssel) und auf Build-Variation pro Betreiber, nicht auf geheimem Code.
+3. **Ein Profil, ein Release.** `odinguard.profile.toml` ist die einzige Quelle. Studio (GUI) und `og` (CLI) bauen
+   daraus dasselbe signierte Release. Geheimnisse stehen nie im Profil, nur ihre Dateipfade.
+4. **Modular zur Build-Zeit.** Nicht gewählte Module sind nicht im Binary (Beleg: Linker-Map, Abschnitt 2.3).
+5. **Flaggen, dann verzögert bannen.** Detections erzeugen Flags mit Punkten; Bans kommen gesammelt in Ban-Wellen,
+   damit Cheater die auslösende Prüfung nicht zuordnen können.
+6. **Keine Fehlalarme als Ziel.** Jede Regel hat Schwere, Konfidenz und Aktion (log, flag, flagban, kick, ban);
+   Allowlist für legitime Add-ons; Rollout beginnt im Warnmodus.
 
-```
-┌───────────────────────── client (x86, Windows) ─────────────────────────┐
-│ alpha.exe ── loads ──► ijl15.dll (OdinGuard loader/proxy)               │
-│                           ├─► ijl15x.dll   (original, forwarded)        │
-│                           └─► odinguard.dll (guard)                     │
-│   odinguard.dll modules:                                                │
-│     core      init, config, logging, versioned ABI                      │
-│     integrity exe .text hash, file hashes, module allowlist             │
-│     inject    LdrDllNotification + periodic module scan                 │
-│     hwid      component fingerprint (several independent sources)       │
-│     env       VM check, windows-per-machine limit, tool/process scan    │
-│     net       hello + session key + framed channel (O2)                 │
-│     input     synthetic input filter, no-delay checks (optional, O4)   │
-│     crash     SEH filter, crash log, last packets, GRFs                 │
-│     cmds      !vsync !crash !ping                                       │
-│     assets    GRF override policy, LGP, auras, colour nick/item (O4)    │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │ game TCP connection (char/map), one reserved packet id
-┌────────────────────────────────▼────────────────────────────────────────┐
-│ xAthena server module  (src/map + src/login, namespace odinguard)       │
-│   og_init     CREATE TABLE IF NOT EXISTS + conf/import/odinguard.conf   │
-│   og_session  X25519 handshake, HKDF, ChaCha20-Poly1305 frames          │
-│   og_policy   allowed manifests, min client version, VM / multi-window  │
-│   og_ban      ban by unique id (+ fuzzy component match), by account    │
-│   og_report   crash reports, detections, audit log                      │
-│   @og commands: @ogban @ogunban @ogwho @oginfo                          │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+## 2. Modulsystem
 
-## 3. Feature mapping (your list → module → phase)
+### 2.1 Registry (`modules/modules.toml`) [gelesen]
 
-Phases are O0–O6 from `docs/estland-rebuild/15-odinguard.md`; this table is the detail.
+Jedes Modul hat `id`, `version`, `kind` (core, protection, detection, challenge, gameplay, client-feature), `side`
+(client, server, both), `requires` (Abhängigkeiten), `client_src` (C-Quellen im Client), `define`
+(`OG_MOD_*` im generierten `og_modules.h`), `server_key` (Schalter in `odinguard_athena.conf`), `assets`
+(Gruppen für `odin.grf`) und `param` (Name, Typ, Default, Min/Max, Konfig-Schlüssel, Hilfetext).
 
-| # | Requirement | Module | Mechanism | Phase |
-|---|---|---|---|---|
-| A1 | Runtime integrity of exe code section | integrity | Hash non-writable sections of the main module in memory at start and every N s; value reported, server compares with allowed manifest. Packed exe: hash is taken after unpack and whitelisted per build. | O1 |
-| A1 | File integrity exe + all DLLs | integrity | SHA-256 of exe and `*.dll` in client dir via `BCrypt`; server compares with `manifest.json` (built by `tools/make_manifest.py`). | O1 |
-| A1 | Unauthorized DLL injection | inject | `LdrRegisterDllNotification` + module list scan; every module must be in the manifest or be a system module in `System32/SysWOW64` with a valid signature (`WinVerifyTrust`). Report unknown module to server. | O1 |
-| A2 | Dynamic key packet encryption | net | Per-connection X25519 ephemeral key exchange, server key pinned in the DLL, BLAKE2b key derivation. The whole game stream (not only OG messages) travels in XChaCha20-Poly1305 records with a counter nonce, so every connection has its own keys and replayed or modified bytes fail authentication. Implemented in the ws2_32 hooks and in the xAthena socket layer. | O2 |
-| A2 | Block WPE/RPE/OpenKore | net | Injected or replayed packets fail because: (a) OG frames are MAC'd with a counter, (b) the server requires periodic signed "alive" frames tied to the session, (c) packet-ID obfuscation keyed per session. Sniffing is defeated by (c). | O2 |
-| A2 | Malformed chat packets | net + server | Server: strict length/charset validation of chat packets (0x00F3/0x08B8-type, whisper, guild) before processing. Client: drop inbound chat packets whose length field disagrees with the buffer before the exe parses them (hook in O2). | O1 (server) / O2 |
-| A3 | Hardware Unique ID, server ban | hwid + og_ban | Not MAC only. Independent components, each hashed with a per-server salt: MachineGuid, SMBIOS UUID/serial, volume serial of the system drive, CPU brand/ID, disk serial, first physical MAC. Server stores the components and matches **fuzzily** (≥ k of n). Unique ID = SHA-256 of the sorted component hashes. | O1 |
-| A3 | Max windows per machine | env | Client: named kernel semaphore with N slots (`Global\…`). Server: counts sessions per unique id. (Server-side `max_clients_per_ip` is already live.) | O1 |
-| A3 | Optional VM block | env | CPUID hypervisor bit + vendor string + known VM devices; policy flag from server (`og_block_vm`). | O1 |
-| A3 | Detect known tools (PotND, meth4u, xRag, xLike, RoTools) | env | Process/window class/module signature list delivered by the server (`og_signatures`), not hardcoded; updatable without a client release. | O3 |
-| B1 | 2018 client, ≥ 2010-07-30aRagexeRE | core | Load via proxy (no exe patch); versioned structures; per-build offset table in `builds/<exe-hash>.json`. | O1 |
-| B1 | RCX final compatibility | core | RCX loads via its own dinput8/ijl proxy. OdinGuard chains **after** it and tolerates RCX modules (allowlisted by manifest); test matrix in `tests/`. | O3 |
-| B1 | Warsaw (Brazil) crash fix | core | Warsaw (`gbpsv/gbp`, `Gbp*` DLLs from Diebold) hooks into every process. Fix: do not hook APIs it detours (use inline-hook checks + disable own hooks if the target prologue already starts with a jump into a foreign module), and make module scan tolerate it. Needs a Warsaw machine to verify. | O3 |
-| B2 | Crash log | crash | `SetUnhandledExceptionFilter` + vectored handler: registers, stack walk, stack dump, module list, GRF list (read from `DATA.INI`/GRF.INI), missing-resource log (hook later), last 32 sent/received packet headers (ring buffer, filled by net hooks). Upload to the server in O2. | O1 skeleton / O2 |
-| B2 | `!vsync` | cmds | Intercept local `/`-chat-like input (client chat send hook), toggle DDraw/D3D present interval or the exe's FPS limiter. | O3 |
-| B2 | `!crash` | cmds | Writes a crash log on demand without terminating (`MiniDump`-like). | O1 |
-| B2 | `!ping` | cmds | Round-trip over the OG channel (ping/pong frame with timestamp), shown in chat. | O2 |
-| B3 | Auto SQL + config | og_init | `CREATE TABLE IF NOT EXISTS` at map-server start, default `conf/import/odinguard.conf` written if missing. | O1 |
-| C1 | Block synthetic mouse/keyboard | input | `SetWindowsHookEx(WH_MOUSE_LL/WH_KEYBOARD_LL)` and check `LLMHF_INJECTED/LLKHF_INJECTED`; `GetMessageExtraInfo` check on `WM_*` input. Optional flag. | O4 |
-| C1 | Block nodelay / animation-delay | input | Server side: enforce `min_skill_delay_limit` (done: 200 ms) and validate action intervals; client side: detect patched delay values in the exe's `.text` (integrity covers it). | O4 |
-| C2 | GRF override protection + LGP, auras, colour nick/item | assets | Hash and order-check configured GRFs; allow an explicit overlay path for the LGP/aura/colour features; override of protected files elsewhere is rejected and reported. | O4 |
+| Modul | Art | Seite | braucht | Client-Quellen | Server-Schalter | Parameter |
+|---|---|---|---|---|---|---|
+| core | core | beide | – | og_main, og_log, og_net, og_sha256, og_challenge, og_wire | og_enable | required, log_only, min_version |
+| rate-limit | protection | Server | – | – | og_rate_limit | packets_per_second, action |
+| hwid | protection | beide | core | og_hwid | og_hwid | ban_match |
+| multi-client | protection | beide | hwid | og_env | og_multi_client | max_per_machine, max_windows, block_vm, vm_action |
+| heartbeat | protection | beide | core | og_guard | og_heartbeat | interval, timeout |
+| integrity | protection | beide | heartbeat | og_integrity | og_integrity | action, tamper_action |
+| cheat-signatures | detection | beide | heartbeat | og_detect | og_signatures | package, inject_action |
+| grf-rules | protection | beide | heartbeat | og_assets | og_grf_rules | strict, action |
+| input-filter | protection | beide | heartbeat | og_input | og_input_filter | enabled |
+| crash-report | client-feature | Client | core | og_crash | – | – |
+| client-commands | client-feature | beide | core | og_cmds | og_client_commands | – |
+| colors | gameplay | beide | core | og_text, og_ui | og_colors | – |
+| branding | client-feature | Client | core | og_splash | – | – |
+| lgp | gameplay | Server | core | – | og_lgp_enable | – |
+| auras | gameplay | Server | core | – | og_auras_enable | scope |
+| ban-system | protection | Server | core | – | og_ban_system | wave_hour, ban_score |
+| behaviour | detection | Server | ban-system | – | og_behaviour | nodelay_per_minute, autopot_ms, macro_jitter_ms |
+| ch-nonce | challenge | beide | core | (core) | og_ch_nonce | interval, action |
+| ch-code | challenge | beide | integrity | (core) | og_ch_code | interval, action |
+| ch-time | challenge | beide | core | (core) | og_ch_time | interval, max_drift_percent, action |
+| ch-file | challenge | beide | core | (core) | og_ch_file | interval, action |
+| ch-captcha | challenge | Server | behaviour | – | og_ch_captcha | action |
+| ch-honeypot | challenge | Server | ban-system | – | og_ch_honeypot | action |
+| competitive-pack | gameplay | beide | ch-file | – | og_competitive_pack | – |
 
-## 4. Wire design (OG channel)
+### 2.2 Build-Zeit und Laufzeit
 
-* Transport: the normal game TCP connection. One reserved packet id pair
-  (`CZ_OG_FRAME` / `ZC_OG_FRAME`, variable length) — id chosen from the free range
-  of the `PACKETVER 20180620` table and kept in `server/conf/odinguard.conf`.
-* Handshake (after login-server accept, before char select):
-  1. Client → server `HELLO{ver, build_id, nonce_c, eph_pub_c, hwid components, manifest_digest, flags}`
-  2. Server → client `CHALLENGE{nonce_s, eph_pub_s, signature(server_static_key, transcript)}`
-     — the client verifies against the **pinned** server public key.
-  3. Both derive `k_c2s`, `k_s2c` = HKDF(X25519(eph), nonces); AEAD frames with a 64-bit
-     counter (replay-proof).
-  4. Server → client `POLICY{block_vm, max_windows, scan_interval, signature_list_version}`.
-* After that: `ALIVE{counter, integrity_digest}` every `scan_interval`, `DETECT{type, data}`,
-  `CRASH{…}`, `PING/PONG`.
-* Server side decision: unknown/old manifest, missing alive for > 2 intervals, detections,
-  or banned unique id → disconnect with a message; ban is applied at login (account
-  and unique id).
+- **Build-Zeit (Client):** Das Studio schreibt `og_modules.h` (`#define OG_MOD_* 1` nur für gewählte Module),
+  `og_modules.mk` (Liste der C-Quellen) und `og_profile.h` (Betreiber, Ports, Salts, Server-Public-Key,
+  geschützte Dateien – Geheimnisse XOR-maskiert mit `BLAKE2b("OdinGuard/mask" ‖ seed ‖ id)`). Nicht gewählte
+  Module sind in `og.h` leere `static inline`-Stubs. Die Link-Reihenfolge wird mit dem Seed gemischt.
+- **Laufzeit (Server):** `odinguard_athena.conf` + `conf/import/odinguard_conf.txt` (vom Studio generiert) schalten
+  Module und Parameter; der Server schickt die Policy (OG_S_POLICY) und das Signaturpaket (OG_S_SIGS) nach dem
+  Handshake. Spätere Zeilen überschreiben frühere (`og_switch_set`).
+- **Abhängigkeiten:** Das Studio schließt die Hülle (`requires`) und lehnt Profile mit fehlenden Abhängigkeiten,
+  Parametern außerhalb Min/Max oder unbekannten Modulen ab (`og validate`, Unit-Test `validation_catches_errors`).
 
-## 5. Server data model (`server/sql/odinguard.sql`)
+### 2.3 Beleg „nicht gewählter Code steckt nicht im Binary“ [gemessen]
 
-`og_client` (machine ↔ account, last seen, build, exe code hash), `og_component` (salted component
-hashes per machine, for fuzzy bans), `og_ban` (machine bans), `og_event` (detections and actions).
-Signatures, allowed exe hashes, policy, colours, auras and LGP skills are in
-`conf/odinguard_athena.conf` (no tables). Colour and aura choices of characters are char regs
-(`og_namecolor`, `og_aura`, `og_flags`).
+`client/Makefile` erzeugt ein Objekt pro Quelle unter `OUT/obj/` und eine Linker-Map. Die Pipeline liest die
+Map (`linked_objects`) und bricht ab, wenn ein nicht gewähltes Modulobjekt gelinkt wurde (`check_linked`).
+Messung 2026-11-23: Minimal-Profil (core + rate-limit) linkt 6 Kern-Objekte, DLL 271 360 Byte, keine Strings
+anderer Module; Default-Profil 1 026 560 Byte.
 
-## 5a. Display features (v0.3)
+## 3. Profil (`odinguard.profile.toml`, Schema 2)
 
-Server driven, so no client files are needed:
-- **Colour nicks / items:** the map-server sends colour lists (`OG_S_COLORS`) at load and on changes; the
-  DLL recolours matching texts in the exe's outline text function and in GDI `TextOutW`.
-- **Auras:** hat effects from an allow list; `@showauras` filters the hat-effect packets per viewer.
-- **LGP:** per viewer flat ground units instead of the skill's dummy unit, heavy animation left out.
+Abschnitte: `modules`, `[general]` (id, operator, client_build, ports, splash_ms, variation_seed, hwid_salt),
+`[keys]` (Pfade: server_seed, signing_seed, build_secret), `[params.<modul>]`, `[commands.<id>]` (enabled, name,
+group, rate_ms), `[signatures]` (sources, allowlist, max_action, version), `[assets]` (competitive_pack,
+odin_grf-Gruppen), `aura_catalog`, `output`, `[rollout]` (stage 1–4, reviewed_rules).
+Migration: `profile::migrate` hebt Schema 1 → 2 an (Test `schema1_profile_migrates_without_data_loss`),
+`og migrate` legt eine `.bak`-Kopie an.
 
-## 6. Risks and honest limits
+Ableitungen (Studio, `pipeline::Derived`):
+- `proto_salt = BLAKE2b-128("OdinGuard/proto-salt" ‖ variation_seed ‖ server_pub)`
+- `profile_tag = BLAKE2b-128("OdinGuard/tag" ‖ proto_salt)` – ein Client eines fremden Profils wird mit Status 3
+  abgewiesen [gemessen, E2E].
+- Secrets für den Server landen in `secrets/odinguard.env` (`ODINGUARD_KEY`, `ODINGUARD_PROTO_SALT`,
+  `ODINGUARD_BUILD_SECRET`).
 
-* **Packet hook point:** the game's send/recv functions inside the packed/patched
-  `alpha.exe` must be located once (reverse-engineering of *our own* client build, with
-  REA/Ghidra on the VM). Until then O2 runs on `ws2_32` `send`/`recv` import hooks, which
-  is sufficient for the OG channel but not for hooking inside the packet parser.
-* **Any client guard can be defeated by a determined attacker** (kernel drivers, emulated
-  environments). The aim is: automated, public bots (WPE/RPE/OpenKore/macros) stop
-  working and manual cheating becomes expensive and traceable.
-* **Packed exe:** `.text` integrity must be verified after the packer has run; the
-  build-specific whitelist handles this, but every exe change needs a new manifest.
-* Anti-cheat code can trigger antivirus false positives: sign releases (Authenticode) when
-  we get a certificate.
-* Privacy: hardware components are stored hashed + salted; mention it in the rules/privacy
-  text on the website.
+## 4. Protokoll v2 (`proto/og_proto.h`, `og_wire.c`)
+
+- Handshake: Client-Hello (X25519 ephemer, Nonce, Version, Build, Hardware-Komponenten, `profile_tag`) → Server-
+  Antwort mit Ed25519-Signatur über das Transkript; der Client prüft gegen den **eingebauten** Server-Key.
+- KDF: `BLAKE2b-512("OdinGuard/v2" ‖ proto_salt ‖ shared ‖ pubs ‖ nonces)` → je ein Schlüssel pro Richtung.
+- Records: XChaCha20-Poly1305 über den **gesamten** Spielstrom, Zähler-Nonce (Replay/Reorder = Abbruch),
+  Schlüsselrotation alle 4096 Records (`key = BLAKE2b-256(key ‖ "OdinGuard/rekey")`).
+- Downgrade-Schutz: Client verweigert Server < v2, Server erzwingt `og_min_version ≥ 2`.
+- Steuer-Nachrichten: C→S `ALIVE`, `DETECT`, `PONG`, `REPORT`, `RESPONSE`; S→C `POLICY`, `PING`, `COMMAND`,
+  `COLORS`, `CHALLENGE`, `SIGS`.
+- Parser sind reine Funktionen (`og_wire.c`, im Client und Server byte-identisch) und werden gefuzzt
+  (`make -C client fuzz`: 2 000 000 Iterationen ASan/UBSan ohne Befund [gemessen]).
+- Vergleiche von MACs/Digests in konstanter Zeit (`crypto_verify16/32`, Monocypher).
+
+## 5. Challenge-Framework
+
+Der Server schickt `OG_S_CHALLENGE {id, type, nonce[16], target, a, b}` in zufälligen Abständen
+(`interval` ± Zufallsfenster); der Client antwortet mit `OG_C_RESPONSE`. Jede Challenge-ID gilt einmal
+(Antwort auf unbekannte/beantwortete ID = `challenge:replay`), Timeout = Fehlschlag.
+
+| Challenge | Prüft | Server kennt | Schutzwirkung |
+|---|---|---|---|
+| ch-nonce | `BLAKE2b(key = build_secret, "OG/nonce" ‖ nonce)` | Build-Secret | Hürde: beweist den Betreiber-Build, solange das Secret nicht aus dem RAM gezogen wird |
+| ch-code | Hash eines zufälligen Bereichs des kanonischen Code-Images von Exe oder Guard | Referenz-Images (`conf/odinguard/`) | Hürde: Patches im Code fallen auf, auch wenn die Heartbeat-Hashes gefälscht werden |
+| ch-time | Client-Uhr gegen Server-Uhr (Tick + Performance-Counter) | eigene Uhr | Hürde gegen Speedhacks; Server-Delay-Prüfung ist die echte Sicherheit |
+| ch-file | Hash eines zufälligen Bereichs von `odin.grf` / Competitive-Pack | offizielle Dateien | Hürde, Pflichtdatei fehlt = Fehlschlag, optionale fehlt = ok |
+| ch-captcha | Bot-Captcha nach Verhaltens-Flags, nie auf WoE/BG-Maps | Antwort | echte Sicherheit gegen unbeaufsichtigte Bots |
+| ch-honeypot | unsichtbare Lockvogel-Einheit, die nur Bots angreifen | Einheiten-ID | echte Sicherheit (serverseitig), Treffer = flagban |
+
+Kanonisches Image: nicht beschreibbare, nicht verwerfbare Sektionen; HIGHLOW-Relocations und die IAT
+(Datenverzeichnis 12) genullt, damit ASLR und Loader-Schreibzugriffe den Hash nicht ändern [gemessen].
+Fehlschläge gehen über `og_report` → Flag mit Punkten → Aktion laut Profil; Telemetrie nur Diagnose
+(Regel, Zeit, Account, gehashte HWID).
+
+## 6. Detection-Modul „cheat-signatures“
+
+- **Quellen:** `signatures/signatures.toml` (170 Signaturen aus der statischen Analyse, `analysis/cheat-signatures/`)
+  und `signatures/allowlist.toml` (32 Einträge: ROExt-Standard, dxwrapper, Skins, Overlays, eigene Dateien).
+- **Paket:** Das Studio kompiliert daraus `odinguard.sigpack` – `"OGSP"`, Version, Einträge
+  `{id, kind, action, score, name, pattern}`, EdDSA-Signatur (Signier-Schlüssel des Profils). Der Server lädt es
+  nur mit gültiger Signatur und Mindestversion und schickt die client-prüfbaren Arten an den Client.
+- **Arten:** process, window_title, window_class, module, file_name, file_sha256, driver, grf_sha256
+  (Client); grf_entry, import_pattern, string_pattern, registry (nur Analyse/Studio, Client kann sie nicht
+  prüfen); allow_sha256, allow_path (Allowlist).
+- **Punkte:** Schwere (low 10, medium 30, high 60, critical 100) × Konfidenz (high 1, medium 0,6, low 0,3);
+  `max_action` des Profils kappt Aktionen (log < flag < flagban < kick < ban).
+- **Verhalten (Server, echte Sicherheit):** `behaviour` – Skill-Anfragen innerhalb des Delays (nodelay),
+  Autopot-Reaktionszeit, Makro-Timing; `rate-limit` – Pakete pro Sekunde (WPE/RPE-Sendeschleifen).
+- **Fehlalarm-Schutz:** zwei Scans zur Bestätigung (Integrität), Allowlist vor jeder Meldung, Toleranzpfade
+  (Warsaw, Treiber-Overlays, Parallels), jede Meldung einmal pro Verbindung [gemessen, `dettest`].
+
+## 7. Command-Registry (`modules/commands.toml`)
+
+16 Commands (3 Client `!…`, 13 Server `@…`) mit `id`, `kind`, `name` (umbenennbar), `module`, `group`
+(Mindest-Gruppe), `rate_ms`, `params`, `help_de/en`. Das Studio erzeugt daraus:
+- die Server-Konfig (`og_cmd_<id>`, `og_cmdgroup_<id>`, `og_cmdrate_<id>`, `og_cmdname_<id>`); deaktivierte
+  Commands werden nicht registriert. Auch die `!`-Commands prüft der Map-Server (Registry in `og_map.cpp`:
+  Name, Gruppe, Ratenlimit) und schickt dann `OG_S_COMMAND`/`OG_S_PING` an den Guard – der Client braucht
+  keine eigene Tabelle, Umbenennen wirkt ohne Client-Update;
+- die Doku (`og docs <profil> --lang de|en`, Release `docs/commands-*.md`; Abschnitt in `16-commands-referenz.md`).
+Commands eines nicht gewählten Moduls sind automatisch aus.
+
+## 8. OdinGuard Studio (`studio/`)
+
+- `crates/og-core`: registry, profile (Schema + Migration), keys, crypto (Monocypher-FFI), sigpack, generate,
+  pipeline (Build), manifest (signiertes Hash-Manifest), update (Updater), rollout (Stufen-Gate).
+- `crates/og-cli` (`og`): new, validate, registry, show, migrate, preview, build, verify-release, sigpack,
+  sigpack-verify, docs, rollout, update, update-manifest, update-verify.
+- `apps/studio` (Tauri 2): Tabs Profil, Module & Challenges, Commands, Auren, Build, Rollout, Updates; ruft nur
+  og-core auf.
+- **Release pro Profil** (`og build`): `client/` (odinguard.dll, ijl15.dll, odin.grf, [odin-dark.grf],
+  odinguard.ini, README.txt, Lizenzen), `server/` (src, conf inkl. sigpack und Referenz-Images, sql),
+  `patcher/filelist.txt`, `docs/` (Handbuch, Command-Referenz, Build-Report), `secrets/odinguard.env`,
+  `manifest.json` + `manifest.sig` + `signing.pub`. `og verify-release` prüft Signatur und jede Datei.
+- Reproduzierbar: gleiche Eingaben → gleiche Hashes (zweimal gebaut, identisch [gemessen]); Cross-Compile mit
+  mingw-w64 auf macOS. Liegt das Ausgabeverzeichnis auf einem Pfad mit Leerzeichen, baut die Pipeline den
+  Client in einem festen Arbeitsordner unter `$TMPDIR/odinguard-build/<id>` (GNU make kann keine Leerzeichen).
+
+## 9. odin.grf
+
+Nur Assets (LGP-Kacheln `hanmoon1/2.tga`, später Auren/UI), gebaut mit `rgrf-core` aus den Asset-Gruppen der
+gewählten Module und danach mit `rgrf_core::verify` geprüft. DLLs und Server-Code liegen nie in der GRF.
+`odin.grf` ist Pflicht-Datei der `ch-file`-Challenge, das Competitive-Pack (`odin-dark.grf`) optional.
+Ladereihenfolge (`DATA.INI`): `0=odin.grf`, `1=odin-dark.grf` (falls gewählt), danach die GRFs des Clients.
+
+## 10. Updater und Rollout
+
+- **Studio-Selbstupdate:** Kanäle `stable`/`beta`, Endpunkt `<basis>/<kanal>.json` + `.sig`. Schritt 1 (og-core):
+  Manifest-Signatur (minisign), Downgrade-Sperre gegen die höchste je akzeptierte Version, Pinning des
+  Manifest-Hashes. Schritt 2 (Tauri-Updater-Plugin, gleicher Endpunkt): Artefakt-Signatur und Installation.
+  Nur https (http nur Loopback in Tests). Privater Schlüssel `keys/studio-updater.key` bleibt lokal.
+- **Core-/Signatur-Updates:** `og update --key core|sigpack …` lädt, prüft und legt Versionen unter
+  `versions/<key>/<version>/` ab; `--rollback` schaltet auf die vorige lokal gehaltene Version.
+- **Release-Pipeline:** `tools/release_studio.sh <stable|beta> <https-basis>` baut, signiert Artefakt und
+  Manifest, prüft offline (`og update-verify`) und veröffentlicht **nichts**.
+- **Rollout-Stufen pro Profil:** 1 Warnmodus (`log_only`) → 2 Kick → 3 Patcher-Auslieferung → 4 Pflicht
+  (`required`). `og rollout` liest Exporte von `og_event`/`og_client` und sperrt Stufe 4, solange Regeln mit
+  Fehlalarm-Verdacht (Quote über `fp_percent`) ungeprüft sind oder zu wenige aktive Accounts den Guard nutzen.
+
+## 11. Härtung: Hürde oder echte Sicherheit
+
+| Maßnahme | Wo | Wirkung | Stand |
+|---|---|---|---|
+| AEAD über den ganzen Strom, Sitzungsschlüssel, Replay-Schutz, Rekey | beide | echte Sicherheit gegen Mitlesen/Einschleusen im Netz; Hürde gegen Tools im Prozess | gemessen (E2E) |
+| Gepinnter Server-Key, signierte Policy/Sigpack, Downgrade-Schutz | beide | echte Sicherheit gegen MITM und gefälschte Server-Daten | gemessen |
+| Profil-Tag / Protokoll-Salt pro Betreiber | beide | Hürde: Clients/Bypässe für einen Server laufen nicht auf einem anderen | gemessen |
+| Parser-Fuzzing | beide | echte Sicherheit gegen Speicherfehler in den Parsern | gemessen |
+| ASLR, DEP, Stack-Protector, keine Timestamps | Client | Hürde, erschwert Exploits | gelesen (Makefile) |
+| CFG | Client | nicht verfügbar mit mingw-gcc | offen |
+| String-Maskierung, Build-Variation (Link-Reihenfolge, Konstanten) | Client | Hürde gegen generische Patches | gemessen (Hashes je Profil verschieden) |
+| Anti-Debug, Hardware-Breakpoints, API-Hook-Check, Selbst-Integrität | Client | Hürde, zweistufig bestätigt | gemessen (keine Fehlalarme im Testclient) |
+| Code-Signing (Authenticode) | Client | senkt AV-Fehlalarme | Hook vorgesehen, kein Zertifikat |
+| Challenges nonce/code/time/file | beide | Hürde mit serverseitiger Prüfung | gemessen (E2E) |
+| Rate-Limit, Delay/Nodelay, Honeypot, Captcha, Multi-Client, Handshake-Pflicht | Server | **echte Sicherheit** | gemessen (E2E, Captcha nur Server-Logik) |
+| Flags, Ban-Wellen, Audit-Log (`og_event`, `og_flag`) | Server | echte Sicherheit + Nachvollziehbarkeit | gemessen |
+| GRF-Allowlist (offizielle Hashes, ch-file) | beide | Hürde; serverseitig geprüft | gemessen |
+
+Ehrlich: Wer den Rechner kontrolliert (Kernel-Treiber, VM-Introspektion, eigener Loader ohne Guard + gestohlenes
+Build-Secret), kann jede Client-Prüfung umgehen. Ziel ist, öffentliche Tools und Bots zu stoppen und Handarbeit
+teuer und nachweisbar zu machen; serverseitige Regeln greifen unabhängig vom Client.
+
+## 12. ADR: Sprachen
+
+| Teil | Sprache | Begründung |
+|---|---|---|
+| Client-DLL, Loader | C11 (mingw-w64, 32 Bit) | klein (271 KB minimal), AV-freundlich, kein Runtime-Ballast, Hooks/Win32-FFI ohnehin `unsafe`; getestet seit v0.1 |
+| Server-Modul | C++ (xAthena) | nativ im Emulator, gleiche Build-Kette |
+| Gemeinsame Parser | C (`og_wire.c`), in beiden byte-identisch | eine Implementierung, gefuzzt |
+| Studio, CLI, Signatur-/Manifest-/Update-Werkzeuge | Rust (Tauri 2) | Speichersicherheit beim Parsen fremder Daten, Cross-Platform-GUI, RustyGRF-Crates direkt nutzbar |
+
+Keine Abweichung von der Standardannahme in `<architecture>` Punkt 6.

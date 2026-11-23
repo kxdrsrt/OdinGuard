@@ -1,7 +1,7 @@
 # OdinGuard Anti Cheat profile (schema 2). Secrets are only referenced by path.
 schema_version = 2
 modules = [
-    "rate-limit", "behaviour", "ch-nonce", "ch-code", "ch-time", "ch-file", "ch-honeypot",
+    "rate-limit", "behaviour", "ch-nonce", "ch-code", "ch-time", "ch-file", "ch-honeypot", "competitive-pack",
     "core",
     "hwid",
     "multi-client",
@@ -50,7 +50,7 @@ max_action = "flagban"
 version = 1
 
 [assets]
-competitive_pack = ""
+competitive_pack = "../tests/e2e/fixtures/competitive-test.grf"
 
 [assets.odin_grf]
 lgp = "../assets/odin-grf/lgp"

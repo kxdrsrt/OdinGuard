@@ -1,5 +1,13 @@
 # 06 – OdinGuard compared with Gepard Shield 3.0
 
+> **Stand 1.0.0 (2026-11-23):** Die Matrix unten stammt aus v0.3 und gilt weiter. Neu in 1.0 (Details
+> `02-architecture.md`, Tests `05-tests.md`): Protokoll v2 mit Schlüsselrotation und Profil-Tag pro Betreiber,
+> Challenges (nonce, code, time, file, honeypot, captcha), signiertes Signaturpaket mit 170 Signaturen und
+> Allowlist, serverseitige Verhaltensregeln (nodelay, Rate-Limit), Flags und Ban-Wellen, Aura-Freischaltung per
+> Quest, Studio + CLI mit Modulauswahl zur Build-Zeit, signierte Releases und Updater. Gepard bietet davon
+> weder Modulauswahl durch den Betreiber noch offene, signierte Signaturpakete [gelesen: öffentliche Featureliste].
+> Datei-Integrität läuft jetzt über `ch-file`/`og verify-release` statt `tools/make_manifest.py` (entfernt).
+
 State: OdinGuard v0.3.0 (2026-11-23). "Tested" means tested end to end with our 2018-06-20 client and
 xAthena (`05-tests.md`). Gepard facts are from its public feature list; its code was not used.
 
@@ -65,5 +73,6 @@ colour lists), `cargo` for dependencies. But:
   (i686, no UCRT surprises) needs extra care.
 - **Working, tested code.** v0.3 is tested end to end; a rewrite would mean the same tests again.
 
-Recommendation: stay in C for the client DLL and keep the parsers small (a fuzz test for them is a good next step). Rust is a
+Recommendation: stay in C for the client DLL and keep the parsers small (fuzz test: done in 1.0, `make -C client fuzz`).
+Decision record for 1.0: `02-architecture.md` §12 (client C, server C++, Studio and tools Rust). Rust is a
 good choice for new standalone tools (patcher, manifest/asset tools; RustyGRF already is Rust).
