@@ -73,7 +73,7 @@ The client draws hat effect ids from `data\luafiles514\lua files\hateffectinfo\h
 (the first GRF in DATA.INI wins; ours comes from `core.grf`). An entry is either a `.str` file under
 `data\texture\effect\` or a client effect id built into the exe (`hatEffectID`). Missing files show
 "Cannot find File" and can crash the client at login, so the server only allows ids from its `og_aura`
-list; `check_auras.py` (now in the separate rathena-auras repository) checks every `.str` entry and its textures. Results for our client
+list; `check_auras.py` (now part of the separate rAthena aura feature) checks every `.str` entry and its textures. Results for our client
 in `05-tests.md`.
 
 ## Ground skills (LGP)

@@ -17,7 +17,7 @@ A Studio release (`og build`) contains this folder plus the generated config.
 | `conf/odinguard_athena.conf` | `conf/` | every switch with defaults; the Studio writes `conf/import/odinguard_conf.txt` |
 | `sql/odinguard.sql` | – | reference DDL; the servers create the tables at start |
 
-Auras were part of OdinGuard up to 1.0 previews; they are a separate rAthena feature now (rathena-auras).
+Auras were part of OdinGuard up to 1.0 previews; they are a separate rAthena feature now (not part of this repository).
 
 ## Hooks (exact lines: `HOOKS.txt`)
 

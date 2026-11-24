@@ -66,11 +66,13 @@ pub fn data_ini(client: &Path) -> Result<Vec<String>> {
 /// Scans the GRFs of a client folder. `full` = also the whole-file SHA-256 for archives up to `full_max` bytes (the
 /// guard re-reads those at every start in the background; larger ones rely on the tail hash, which every GRF tool
 /// and patcher changes when it writes the archive).
+/// The GRFs the release itself ships (odin.grf, odin-dark.grf) are skipped: the build adds their hashes to the
+/// manifest, so a client that already has a release installed scans the same as one without.
 pub fn scan_client_limited(client: &Path, full: bool, full_max: u64) -> Result<Vec<GrfFile>> {
     let mut out = Vec::new();
     for name in data_ini(client)? {
         let p = client.join(&name);
-        if !p.is_file() {
+        if RELEASE_GRFS.iter().any(|r| r.eq_ignore_ascii_case(&name)) || !p.is_file() {
             continue;
         }
         let (size, tail) = tail_hash(&p)?;
@@ -79,6 +81,8 @@ pub fn scan_client_limited(client: &Path, full: bool, full_max: u64) -> Result<V
     }
     Ok(out)
 }
+
+pub const RELEASE_GRFS: [&str; 2] = ["odin.grf", "odin-dark.grf"];
 
 pub const FULL_HASH_MAX: u64 = 512 * 1024 * 1024;
 
@@ -131,7 +135,7 @@ mod tests {
         std::fs::write(d.path().join("odin.grf"), fake_grf(0, b"", b"t1")).unwrap();
         std::fs::write(d.path().join("data.grf"), fake_grf(0, b"", b"t2")).unwrap();
         let s = scan_client(d.path(), true).unwrap();
-        assert_eq!(s.iter().map(|f| f.name.as_str()).collect::<Vec<_>>(), ["odin.grf", "data.grf"]);
+        assert_eq!(s.iter().map(|f| f.name.as_str()).collect::<Vec<_>>(), ["data.grf"], "release GRFs are added by the build");
         let mut list = s.clone();
         std::fs::write(d.path().join("data.grf"), fake_grf(0, b"", b"t3")).unwrap();
         merge(&mut list, scan_client(d.path(), false).unwrap(), true);
