@@ -39,7 +39,7 @@ static const char *const g_colors[] = { "blue", "cyan", "yellow", "red", "orange
 
 /* symbol number (marker bits 16..23, 0 = none) -> tile name suffix; same list as SYMBOLS in make_lgp_tiles.py */
 static const char *const g_symbols[] = { "plus", "minus", "shield", "note", "dnote", "apple", "heart", "star", "cross", "zzz", "coin", "swirl", "drum",
-                                         "ring", "noentry", "diamond", "bolt", "exclaim", "arrowdown", "moon", "sun", "flame", "wand" };
+                                         "ring", "noentry", "diamond", "bolt", "exclaim", "arrowdown", "moon", "sun", "flame", "wand", "web", "swordplus" };
 
 typedef void (__fastcall *flatquad_t)(void *self, void *edx, const char *tex, int mode);
 typedef int (__fastcall *getjob_t)(void *self, void *edx);

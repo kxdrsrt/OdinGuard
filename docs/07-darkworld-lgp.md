@@ -54,8 +54,10 @@ Abschnitte 1.1–1.6 unten sind der frühere Stand und bleiben als Herleitung st
 
 | Symbol | Skills |
 |---|---|
-| **+** | Feldbuffs: Volcano, Deluge, Violent Gale, Sanctuary, B.S. Sacramenti, Battle Chant (Gospel), Slim Pitcher |
-| **−** | Schwächungszonen: Quagmire, Blinding Mist, Fiber Lock, Venom Dust, Evil Land, Ugly Dance |
+| Schwert mit **+** | schadenserhöhende Felder: Volcano, Deluge, Violent Gale |
+| **+** | sonstige Feldbuffs: Sanctuary, B.S. Sacramenti, Battle Chant (Gospel), Slim Pitcher |
+| **−** | Schwächungszonen: Quagmire, Blinding Mist, Venom Dust, Evil Land, Ugly Dance |
+| Spinnennetz | Fiber Lock (graues Quadrat) |
 | Schild | Schutz: Pneuma, Safety Wall, Basilica, Improvised Defense, Siegfried, Wand of Hermode |
 | ! | alle Fallen |
 | Flamme | Fire Wall, Crimson Fire Formation, Raging Fire Dragon |
@@ -92,8 +94,10 @@ Bodenzellen und damit auch keine LGP.
    - `@square 1` = jeder Skill in seiner Farbe, `@square 2..15` = alle Skills in einer Farbe (Reihenfolge der
      `og_lgp_color`-Zeilen, die Form bleibt), `@circle` = Sage-Bänder für SG/LoV/MS, `@aoes` = nur SG/LoV/MS
      (**Achtung:** wer `@aoes` an hat, sieht für alle anderen Skills die normalen Effekte; `@lgp` schaltet es zurück).
-4. **Texturen:** `assets/odin-grf/lgp/data/texture/effect/odinlgp_<farbe>.tga` und `_t.tga` (12 Farben × 2 Formen)
-   und `hanmoon1/2.tga` (Fallback), 128×128 TGA32, erzeugt mit `analysis/lgp/tools/make_lgp_tiles.py`.
+4. **Texturen:** `assets/odin-grf/lgp/data/texture/effect/odinlgp_<farbe>[_t][_<symbol>].tga`: 14 Farben × 2 Formen ×
+   (ohne + 25 Symbole) = 728 Dateien (komprimiert ≈ 1,4 MB) und `hanmoon1/2.tga` (Fallback), 128×128 TGA32, erzeugt mit
+   `analysis/lgp/tools/make_lgp_tiles.py` (Vorschau: `analysis/lgp/lgp-symbols-sheet.png`). Wer ein Symbol oder eine
+   Farbe ergänzt, trägt es in `make_lgp_tiles.py`, `client/src/og_lgp.c` und der Serverkonfig ein.
 5. **Test-NPC:** „LGP Test“ in Prontera (156,186) bzw. `@lgptest [skill]` (Admins) wirkt alle Skills nacheinander,
    jeweils auf leerem Feld (Skript-Befehl `og_clearskillunits`: sonst verdecken Lieder und Felder des Vorgängers die
    nächsten Skills), nie auf der eigenen Zelle (kleine Skills lägen unter dem Charakter) und mit den nötigen

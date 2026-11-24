@@ -45,7 +45,7 @@ PALETTE = [
 
 # symbols inside the tile (marker bits 16..23); the number is the index here + 1, same list in client/src/og_lgp.c
 SYMBOLS = ["plus", "minus", "shield", "note", "dnote", "apple", "heart", "star", "cross", "zzz", "coin", "swirl", "drum",
-           "ring", "noentry", "diamond", "bolt", "exclaim", "arrowdown", "moon", "sun", "flame", "wand"]
+           "ring", "noentry", "diamond", "bolt", "exclaim", "arrowdown", "moon", "sun", "flame", "wand", "web", "swordplus"]
 BLUE = (110, 165, 255)
 
 
@@ -179,6 +179,19 @@ def _glyph(name, ss):
             a = -math.pi / 2 + i * math.pi / 5
             pts.append((0.5 + r * math.cos(a), -0.5 + r * math.sin(a)))
         d.polygon(P(pts), fill=255)
+    elif name == "web":
+        for i in range(8):
+            a = i * math.pi / 4
+            line([(0, 0), (0.98 * math.cos(a), 0.98 * math.sin(a))], 0.17)
+        for r in (0.55, 0.98):
+            pts = [(r * math.cos(i * math.pi / 4), r * math.sin(i * math.pi / 4)) for i in range(9)]
+            line(pts, 0.17)
+    elif name == "swordplus":
+        d.polygon(P([(-0.4, -0.98), (-0.2, -0.78), (-0.2, 0.3), (-0.6, 0.3), (-0.6, -0.78)]), fill=255)
+        rect(-0.85, 0.28, 0.05, 0.46)
+        rect(-0.52, 0.46, -0.28, 0.8)
+        ell(-0.4, 0.88, 0.17, 0.13)
+        rect(0.3, -0.5, 0.95, -0.28); rect(0.52, -0.72, 0.74, -0.06)
     return m
 
 

@@ -37,9 +37,9 @@ skill_id	name	unit	colour	lgp_colour	source	lgp_shape	lgp_symbol
 233	AM_SPHEREMINE	(kein Unit)	-	-	class N; fallback -; Sphere Mine (Beschwörung)	-	-
 254	CR_GRANDCROSS	UNT_DUMMYSKILL 0x86	cyan	1	class A; fallback 0xc8; Holy, weiß/cyan [vermutet]	triangle	-
 264	MO_BODYRELOCATION	(kein Unit)	-	-	class N; fallback -; Body Relocation (Sprung)	-	-
-285	SA_VOLCANO	UNT_VOLCANO 0x9a	red	3	class O; fallback 0xc9; Volcano rot (vanilla ring_red) [gemessen Client 239]	square	plus
-286	SA_DELUGE	UNT_DELUGE 0x9b	blue	0	class O; fallback 0xc8; Deluge blau (vanilla ring_blue) [gemessen Client 240]	square	plus
-287	SA_VIOLENTGALE	UNT_VIOLENTGALE 0x9c	lime	13	class O; fallback 0xc8; Violent Gale: im 2018-Client magic_green (grün) [gemessen]; gelb wäre LoV-Farbe	square	plus
+285	SA_VOLCANO	UNT_VOLCANO 0x9a	red	3	class O; fallback 0xc9; Volcano rot (vanilla ring_red) [gemessen Client 239]	square	swordplus
+286	SA_DELUGE	UNT_DELUGE 0x9b	blue	0	class O; fallback 0xc8; Deluge blau (vanilla ring_blue) [gemessen Client 240]	square	swordplus
+287	SA_VIOLENTGALE	UNT_VIOLENTGALE 0x9c	lime	13	class O; fallback 0xc8; Violent Gale: im 2018-Client magic_green (grün) [gemessen]; gelb wäre LoV-Farbe	square	swordplus
 288	SA_LANDPROTECTOR	UNT_LANDPROTECTOR 0x9d	white	9	class N; fallback -; Land Protector	square	-
 306	BD_LULLABY	UNT_LULLABY 0x9e	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle	zzz
 307	BD_RICHMANKIM	UNT_RICHMANKIM 0x9f	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	coin
@@ -66,7 +66,7 @@ skill_id	name	unit	colour	lgp_colour	source	lgp_shape	lgp_symbol
 388	WS_SYSTEMCREATE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; sonstige (nicht nutzbar)	-	-
 395	CG_MOONLIT	UNT_MOONLIT 0xb5	pink	8	class O; fallback 0xc9; Moonlit Water Mill [vermutet]	square	moon
 404	PF_FOGWALL	UNT_FOGWALL 0xb6	lightgrey	12	class O; fallback 0xc8; Fog Wall: weiß/grau [vermutet]	square	minus
-405	PF_SPIDERWEB	UNT_SPIDERWEB 0xb7	grey	11	class N; fallback -; Spider Web/Fiber Lock: eigene Flachkachel (Kategorie effects hebt sie hervor)	triangle	minus
+405	PF_SPIDERWEB	UNT_SPIDERWEB 0xb7	grey	11	class N; fallback -; Spider Web/Fiber Lock: eigene Flachkachel (Kategorie effects hebt sie hervor)	square	web
 409	WE_CALLPARENT	UNT_CALLFAMILY 0xb2	-	-	class N; fallback -; Call Parent	-	-
 410	WE_CALLBABY	UNT_CALLFAMILY 0xb2	-	-	class N; fallback -; Call Baby	-	-
 428	SG_SUN_WARM	UNT_DUMMYSKILL 0x86	red	3	class O; fallback 0xc9; SG Sonnenwärme, Zellen um den SG [vermutet]	square	sun

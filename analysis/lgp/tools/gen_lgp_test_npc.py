@@ -46,6 +46,9 @@ slv = arr("slv")
 smode = arr("smode")
 sname = arr("sname$")
 info = {s: (slv[i], smode[i], sname[i]) for i, s in enumerate(sid)}
+# skills added after the first NPC version: id -> (level, self cast, name)
+info.setdefault(405, ("1", "0", "Fiber Lock"))
+sid = sorted(set(sid) | {405}, key=lambda x: sid.index(x) if x in sid else 10**6)
 missing = sorted(set(lgp) - set(info))
 if missing:
     print("skills without NPC test data (kept out):", missing)
