@@ -26,6 +26,7 @@ struct s_og_info {
 	std::string build;
 	uint8 flags = 0;
 	uint8 version = 0;
+	bool lgp_palette = false; // the client draws the LGP colour units (OG_ALIVE_LGP_PALETTE)
 	std::vector<std::pair<std::string, std::string>> components; // name, hex hash
 };
 
@@ -75,7 +76,9 @@ void og_set_handlers(og_event_handler ev, og_text_handler text, og_pong_handler 
 const std::vector<std::pair<int32, uint32>>& og_item_colors();       // item id, 0xRRGGBB
 const std::vector<std::pair<int32, uint32>>& og_group_namecolors();  // group id, 0xRRGGBB
 uint16 og_lgp_unit(uint16 skill_id);                                  // square style; 0 = no lite display for the skill
-uint16 og_lgp_unit_style(const char* style, uint16 skill_id);         // square | circle | set2..set14, 0 = not configured
+uint16 og_lgp_unit_style(const char* style, uint16 skill_id, bool palette); // square | circle | setN, 0 = not configured
+int32 og_lgp_color_count();                                           // og_lgp_color lines
+uint16 og_lgp_color_unit(int32 index, bool palette);                  // unit of a colour: palette or fallback
 
 // CREATE TABLE IF NOT EXISTS statements (login and map server run them at start)
 const std::vector<const char*>& og_sql_ddl();

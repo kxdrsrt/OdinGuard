@@ -6,7 +6,7 @@
 | | |
 |---|---|
 | Base commit | `4cd08b739035721b2cbffa0310dbbf0eac081d9d` (2026-11-23, "Removed duplicate header includes in clif.cpp and npc.cpp (#10186)") |
-| Content | 37 files, +6717 / −6 lines: module files, Monocypher, all hooks, build files, config |
+| Content | 38 files, +6912 / −6 lines: module files, Monocypher, all hooks, build files, config |
 
 ## What the patch contains
 
@@ -15,7 +15,7 @@
   `conf/odinguard_athena.conf`.
 - `3rdparty/monocypher/` (`monocypher.c/.h`, `LICENCE.md`) – upstream rAthena does not ship Monocypher.
 - Hooks (see `../HOOKS.txt` and `../README.md`): `socket.cpp/.hpp`, `login.cpp`, `loginclif.cpp`, `char_clif.cpp`,
-  `clif.cpp/.hpp`, `map.cpp`, `pc.cpp`, `atcommand.cpp` (`@ogban @ogunban @oginfo @ogflags @ogbanwave @namecolor
+  `clif.cpp/.hpp`, `skill.hpp` (declaration of `skill_get_unit_layout_type`), `map.cpp`, `pc.cpp`, `atcommand.cpp` (`@ogban @ogunban @oginfo @ogflags @ogbanwave @namecolor
   @lgp @square @circle @aoes`), `conf/groups.yml` (player group: `lgp`, `square`, `circle`, `aoes`).
 - Build files: `src/common/Makefile.in` (`odinguard.o og_crypto.o og_wire.o`; `og_proto.h og_wire.h og_wire.c` as
   header dependencies so `og_wire.o` is rebuilt), `src/common/CMakeLists.txt`, and the Visual Studio projects and

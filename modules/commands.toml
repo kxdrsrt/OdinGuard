@@ -48,8 +48,8 @@ module = "lgp"
 group = 0
 rate_ms = 1000
 params = "[on|off]"
-help_en = "Lite ground skills: Storm Gust, Lord of Vermilion, Meteor Storm and more as flat cell tiles."
-help_de = "Lite Ground Skills: Storm Gust, Lord of Vermilion, Meteor Storm u. a. als flache Zellkacheln"
+help_en = "Lite ground skills: every ground skill (Storm Gust blue, Lord of Vermilion yellow, Meteor Storm red ...) as flat coloured cells."
+help_de = "Lite Ground Skills: alle Bodenskills (Storm Gust blau, Lord of Vermilion gelb, Meteor Storm rot …) als flache farbige Zellen"
 
 [[command]]
 id = "square"
@@ -58,9 +58,9 @@ name = "square"
 module = "lgp"
 group = 0
 rate_ms = 1000
-params = "[on|off|1-14]"
-help_en = "Lite ground skills with square tiles; a number picks the colour set."
-help_de = "LGP mit Quadrat-Kacheln; eine Zahl wählt das Farbset"
+params = "[on|off|1-10]"
+help_en = "Lite ground skills with square tiles; 1 = each skill in its colour, 2-10 = one colour for every skill."
+help_de = "LGP mit Quadrat-Kacheln; 1 = jeder Skill in seiner Farbe, 2-10 = eine Farbe für alle Skills"
 
 [[command]]
 id = "circle"
@@ -70,8 +70,8 @@ module = "lgp"
 group = 0
 rate_ms = 1000
 params = "[on|off]"
-help_en = "Lite ground skills with round tiles."
-help_de = "LGP mit runden Kacheln"
+help_en = "Lite ground skills with round bands for Storm Gust, Lord of Vermilion and Meteor Storm (WoE-RO look)."
+help_de = "LGP mit runden Bändern für Storm Gust, Lord of Vermilion und Meteor Storm (WoE-RO-Optik)"
 
 [[command]]
 id = "aoes"

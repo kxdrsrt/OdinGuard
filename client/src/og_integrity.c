@@ -161,7 +161,7 @@ static int api_hooked(char *what, size_t cap)
         }
         if (owner == og_instance) continue;
         GetModuleFileNameA(owner, path, sizeof path);
-        if (_strnicmp(path, win, strlen(win)) == 0 || og_path_tolerated(path)) continue;
+        if (_strnicmp(path, win, strlen(win)) == 0 || og_path_tolerated(path) || og_file_allowed(path)) continue;
         snprintf(what, cap, "%s!%s -> %s", api[i].mod, api[i].fn, path);
         return 1;
     }

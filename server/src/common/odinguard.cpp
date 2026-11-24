@@ -59,6 +59,9 @@ struct s_og_file {
 	std::string path;
 };
 
+struct s_og_lgp_color { std::string name; uint16 palette, fallback; };
+struct s_og_lgp { std::string style; uint16 skill, unit; int32 color; }; // color: index into lgp_colors, -1 = fixed unit
+
 static struct {
 	bool enable = false;
 	bool required = false;
@@ -85,7 +88,8 @@ static struct {
 	std::vector<std::string> allowed_exe;
 	std::vector<s_og_signature> signatures;
 	std::vector<std::pair<int32, uint32>> item_colors, group_colors;
-	std::vector<std::tuple<std::string, uint16, uint16>> lgp; // style, skill, unit
+	std::vector<s_og_lgp_color> lgp_colors;
+	std::vector<s_og_lgp> lgp;
 	std::vector<std::pair<std::string, std::string>> switches; // module switches and other plain values
 	s_og_challenge_cfg ch[5]; // index = OG_CH_*
 	std::vector<s_og_file> files;
@@ -344,14 +348,36 @@ static bool og_config_read(const char* file) {
 			if (sscanf(w2, "%d , %x", &id, &rgb) == 2)
 				(w1[3] == 'i' ? og_cfg.item_colors : og_cfg.group_colors).emplace_back(id, rgb & 0xFFFFFF);
 		}
+		else if (!strcmpi(w1, "og_lgp_color")) {
+			// name,palette unit,fallback unit: the palette unit for clients with the colour patch, else the fallback
+			char name[16];
+			unsigned int palette, fallback;
+			if (sscanf(w2, "%15[a-z] , %i , %i", name, &palette, &fallback) == 3) {
+				auto it = std::find_if(og_cfg.lgp_colors.begin(), og_cfg.lgp_colors.end(), [&](const auto& c) { return !strcmpi(c.name.c_str(), name); });
+				if (it != og_cfg.lgp_colors.end()) { it->palette = (uint16)palette; it->fallback = (uint16)fallback; }
+				else og_cfg.lgp_colors.push_back({ name, (uint16)palette, (uint16)fallback });
+			}
+		}
 		else if (!strcmpi(w1, "og_lgp")) {
-			// [style,]skill,unit  (style: square = default, circle, set2 .. set14); unit 0 removes the entry
-			char style[16] = "square";
-			unsigned int skill, unit;
-			if (sscanf(w2, "%15[a-z0-9] , %i , %i", style, &skill, &unit) == 3 || sscanf(w2, "%i , %i", &skill, &unit) == 2) {
-				if (isdigit((unsigned char)style[0])) safestrncpy(style, "square", sizeof(style));
-				og_cfg.lgp.erase(std::remove_if(og_cfg.lgp.begin(), og_cfg.lgp.end(), [&](const auto& e) { return std::get<1>(e) == skill && !strcmpi(std::get<0>(e).c_str(), style); }), og_cfg.lgp.end());
-				if (unit != 0) og_cfg.lgp.emplace_back(style, (uint16)skill, (uint16)unit);
+			// [style,]skill,<colour name | unit id>  (style: square = default, circle, set2 .. set10); unit 0 removes the entry
+			char a[16] = "", b[16] = "", c[16] = "";
+			int32 n = sscanf(w2, "%15[^, ] , %15[^, ] , %15[^, ]", a, b, c);
+			const char* style = n == 3 ? a : "square";
+			const char* skill_s = n == 3 ? b : a;
+			const char* value = n == 3 ? c : b;
+			if (n >= 2 && isdigit((unsigned char)skill_s[0])) {
+				uint16 skill = (uint16)strtoul(skill_s, nullptr, 0);
+				s_og_lgp e = { style, skill, 0, -1 };
+				if (isdigit((unsigned char)value[0]))
+					e.unit = (uint16)strtoul(value, nullptr, 0);
+				else {
+					auto it = std::find_if(og_cfg.lgp_colors.begin(), og_cfg.lgp_colors.end(), [&](const auto& col) { return !strcmpi(col.name.c_str(), value); });
+					if (it == og_cfg.lgp_colors.end()) { ShowWarning("OdinGuard: og_lgp %s: unknown colour '%s' (og_lgp_color first)\n", w2, value); continue; }
+					e.color = (int32)(it - og_cfg.lgp_colors.begin());
+					e.unit = it->palette;
+				}
+				og_cfg.lgp.erase(std::remove_if(og_cfg.lgp.begin(), og_cfg.lgp.end(), [&](const auto& x) { return x.skill == skill && !strcmpi(x.style.c_str(), style); }), og_cfg.lgp.end());
+				if (e.unit != 0) og_cfg.lgp.push_back(e);
 			}
 		}
 		else if (!strcmpi(w1, "import")) og_config_read(w2);
@@ -570,14 +596,22 @@ bool og_send_control(int32 fd, const std::vector<uint8>& msg) {
 const std::vector<std::pair<int32, uint32>>& og_item_colors() { return og_cfg.item_colors; }
 const std::vector<std::pair<int32, uint32>>& og_group_namecolors() { return og_cfg.group_colors; }
 uint16 og_lgp_unit(uint16 skill_id) {
-	return og_lgp_unit_style("square", skill_id);
+	return og_lgp_unit_style("square", skill_id, true);
 }
 
-uint16 og_lgp_unit_style(const char* style, uint16 skill_id) {
+uint16 og_lgp_unit_style(const char* style, uint16 skill_id, bool palette) {
 	if (!og_cfg.enable) return 0;
 	for (const auto& e : og_cfg.lgp)
-		if (std::get<1>(e) == skill_id && !strcmpi(std::get<0>(e).c_str(), style)) return std::get<2>(e);
+		if (e.skill == skill_id && !strcmpi(e.style.c_str(), style))
+			return e.color < 0 ? e.unit : og_lgp_color_unit(e.color, palette);
 	return 0;
+}
+
+int32 og_lgp_color_count() { return (int32)og_cfg.lgp_colors.size(); }
+
+uint16 og_lgp_color_unit(int32 index, bool palette) {
+	if (index < 0 || index >= (int32)og_cfg.lgp_colors.size()) return 0;
+	return palette ? og_cfg.lgp_colors[index].palette : og_cfg.lgp_colors[index].fallback;
 }
 
 bool og_send_ping(int32 fd) {
@@ -821,6 +855,7 @@ static void og_handle_control(int32 fd, s_og_state* o, const uint8* p, size_t n)
 		if (a.flags & OG_ALIVE_HW_BREAKPOINT) og_event(fd, "hw-breakpoint", "debug registers set", og_cfg.tamper_action);
 		if (a.flags & OG_ALIVE_API_HOOKED) og_event(fd, "api-hook", "timing/input API patched", og_cfg.tamper_action);
 		if (a.flags & OG_ALIVE_GRF_VIOLATION) og_event(fd, "grf", "protected resource overridden", og_cfg.grf_action);
+		o->info.lgp_palette = (a.flags & OG_ALIVE_LGP_PALETTE) != 0;
 		break;
 	}
 	case OG_C_DETECT: {

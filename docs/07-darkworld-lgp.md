@@ -21,6 +21,57 @@ den gespeicherten Strom; es meldet daher für `dark.grf` gegen kRO 2438 „chang
 
 ## Teil 1 – LGP-Kacheln
 
+### 1.0 Stand 2026-11-24: flache Farbzellen je Skill (umgesetzt, im Spiel getestet)
+
+Vollständige Analyse: `analysis/lgp/lgp-audit.md` (243 Bodenskills, Mod-GRFs, Client-Units) mit Nachtrag §9
+(Messung im Spiel), Liste aller Skills: `analysis/lgp/lgp-skills.tsv`. Die Abschnitte 1.1–1.6 unten sind der
+frühere Stand und bleiben als Herleitung stehen.
+
+**So sieht es aus:** Jede Zelle eines Bodenskills wird für Spieler mit `@lgp` zu einer flachen, achsparallelen
+Kachel in der Farbe des Skills (wie Gepards `@lgp` und die darkworld-/WoE-RO-Optik), die schwere Animation
+kommt nicht. Keine RO-Animation, keine Partikel.
+
+| Farbe | Skills (Konfiguration `og_lgp`) |
+|---|---|
+| blau | Storm Gust, Water Ball, Ice Meteor (Ninja), Deluge, Suiton |
+| gelb | Lord of Vermilion, Thunderstorm, Raigekisai, Warmth of the Stars |
+| rot | Meteor Storm, Fire Pillar, Volcano, Kaensin, Bakuenryu, Warmth of the Sun |
+| braun | Heaven's Drive, Quagmire, Desperado, Arrow Shower (auch Söldner), Hammer Fall, Earthquake (MVP) |
+| cyan | Grand Cross, Magnus, B.S. Sacramenti, Ganbantein, Basilica, Fog Wall |
+| orange | Fire Wall, Bomb (Demonstration) |
+| grün | Pneuma, Sanctuary, Slim Pitcher, Violent Gale |
+| violett | Venom Dust, Gravitation Field, Warmth of the Moon, Grand Darkness, Evil Land (MVP) |
+| rosa | Safety Wall, Gospel, Sheltering Bliss |
+| nie | Ice Wall (Zellsperre), Land Protector, Fallen, Warp, Lieder/Tänze (schon flach), Gildenauren |
+
+**Technik:**
+
+1. **Client-Patch (`client/src/og_lgp.c`, Modul `lgp`):** Der 2018er Client hat nur zwei freie flache Units
+   (0xc8/0xc9) und tönt beide blau. Der Patch leitet sieben ungenutzte Unit-IDs im Unit-Switch auf denselben
+   Flachquad-Effekt (671) um und ersetzt dort den Aufruf des Quad-Helfers: Je nach Unit-ID des Besitzers lädt er
+   `effect\odinlgp_<farbe>.tga` aus `odin.grf` und setzt die Tönung auf Weiß mit normaler Alpha-Mischung. Jede
+   Stelle wird vorher an ihren Bytes erkannt; ein anderer Client-Build bleibt unverändert (dann blaue Kacheln).
+   Der Client meldet die Palette im Heartbeat (`OG_ALIVE_LGP_PALETTE`).
+2. **Palette (gemessen):** blau 0xc8, cyan 0xc9, gelb 0xba, rot 0x8b, orange 0xdf, grün 0xec, violett 0x103,
+   braun 0x89, rosa 0xb5; Fallback ohne Patch 0xc8 (gefüllt) / 0xc9 (Umriss), beide blau. Nicht frei trotz fehlendem
+   Fall: 0xb0 (Graffiti-Text), 0xe5 (Pflanzen), 0x104/0x106 (heller Schein), 0xd1/0x107 (andere Handler).
+3. **Server (xAthena, `og_map.cpp`, Hooks in `clif.cpp`):**
+   - `og_lgp_color: <name>,<palette unit>,<fallback unit>` und `og_lgp: [style,]<skill>,<farbe|unit>`.
+   - Unsichtbare Zellen (Storm Gust …) **und** sichtbare Units (Fire Wall, Pneuma, Sanctuary …) werden pro
+     Betrachter ersetzt; Ice Wall nie. Lite-Units gehen immer mit Stufe 1 raus (0xba wechselt sonst je Stufe).
+   - **Flash-Zellen:** Skills ohne Unit (Arrow Shower, Hammer Fall, Ganbantein …), kurzlebige Units (Heaven's
+     Drive, 100 ms) und Einzelzellen-Units mit Fläche (Meteor-Einschläge) bekommen für `og_lgp_flash_ms`
+     (Standard 1000) eine Kachel pro Zelle; IDs 100.000.000+ (der Client ignoriert IDs ab 0x7E000000).
+   - `@square 1` = jeder Skill in seiner Farbe, `@square 2..10` = alle Skills in einer Farbe (Reihenfolge der
+     `og_lgp_color`-Zeilen), `@circle` = Sage-Bänder für SG/LoV/MS, `@aoes` = nur SG/LoV/MS.
+4. **Texturen:** `assets/odin-grf/lgp/data/texture/effect/odinlgp_*.tga` (9) und `hanmoon1/2.tga` (Fallback),
+   128×128 TGA32, erzeugt mit `analysis/lgp/tools/make_lgp_tiles.py`.
+
+**Getestet (gemessen, VM, echter Client):** alle neun Farben mit Stufen 1–10, 14 Skills einzeln (Tabelle in
+`analysis/lgp/lgp-audit.md` §9), Flash-Zellen verschwinden nach Ablauf, `@lgp off` zeigt die normalen Effekte.
+**Nicht geprüft:** Fallback-Optik ohne Patch, zwei Betrachter gleichzeitig.
+
+
 ### 1.1 So arbeitet die aktuelle OdinGuard-LGP **[gelesen]**
 
 `@lgp` setzt `og_flags` Bit 2. Für Skills aus `og_lgp` (`conf/odinguard_athena.conf`) bekommt ein
@@ -112,6 +163,10 @@ Analysematerial; ausgeliefert wird nur, was ein Betreiber über die Kategorien i
 | E Evil Land | 0xc7 | `curse.bmp` | NPC-Skill; `curse.bmp` evtl. weitere Nutzer; schwebend | unklar |
 
 ### 1.5 Empfehlung **[Vorschlag]**
+
+> **Überholt durch `analysis/lgp/lgp-audit.md` (2026-11-24):** Der 2018er Client tönt die Units 0xc8/0xc9
+> fest blau (additiv); eine orange `hanmoon2.tga` erscheint dunkel. `hanmoon1/2.tga` sind jetzt blau gefüllt
+> bzw. blauer Umriss; weitere Farben nur über den dort beschriebenen Client-Patch (`odinlgp_*.tga`).
 
 1. **Sofort (Estland-/WoE-RO-Look, belegt):** Variante B. `og_lgp` für 89, 83, 85 auf `0x9b`;
    `odin.grf` überschreibt **eine** Datei: `data\texture\effect\ring_blue.tga` (64×64, TGA 32 bit,

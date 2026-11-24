@@ -78,8 +78,20 @@ in `05-tests.md`.
 
 ## Ground skills (LGP)
 
-No client hook is needed: the map-server sends players with `@lgp` an existing flat ground unit
-(Volcano 0x9a, Deluge 0x9b, Violent Gale 0x9c, Land Protector 0x9d) instead of `UNT_DUMMYSKILL` for the
-cells of Storm Gust, Meteor Storm, Lord of Vermilion, Heaven's Drive and the Ninja ground skills, and
-leaves out the heavy `ZC_NOTIFY_GROUNDSKILL` animation. The textures are in every data.grf, so there are
-no missing-file or BMP errors.
+The map-server sends players with `@lgp` a flat ground unit per cell instead of the skill's own unit (invisible
+`UNT_DUMMYSKILL` cells of Storm Gust, Meteor Storm ... and visible units of Fire Wall, Pneuma, Sanctuary ...) and
+leaves out the heavy `ZC_NOTIFY_GROUNDSKILL` animation; skills without a unit get short-lived "flash" units.
+
+The 2018-06-20 client draws only two unused flat units (0xc8/0xc9, effects 671/672, flat quad helper
+`0x949b00(texture, 3)`) and tints both blue (primitive `+0x304 = 111.0`). `client/src/og_lgp.c` (module `lgp`)
+patches, after checking the bytes of every site:
+
+- the unit switch jump table `0xb0ceb4` (index unit − 0x7e): seven ids without a case → the case of 0xc8;
+- the two `call 0x949b00` in the effect cases 671/672 → `lgp_tile`, which takes the unit id of the effect's owner
+  (`this+0x128`, job getter `0x9c6a30`), loads `effect\odinlgp_<colour>.tga` and sets the tint to 110.0 (white,
+  normal alpha blending).
+
+Free ids were measured in game, not only read from the switch: 0xb0 is graffiti text (`0xa52c53`), 0xe5/0x104/
+0x106/0xd1/0x107 have cases in the actor message handler `0xb0f821` (plants, glow), 0xba changes by level in
+`0x9dff81` (the server sends lite units with level 1). The client ignores units with ids from 0x7E000000 on.
+Full analysis: `analysis/lgp/lgp-audit.md`.

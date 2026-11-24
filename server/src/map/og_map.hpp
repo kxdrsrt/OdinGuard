@@ -27,7 +27,11 @@ void og_map_on_quit(map_session_data* sd);
 uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id);
 /// sends buf to every player in the area of src for whom keep(viewer) is true
 void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
-/// @lgp (kind 0), @square (1), @circle (2), @aoes (3); arg "", "on", "off" or a colour set 1-14
+/// lite cells for a ground skill without a unit (position effect only), sent to this viewer and removed again
+void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y);
+/// the same for a square of the given range around x,y (single-cell units with an area: Meteor Storm impacts ...)
+void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y, int32 range, bool skip_center);
+/// @lgp (kind 0), @square (1), @circle (2), @aoes (3); arg "", "on", "off" or a colour set (1 + og_lgp_color lines)
 void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg);
 /// @namecolor: permanent name colour of a character (-1 = none)
 void og_map_set_namecolor(map_session_data* sd, int32 rgb);

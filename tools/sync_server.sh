@@ -33,6 +33,7 @@ cp "$X/conf/odinguard_athena.conf" "$S/conf/"
 		src/login/login.cpp src/login/loginclif.cpp src/char/char_clif.cpp \
 		src/map/clif.cpp src/map/clif.hpp src/map/map.cpp src/map/pc.cpp src/map/atcommand.cpp src/map/script.cpp \
 		| sed 's/[[:space:]]\{2,\}/ /g' | cut -c1-200
+	grep -n "skill_get_unit_layout_type" src/map/skill.hpp | sed 's/^/src\/map\/skill.hpp:/'
 	echo
 	grep -n -E "^\s+(lgp|square|circle|aoes):" conf/groups.yml | sed 's/^/conf\/groups.yml:/'
 } > "$S/HOOKS.txt"

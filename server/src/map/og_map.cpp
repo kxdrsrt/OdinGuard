@@ -10,6 +10,7 @@
 #include <common/socket.hpp>
 #include <common/sql.hpp>
 #include <common/strlib.hpp>
+#include <common/timer.hpp>
 #include <common/utilities.hpp>
 
 #include <common/og_proto.h>
@@ -21,14 +22,17 @@
 #include "pc.hpp"
 #include "pc_groups.hpp"
 #include "script.hpp"
+#include "skill.hpp"
 #include "unit.hpp"
 
 // character registry keys
 #define OG_REG_FLAGS "og_flags"         // bit 1: lite ground skills, bit 3: only SG/LoV/MS (bit 0 was "hide auras", now src/map/aura.cpp)
-#define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2..14 = colour set
+#define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2.. = one colour for every skill (og_lgp_color order)
 #define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
 #define OG_FLAG_LGP 2
 #define OG_FLAG_LGP_AOES 8
+
+TIMER_FUNC(og_lgp_flash_end);
 
 static std::string og_esc(const std::string& s) {
 	std::string out(s.size() * 2 + 1, '\0');
@@ -102,6 +106,7 @@ void og_map_init() {
 		if (SQL_ERROR == Sql_QueryStr(mmysql_handle, q))
 			Sql_ShowDebug(mmysql_handle);
 	og_set_handlers(og_map_event, og_map_text, og_map_pong);
+	add_timer_func_list(og_lgp_flash_end, "og_lgp_flash_end");
 	og_map_guard_init();
 }
 
@@ -211,12 +216,85 @@ uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id) {
 	int32 flags = og_flags(viewer);
 	if (!(flags & OG_FLAG_LGP) || ((flags & OG_FLAG_LGP_AOES) && !og_lgp_in_aoes(skill_id)))
 		return 0;
+	// clients with the colour patch (og_lgp.c) draw the palette units, others the blue fallback units
+	const s_og_info* info = og_info(viewer->fd);
+	bool palette = info != nullptr && info->lgp_palette;
+	uint16 base = og_lgp_unit_style("square", skill_id, palette);
+	if (base == 0)
+		return 0;
 	int32 style = (int32)pc_readglobalreg(const_cast<map_session_data*>(viewer), add_str(OG_REG_LGP_STYLE));
+	if (style <= 0)
+		return base;
 	char name[16];
 	if (style == 1) safestrncpy(name, "circle", sizeof(name));
 	else safesnprintf(name, sizeof(name), "set%d", style);
-	uint16 unit = style > 0 ? og_lgp_unit_style(name, skill_id) : 0;
-	return unit ? unit : og_lgp_unit(skill_id);
+	if (uint16 unit = og_lgp_unit_style(name, skill_id, palette); unit != 0)
+		return unit;
+	// @square <n>: every skill in colour n-1 of the og_lgp_color list
+	if (style >= 2 && style - 2 < og_lgp_color_count())
+		return og_lgp_color_unit(style - 2, palette);
+	return base;
+}
+
+// Flash cells: ground skills without a unit (Arrow Shower, Hammer Fall ...) only have the position effect. LGP
+// players get one lite unit per cell of the splash area instead, removed again after og_lgp_flash_ms. The ids
+// are only known to that viewer's client and come from the gap between account ids (END_ACCOUNT_NUM) and NPC/mob
+// ids (START_NPC_NUM) that no game object uses (the 2018 client ignores units with ids from 0x7E000000 on).
+#define OG_LGP_FLASH_BASE 100000000u
+#define OG_LGP_FLASH_IDS 0x100000u
+static uint32 og_lgp_flash_next = 0;
+
+TIMER_FUNC(og_lgp_flash_end) {
+	map_session_data* sd = map_id2sd(id);
+	if (sd == nullptr || sd->fd <= 0 || !session_isActive(sd->fd))
+		return 0;
+	uint32 first = OG_LGP_FLASH_BASE + (uint32)(data >> 8);
+	for (int32 i = 0; i < (int32)(data & 0xff); i++) {
+		unsigned char buf[6];
+		WBUFW(buf, 0) = 0x0120; // ZC_SKILL_DISAPPEAR
+		WBUFL(buf, 2) = first + i;
+		clif_send(buf, sizeof(buf), sd, SELF);
+	}
+	return 0;
+}
+
+void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y) {
+	og_map_lgp_flash_area(viewer, src, skill_id, skill_lv, x, y, skill_get_splash(skill_id, std::max<uint16>(skill_lv, 1)), false);
+}
+
+void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y, int32 range, bool skip_center) {
+	uint16 unit = og_map_lgp_unit(viewer, skill_id);
+	if (unit == 0)
+		return;
+	int32 r = std::clamp(range, 0, 3);
+	int32 n = (2 * r + 1) * (2 * r + 1);
+	if (og_lgp_flash_next + n >= OG_LGP_FLASH_IDS)
+		og_lgp_flash_next = 0;
+	uint32 start = og_lgp_flash_next;
+	og_lgp_flash_next += n;
+	int32 sent = 0;
+	for (int32 dy = -r; dy <= r; dy++) {
+		for (int32 dx = -r; dx <= r; dx++) {
+			int16 cx = x + dx, cy = y + dy;
+			if ((skip_center && dx == 0 && dy == 0) || cx < 0 || cy < 0 || cx >= map[src.m].xs || cy >= map[src.m].ys || map_getcell(src.m, cx, cy, CELL_CHKWALL))
+				continue;
+			unsigned char buf[23];
+			WBUFW(buf, 0) = 0x09ca; // ZC_SKILL_ENTRY5
+			WBUFW(buf, 2) = sizeof(buf);
+			WBUFL(buf, 4) = OG_LGP_FLASH_BASE + start + sent;
+			WBUFL(buf, 8) = src.id;
+			WBUFW(buf, 12) = cx;
+			WBUFW(buf, 14) = cy;
+			WBUFL(buf, 16) = unit;
+			WBUFB(buf, 20) = 0;
+			WBUFB(buf, 21) = 1;
+			WBUFB(buf, 22) = 1; // see clif_getareachar_skillunit: lite units always with level 1
+			clif_send(buf, sizeof(buf), viewer, SELF);
+			sent++;
+		}
+	}
+	if (sent > 0)
+		add_timer(gettick() + og_setting_int("og_lgp_flash_ms", 1000), og_lgp_flash_end, viewer->id, (intptr_t)((start << 8) | (uint32)sent));
 }
 
 struct s_og_area { const block_list* src; const void* buf; int32 len; bool (*keep)(map_session_data*, const block_list&, void*); void* ctx; };
@@ -240,8 +318,13 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 	if (!strcmpi(arg, "on")) on = true;
 	else if (!strcmpi(arg, "off")) on = false;
 	else if (kind == 1 && atoi(arg) > 0) {
-		int32 set = atoi(arg);
-		if (set > 14) { clif_displaymessage(sd->fd, "Colour sets: 1-14."); return; }
+		int32 set = atoi(arg), sets = 1 + og_lgp_color_count();
+		if (set > sets) {
+			char m[CHAT_SIZE_MAX];
+			safesnprintf(m, sizeof(m), "Colour sets: 1 = every skill in its own colour, 2-%d = one colour for every skill.", sets);
+			clif_displaymessage(sd->fd, m);
+			return;
+		}
 		style = set == 1 ? 0 : set;
 		on = true;
 	} else if (kind != 0 && *arg == '\0')
@@ -257,8 +340,8 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 	if (!on)
 		safesnprintf(msg, sizeof(msg), "Lite ground skills off: normal skill effects.");
 	else
-		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat cell tiles.",
-			style == 1 ? "circle" : style > 1 ? "colour set" : "square", style > 1 ? std::to_string(style).c_str() : "",
+		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat coloured cells.",
+			style == 1 ? "circle" : style > 1 ? "colour set " : "square", style > 1 ? std::to_string(style).c_str() : "",
 			(flags & OG_FLAG_LGP_AOES) ? "Storm Gust, Lord of Vermilion and Meteor Storm" : "area skills");
 	clif_displaymessage(sd->fd, msg);
 }

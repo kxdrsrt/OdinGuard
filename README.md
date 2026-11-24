@@ -29,7 +29,7 @@ tie every server to one vendor. OdinGuard is:
 | Detection | signed, updatable signature package (300 signatures: processes, modules, windows, files, drivers, mutexes, registry, GRF hashes), allowlist, per-group actions |
 | Server rules | packet rate limit (WPE/RPE loops), no-delay detection, autopot/macro timing, honeypot unit, captcha, multi-client limit, hardware bans (exact and fuzzy), flags and ban waves |
 | Challenges | nonce (build secret), random code ranges, clock rate, random file ranges, captcha, honeypot |
-| Features | `!ping`, `!vsync`, `!crash` (crash reports with the last packets), colour names and items, lite ground skills (`@lgp`, flat cell tiles), optional competitive pack (same darkworld-style visuals for everyone) |
+| Features | `!ping`, `!vsync`, `!crash` (crash reports with the last packets), colour names and items, lite ground skills (`@lgp`: every ground skill as flat cells in its colour), optional competitive pack (same darkworld-style visuals for everyone) |
 | Tooling | Studio GUI (Tauri 2) and `og` CLI: profiles, validation, reproducible signed releases, signature packages, GRF scan, rollout gate, signed self-update |
 
 ## Quick start

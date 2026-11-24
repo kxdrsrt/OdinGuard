@@ -42,7 +42,7 @@ Jedes Modul hat `id`, `version`, `kind` (core, protection, detection, challenge,
 | client-commands | client-feature | beide | core | og_cmds | og_client_commands | – |
 | colors | gameplay | beide | core | og_text, og_ui | og_colors | – |
 | branding | client-feature | Client | core | og_splash | – | – |
-| lgp | gameplay | Server | core | – | og_lgp_enable | – |
+| lgp | gameplay | beide | core | og_lgp | og_lgp_enable | – |
 | ban-system | protection | Server | core | – | og_ban_system | wave_hour, ban_score |
 | behaviour | detection | Server | ban-system | – | og_behaviour | nodelay_per_minute, autopot_ms, macro_jitter_ms |
 | ch-nonce | challenge | beide | core | (core) | og_ch_nonce | interval, action |
@@ -190,7 +190,7 @@ Commands eines nicht gewählten Moduls sind automatisch aus.
 
 ## 9. odin.grf
 
-Nur Assets (LGP-Kacheln `hanmoon1/2.tga`, später UI), gebaut mit `rgrf-core` aus den Asset-Gruppen der
+Nur Assets (LGP-Kacheln `odinlgp_<farbe>.tga` und `hanmoon1/2.tga`, später UI), gebaut mit `rgrf-core` aus den Asset-Gruppen der
 gewählten Module und danach mit `rgrf_core::verify` geprüft. DLLs und Server-Code liegen nie in der GRF.
 `odin.grf` ist Pflicht-Datei der `ch-file`-Challenge, das Competitive-Pack (`odin-dark.grf`) optional.
 Ladereihenfolge (`DATA.INI`): `0=odin.grf`, `1=odin-dark.grf` (falls gewählt), danach die GRFs des Clients.

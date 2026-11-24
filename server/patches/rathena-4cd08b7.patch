@@ -3560,10 +3560,10 @@ index ce4d0b1..1baaace 100644
        can_trade: true
 diff --git a/conf/odinguard_athena.conf b/conf/odinguard_athena.conf
 new file mode 100644
-index 0000000..45ffcc2
+index 0000000..9e545c7
 --- /dev/null
 +++ b/conf/odinguard_athena.conf
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,232 @@
 +// OdinGuard Anti Cheat settings. Local overrides: conf/import/odinguard_conf.txt (created at the first start).
 +// The OdinGuard Studio generates the profile values (key, proto salt, build secret, signature package, module
 +// switches, commands, auras) into conf/import/odinguard_conf.txt; the environment variables ODINGUARD_KEY,
@@ -3654,25 +3654,75 @@ index 0000000..45ffcc2
 +
 +// ---- Display features (map-server; need OdinGuard on the client) ----
 +
-+// Lite ground skills (@lgp, @square, @circle, @aoes): [style,]<skill id>,<unit id>. For players with LGP on, the
-+// cells of these skills are drawn with a flat ground unit and the heavy animation is not sent. Styles: square
-+// (default), circle, set2 .. set14 (@square <n>). odin.grf replaces the textures of the units 0xc8 (hanmoon1.tga,
-+// blue tile) and 0xc9 (hanmoon2.tga, orange tile); without odin.grf use 0x9b (Deluge) like v0.3.
-+// Unit ids: 0x9a red (Volcano), 0x9b blue (Deluge), 0x9c green (Violent Gale), 0x9d Land Protector glyphs,
-+// 0xc8/0xc9 (no skill uses them). 0 removes an entry. og_lgp_aoes: skills shown with @aoes.
-+og_lgp: 89,0xc8
-+og_lgp: 83,0xc9
-+og_lgp: 85,0xc8
-+og_lgp: 91,0x9c
-+og_lgp: 539,0xc8
-+og_lgp: 540,0x9c
-+og_lgp: 541,0x9c
++// Lite ground skills (@lgp, @square, @circle, @aoes). For players with LGP on, every cell of these skills is drawn as
++// a flat tile in the skill's colour, and the heavy animation is not sent (complete list of ground skills and
++// classes: OdinGuard analysis/lgp/lgp-skills.tsv, docs/07-darkworld-lgp.md).
++//   og_lgp_color: <name>,<palette unit>,<fallback unit>
++//     The palette unit is drawn with effect\odinlgp_<name>.tga (odin.grf) by clients with the OdinGuard colour patch
++//     (2018-06-20 client, module lgp); other clients get the fallback unit: 0xc8 = blue tile, 0xc9 = blue outline
++//     (hanmoon1/2.tga in odin.grf; the client tints both units blue). The order is the order of @square 2..10.
++//   og_lgp: [style,]<skill id>,<colour name | unit id>   (style: square = default, circle, setN; 0 removes)
++//     Skills with dummy cells (Storm Gust ...) and with own units (Fire Wall, Pneuma ...) get lite units; skills
++//     without a unit (Arrow Shower, Hammer Fall ...) get flash cells for og_lgp_flash_ms. Never Ice Wall (87),
++//     Land Protector, traps, Warp, songs: their look carries game information or is already flat.
++og_lgp_color: blue,0xc8,0xc8
++og_lgp_color: cyan,0xc9,0xc8
++og_lgp_color: yellow,0xba,0xc9
++og_lgp_color: red,0x8b,0xc9
++og_lgp_color: orange,0xdf,0xc9
++og_lgp_color: green,0xec,0xc8
++og_lgp_color: purple,0x103,0xc8
++og_lgp_color: brown,0x89,0xc9
++og_lgp_color: pink,0xb5,0xc9
++og_lgp_flash_ms: 1000
++// Wizard / Sage / Ninja / Taekwon / Gunslinger / Crusader
++og_lgp: 89,blue
++og_lgp: 86,blue
++og_lgp: 539,blue
++og_lgp: 286,blue
++og_lgp: 538,blue
++og_lgp: 85,yellow
++og_lgp: 21,yellow
++og_lgp: 541,yellow
++og_lgp: 430,yellow
++og_lgp: 83,red
++og_lgp: 80,red
++og_lgp: 285,red
++og_lgp: 535,red
++og_lgp: 536,red
++og_lgp: 428,red
++og_lgp: 91,brown
++og_lgp: 92,brown
++og_lgp: 516,brown
++og_lgp: 47,brown
++og_lgp: 8208,brown
++og_lgp: 110,brown
++og_lgp: 254,cyan
++og_lgp: 79,cyan
++og_lgp: 69,cyan
++og_lgp: 483,cyan
++og_lgp: 362,cyan
++og_lgp: 404,cyan
++og_lgp: 18,orange
++og_lgp: 229,orange
++og_lgp: 25,green
++og_lgp: 70,green
++og_lgp: 478,green
++og_lgp: 287,green
++og_lgp: 140,purple
++og_lgp: 484,purple
++og_lgp: 429,purple
++og_lgp: 12,pink
++og_lgp: 369,pink
++og_lgp: 395,pink
++// monsters (MVP areas)
++og_lgp: 339,purple
++og_lgp: 670,purple
++og_lgp: 653,brown
++// @circle: the round ground bands of the Sage units for the big three (WoE-RO look); the rest stays square
 +og_lgp: circle,89,0x9b
 +og_lgp: circle,83,0x9a
-+og_lgp: circle,85,0x9b
-+og_lgp: set2,89,0xc9
-+og_lgp: set2,83,0xc8
-+og_lgp: set2,85,0xc9
++og_lgp: circle,85,0x9c
 +og_lgp_aoes: 89,83,85
 +
 +// Name colour per account group: <group id>,<RRGGBB>. Single characters: @namecolor.
@@ -3877,10 +3927,10 @@ index 62b4259..d6b0cf7 100644
      </ClCompile>
 diff --git a/src/common/odinguard.cpp b/src/common/odinguard.cpp
 new file mode 100644
-index 0000000..533f556
+index 0000000..5c619d0
 --- /dev/null
 +++ b/src/common/odinguard.cpp
-@@ -0,0 +1,1179 @@
+@@ -0,0 +1,1214 @@
 +// OdinGuard Anti Cheat – server side. See odinguard.hpp, og_proto.h and og_wire.h.
 +
 +#include "odinguard.hpp"
@@ -3942,6 +3992,9 @@ index 0000000..533f556
 +	std::string path;
 +};
 +
++struct s_og_lgp_color { std::string name; uint16 palette, fallback; };
++struct s_og_lgp { std::string style; uint16 skill, unit; int32 color; }; // color: index into lgp_colors, -1 = fixed unit
++
 +static struct {
 +	bool enable = false;
 +	bool required = false;
@@ -3968,7 +4021,8 @@ index 0000000..533f556
 +	std::vector<std::string> allowed_exe;
 +	std::vector<s_og_signature> signatures;
 +	std::vector<std::pair<int32, uint32>> item_colors, group_colors;
-+	std::vector<std::tuple<std::string, uint16, uint16>> lgp; // style, skill, unit
++	std::vector<s_og_lgp_color> lgp_colors;
++	std::vector<s_og_lgp> lgp;
 +	std::vector<std::pair<std::string, std::string>> switches; // module switches and other plain values
 +	s_og_challenge_cfg ch[5]; // index = OG_CH_*
 +	std::vector<s_og_file> files;
@@ -4227,14 +4281,36 @@ index 0000000..533f556
 +			if (sscanf(w2, "%d , %x", &id, &rgb) == 2)
 +				(w1[3] == 'i' ? og_cfg.item_colors : og_cfg.group_colors).emplace_back(id, rgb & 0xFFFFFF);
 +		}
++		else if (!strcmpi(w1, "og_lgp_color")) {
++			// name,palette unit,fallback unit: the palette unit for clients with the colour patch, else the fallback
++			char name[16];
++			unsigned int palette, fallback;
++			if (sscanf(w2, "%15[a-z] , %i , %i", name, &palette, &fallback) == 3) {
++				auto it = std::find_if(og_cfg.lgp_colors.begin(), og_cfg.lgp_colors.end(), [&](const auto& c) { return !strcmpi(c.name.c_str(), name); });
++				if (it != og_cfg.lgp_colors.end()) { it->palette = (uint16)palette; it->fallback = (uint16)fallback; }
++				else og_cfg.lgp_colors.push_back({ name, (uint16)palette, (uint16)fallback });
++			}
++		}
 +		else if (!strcmpi(w1, "og_lgp")) {
-+			// [style,]skill,unit  (style: square = default, circle, set2 .. set14); unit 0 removes the entry
-+			char style[16] = "square";
-+			unsigned int skill, unit;
-+			if (sscanf(w2, "%15[a-z0-9] , %i , %i", style, &skill, &unit) == 3 || sscanf(w2, "%i , %i", &skill, &unit) == 2) {
-+				if (isdigit((unsigned char)style[0])) safestrncpy(style, "square", sizeof(style));
-+				og_cfg.lgp.erase(std::remove_if(og_cfg.lgp.begin(), og_cfg.lgp.end(), [&](const auto& e) { return std::get<1>(e) == skill && !strcmpi(std::get<0>(e).c_str(), style); }), og_cfg.lgp.end());
-+				if (unit != 0) og_cfg.lgp.emplace_back(style, (uint16)skill, (uint16)unit);
++			// [style,]skill,<colour name | unit id>  (style: square = default, circle, set2 .. set10); unit 0 removes the entry
++			char a[16] = "", b[16] = "", c[16] = "";
++			int32 n = sscanf(w2, "%15[^, ] , %15[^, ] , %15[^, ]", a, b, c);
++			const char* style = n == 3 ? a : "square";
++			const char* skill_s = n == 3 ? b : a;
++			const char* value = n == 3 ? c : b;
++			if (n >= 2 && isdigit((unsigned char)skill_s[0])) {
++				uint16 skill = (uint16)strtoul(skill_s, nullptr, 0);
++				s_og_lgp e = { style, skill, 0, -1 };
++				if (isdigit((unsigned char)value[0]))
++					e.unit = (uint16)strtoul(value, nullptr, 0);
++				else {
++					auto it = std::find_if(og_cfg.lgp_colors.begin(), og_cfg.lgp_colors.end(), [&](const auto& col) { return !strcmpi(col.name.c_str(), value); });
++					if (it == og_cfg.lgp_colors.end()) { ShowWarning("OdinGuard: og_lgp %s: unknown colour '%s' (og_lgp_color first)\n", w2, value); continue; }
++					e.color = (int32)(it - og_cfg.lgp_colors.begin());
++					e.unit = it->palette;
++				}
++				og_cfg.lgp.erase(std::remove_if(og_cfg.lgp.begin(), og_cfg.lgp.end(), [&](const auto& x) { return x.skill == skill && !strcmpi(x.style.c_str(), style); }), og_cfg.lgp.end());
++				if (e.unit != 0) og_cfg.lgp.push_back(e);
 +			}
 +		}
 +		else if (!strcmpi(w1, "import")) og_config_read(w2);
@@ -4453,14 +4529,22 @@ index 0000000..533f556
 +const std::vector<std::pair<int32, uint32>>& og_item_colors() { return og_cfg.item_colors; }
 +const std::vector<std::pair<int32, uint32>>& og_group_namecolors() { return og_cfg.group_colors; }
 +uint16 og_lgp_unit(uint16 skill_id) {
-+	return og_lgp_unit_style("square", skill_id);
++	return og_lgp_unit_style("square", skill_id, true);
 +}
 +
-+uint16 og_lgp_unit_style(const char* style, uint16 skill_id) {
++uint16 og_lgp_unit_style(const char* style, uint16 skill_id, bool palette) {
 +	if (!og_cfg.enable) return 0;
 +	for (const auto& e : og_cfg.lgp)
-+		if (std::get<1>(e) == skill_id && !strcmpi(std::get<0>(e).c_str(), style)) return std::get<2>(e);
++		if (e.skill == skill_id && !strcmpi(e.style.c_str(), style))
++			return e.color < 0 ? e.unit : og_lgp_color_unit(e.color, palette);
 +	return 0;
++}
++
++int32 og_lgp_color_count() { return (int32)og_cfg.lgp_colors.size(); }
++
++uint16 og_lgp_color_unit(int32 index, bool palette) {
++	if (index < 0 || index >= (int32)og_cfg.lgp_colors.size()) return 0;
++	return palette ? og_cfg.lgp_colors[index].palette : og_cfg.lgp_colors[index].fallback;
 +}
 +
 +bool og_send_ping(int32 fd) {
@@ -4704,6 +4788,7 @@ index 0000000..533f556
 +		if (a.flags & OG_ALIVE_HW_BREAKPOINT) og_event(fd, "hw-breakpoint", "debug registers set", og_cfg.tamper_action);
 +		if (a.flags & OG_ALIVE_API_HOOKED) og_event(fd, "api-hook", "timing/input API patched", og_cfg.tamper_action);
 +		if (a.flags & OG_ALIVE_GRF_VIOLATION) og_event(fd, "grf", "protected resource overridden", og_cfg.grf_action);
++		o->info.lgp_palette = (a.flags & OG_ALIVE_LGP_PALETTE) != 0;
 +		break;
 +	}
 +	case OG_C_DETECT: {
@@ -5062,10 +5147,10 @@ index 0000000..533f556
 +}
 diff --git a/src/common/odinguard.hpp b/src/common/odinguard.hpp
 new file mode 100644
-index 0000000..b3e7d12
+index 0000000..dfbe1af
 --- /dev/null
 +++ b/src/common/odinguard.hpp
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,86 @@
 +// OdinGuard server side: handshake, encrypted record layer and policy for client connections.
 +// Wire format: og_proto.h (shared with the OdinGuard client DLL).
 +
@@ -5094,6 +5179,7 @@ index 0000000..b3e7d12
 +	std::string build;
 +	uint8 flags = 0;
 +	uint8 version = 0;
++	bool lgp_palette = false; // the client draws the LGP colour units (OG_ALIVE_LGP_PALETTE)
 +	std::vector<std::pair<std::string, std::string>> components; // name, hex hash
 +};
 +
@@ -5143,7 +5229,9 @@ index 0000000..b3e7d12
 +const std::vector<std::pair<int32, uint32>>& og_item_colors();       // item id, 0xRRGGBB
 +const std::vector<std::pair<int32, uint32>>& og_group_namecolors();  // group id, 0xRRGGBB
 +uint16 og_lgp_unit(uint16 skill_id);                                  // square style; 0 = no lite display for the skill
-+uint16 og_lgp_unit_style(const char* style, uint16 skill_id);         // square | circle | set2..set14, 0 = not configured
++uint16 og_lgp_unit_style(const char* style, uint16 skill_id, bool palette); // square | circle | setN, 0 = not configured
++int32 og_lgp_color_count();                                           // og_lgp_color lines
++uint16 og_lgp_color_unit(int32 index, bool palette);                  // unit of a colour: palette or fallback
 +
 +// CREATE TABLE IF NOT EXISTS statements (login and map server run them at start)
 +const std::vector<const char*>& og_sql_ddl();
@@ -5159,10 +5247,10 @@ index 0000000..6fd3e15
 +#include "../../3rdparty/monocypher/monocypher.c"
 diff --git a/src/common/og_proto.h b/src/common/og_proto.h
 new file mode 100644
-index 0000000..c64e933
+index 0000000..abf5a9d
 --- /dev/null
 +++ b/src/common/og_proto.h
-@@ -0,0 +1,139 @@
+@@ -0,0 +1,140 @@
 +/* OdinGuard Anti Cheat – wire protocol v2. Shared by the client DLL (C) and the server module (C++).
 + * All integers little-endian. The parsers for every message live in og_wire.c (pure C, fuzzed natively).
 + *
@@ -5232,6 +5320,7 @@ index 0000000..c64e933
 +#define OG_ALIVE_GRF_VIOLATION  0x04
 +#define OG_ALIVE_API_HOOKED     0x08 /* timing/input APIs patched by a foreign module (speed hacks, macro tools) */
 +#define OG_ALIVE_HW_BREAKPOINT  0x10 /* debug registers set on the game thread */
++#define OG_ALIVE_LGP_PALETTE    0x20 /* capability, not a violation: the client draws the LGP colour units (og_lgp.c) */
 +
 +/* control messages, server -> client */
 +#define OG_S_POLICY    0x81 /* u8 block_vm, u8 max_windows, u16 alive_interval_s, u8 input_filter, u8 grf_strict,
@@ -6267,7 +6356,7 @@ index f367e9b..d3fc08d 100644
  		ACMD_DEF(mapflag),
  		ACMD_DEF(me),
 diff --git a/src/map/clif.cpp b/src/map/clif.cpp
-index fdca8ba..0d69e37 100644
+index fdca8ba..4391fe2 100644
 --- a/src/map/clif.cpp
 +++ b/src/map/clif.cpp
 @@ -17,6 +17,7 @@
@@ -6329,18 +6418,29 @@ index fdca8ba..0d69e37 100644
  			// On officials the HP never go below 1, even if you die [Lemongrass]
  			// On officials the HP Novice class never go below 50%, even if you die [Napster]
  			if (sd.battle_status.hp == 0) {
-@@ -5500,6 +5531,25 @@ void clif_getareachar_skillunit(block_list *bl, skill_unit *unit, enum send_targ
+@@ -5500,6 +5531,36 @@ void clif_getareachar_skillunit(block_list *bl, skill_unit *unit, enum send_targ
  			WBUFB(buf,pos+20) = (unsigned char)unit->group->skill_lv;
  			break;
  	}
 +
-+	// OdinGuard @lgp: ground skills shown as coloured cells instead of the heavy animation
-+	if( header == 0x09ca && visible && unit_id == UNT_DUMMYSKILL && og_lgp_unit( unit->group->skill_id ) != 0 ){
-+		struct s_lgp { unsigned char* buf; int32 pos; uint16 skill_id; } lgp = { buf, pos, unit->group->skill_id };
++	// OdinGuard @lgp: ground skills shown as coloured cells instead of the heavy animation (the invisible cells of
++	// Storm Gust, Meteor Storm ... and the visible units of Fire Wall, Pneuma, Sanctuary ...; never Ice Wall, whose
++	// cell change is sent below)
++	if( header == 0x09ca && visible && unit->group->skill_id != WZ_ICEWALL && og_lgp_unit( unit->group->skill_id ) != 0 ){
++		// a single-cell unit with an area (Meteor Storm impacts: range 3) also shows that area as flash cells, and a
++		// unit that is gone before the client draws it (Heaven's Drive: 100 ms) gets a flash cell on its own cell
++		int32 area = skill_get_unit_layout_type( unit->group->skill_id, unit->group->skill_lv ) == 0 ? unit->range : 0;
++		if( area == 0 && unit->group->limit < og_setting_int( "og_lgp_flash_ms", 1000 ) )
++			area = -1;
++		struct s_lgp { unsigned char* buf; int32 pos; uint16 skill_id, skill_lv; int32 unit_id, area; skill_unit* unit; } lgp = { buf, pos, unit->group->skill_id, (uint16)unit->group->skill_lv, unit_id, area, unit };
 +		auto set = []( map_session_data* viewer, const block_list&, void* ctx ){
 +			s_lgp* l = static_cast<s_lgp*>( ctx );
 +			uint16 lite = og_map_lgp_unit( viewer, l->skill_id );
-+			WBUFL( l->buf, l->pos + 14 ) = lite != 0 ? lite : UNT_DUMMYSKILL;
++			WBUFL( l->buf, l->pos + 14 ) = lite != 0 ? lite : l->unit_id;
++			// level 1 for lite units: the client changes some unit ids by level (0xba at 2-5 becomes 0xbb-0xbe)
++			WBUFB( l->buf, l->pos + 20 ) = lite != 0 ? 1 : (unsigned char)l->skill_lv;
++			if( lite != 0 && l->area != 0 )
++				og_map_lgp_flash_area( viewer, *l->unit, l->skill_id, l->skill_lv, l->unit->x, l->unit->y, std::max( l->area, 0 ), l->area > 0 );
 +			return true;
 +		};
 +		if( target == SELF ){
@@ -6355,19 +6455,26 @@ index fdca8ba..0d69e37 100644
  	clif_send(buf, len, bl, target);
  
  	if (unit->group->skill_id == WZ_ICEWALL)
-@@ -6209,6 +6259,11 @@ void clif_skill_poseffect( block_list& bl, uint16 skill_id, uint16 skill_lv, uin
+@@ -6209,6 +6270,18 @@ void clif_skill_poseffect( block_list& bl, uint16 skill_id, uint16 skill_lv, uin
  		
  		packet.AID = disguised_bl_id( bl.id );
  		clif_send( &packet, sizeof( packet ), &bl, SELF );
 +	} else if( og_lgp_unit( skill_id ) != 0 ){
-+		// OdinGuard @lgp: players with lite ground skills do not get the heavy animation
-+		og_map_send_area( bl, &packet, sizeof( packet ), []( map_session_data* viewer, const block_list&, void* ctx ){
-+			return og_map_lgp_unit( viewer, *static_cast<uint16*>( ctx ) ) == 0;
-+		}, &skill_id );
++		// OdinGuard @lgp: players with lite ground skills do not get the heavy animation; skills without a unit
++		// (Arrow Shower, Hammer Fall ...) show them flash cells instead
++		struct s_lgp_pos { uint16 skill_id, skill_lv, x, y; bool flash; } ctx = { skill_id, skill_lv, x, y, skill_get_unit_id( skill_id ) == 0 };
++		og_map_send_area( bl, &packet, sizeof( packet ), []( map_session_data* viewer, const block_list& src, void* ctx ){
++			s_lgp_pos* p = static_cast<s_lgp_pos*>( ctx );
++			if( og_map_lgp_unit( viewer, p->skill_id ) == 0 )
++				return true;
++			if( p->flash )
++				og_map_lgp_flash( viewer, src, p->skill_id, p->skill_lv, p->x, p->y );
++			return false;
++		}, &ctx );
  	} else {
  		clif_send( &packet, sizeof( packet ), &bl, AREA );
  	}
-@@ -10697,6 +10752,12 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
+@@ -10697,6 +10770,12 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
  		return;
  	}
  
@@ -6380,7 +6487,7 @@ index fdca8ba..0d69e37 100644
  	//Check for double login.
  	bl = map_id2bl(account_id);
  	if(bl && bl->type != BL_PC) {
-@@ -10811,6 +10872,9 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
+@@ -10811,6 +10890,9 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
  	// reset the callshop flag if the player changes map
  	sd->state.callshop = 0;
  
@@ -6390,7 +6497,7 @@ index fdca8ba..0d69e37 100644
  	if(map_addblock(sd))
  		return;
  	clif_spawn(sd);
-@@ -11516,6 +11580,9 @@ void clif_parse_GlobalMessage(int32 fd, map_session_data* sd)
+@@ -11516,6 +11598,9 @@ void clif_parse_GlobalMessage(int32 fd, map_session_data* sd)
  	if( !clif_process_message(sd, false, name, message, output ) )
  		return;
  
@@ -6400,7 +6507,7 @@ index fdca8ba..0d69e37 100644
  	if( sd->gcbind && ((sd->gcbind->opt&CHAN_OPT_CAN_CHAT) || pc_has_permission(sd, PC_PERM_CHANNEL_ADMIN)) ) {
  		channel_send(sd->gcbind,sd,message);
  		return;
-@@ -11711,6 +11778,8 @@ void clif_parse_ActionRequest_sub( map_session_data& sd, uint8 action_type, int3
+@@ -11711,6 +11796,8 @@ void clif_parse_ActionRequest_sub( map_session_data& sd, uint8 action_type, int3
  
  	if(target_id<0 && -target_id == sd.id) // for disguises [Valaris]
  		target_id = sd.id;
@@ -6409,7 +6516,7 @@ index fdca8ba..0d69e37 100644
  
  	switch(action_type)
  	{
-@@ -12101,6 +12170,7 @@ void clif_parse_UseItem(int32 fd, map_session_data *sd)
+@@ -12101,6 +12188,7 @@ void clif_parse_UseItem(int32 fd, map_session_data *sd)
  
  	if(n <0 || n >= MAX_INVENTORY)
  		return;
@@ -6417,7 +6524,7 @@ index fdca8ba..0d69e37 100644
  	if (!pc_useitem(sd,n))
  		clif_useitemack(sd,n,0,false); //Send an empty ack packet or the client gets stuck.
  }
-@@ -12929,12 +12999,16 @@ void clif_parse_skill_toid( map_session_data* sd, uint16 skill_id, uint16 skill_
+@@ -12929,12 +13017,16 @@ void clif_parse_skill_toid( map_session_data* sd, uint16 skill_id, uint16 skill_
  
  	if( target_id < 0 && -target_id == sd->id ) // for disguises [Valaris]
  		target_id = sd->id;
@@ -6434,7 +6541,7 @@ index fdca8ba..0d69e37 100644
  			clif_skill_fail( *sd, skill_id, USESKILL_FAIL_SKILLINTERVAL );
  			return;
  		}
-@@ -13051,6 +13125,7 @@ static void clif_parse_UseSkillToPosSub( int32 fd, map_session_data& sd, uint16
+@@ -13051,6 +13143,7 @@ static void clif_parse_UseSkillToPosSub( int32 fd, map_session_data& sd, uint16
  
  	if( DIFF_TICK(tick, sd.ud.canact_tick) < 0 ) {
  		if( sd.skillitem != skill_id ) {
@@ -6442,7 +6549,7 @@ index fdca8ba..0d69e37 100644
  			clif_skill_fail( sd, skill_id, USESKILL_FAIL_SKILLINTERVAL );
  			return;
  		}
-@@ -25783,6 +25858,8 @@ static int32 clif_parse(int32 fd)
+@@ -25783,6 +25876,8 @@ static int32 clif_parse(int32 fd)
  		sd->cryptKey = ((sd->cryptKey * clif_cryptKey[1]) + clif_cryptKey[2]) & 0xFFFFFFFF; // Update key for the next packet
  #endif
  
@@ -6591,10 +6698,10 @@ index 4130361..ae2e677 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 0000000..bc23799
+index 0000000..14c9ed9
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,349 @@
+@@ -0,0 +1,432 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
@@ -6607,6 +6714,7 @@ index 0000000..bc23799
 +#include <common/socket.hpp>
 +#include <common/sql.hpp>
 +#include <common/strlib.hpp>
++#include <common/timer.hpp>
 +#include <common/utilities.hpp>
 +
 +#include <common/og_proto.h>
@@ -6618,14 +6726,17 @@ index 0000000..bc23799
 +#include "pc.hpp"
 +#include "pc_groups.hpp"
 +#include "script.hpp"
++#include "skill.hpp"
 +#include "unit.hpp"
 +
 +// character registry keys
 +#define OG_REG_FLAGS "og_flags"         // bit 1: lite ground skills, bit 3: only SG/LoV/MS (bit 0 was "hide auras", now src/map/aura.cpp)
-+#define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2..14 = colour set
++#define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2.. = one colour for every skill (og_lgp_color order)
 +#define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
 +#define OG_FLAG_LGP 2
 +#define OG_FLAG_LGP_AOES 8
++
++TIMER_FUNC(og_lgp_flash_end);
 +
 +static std::string og_esc(const std::string& s) {
 +	std::string out(s.size() * 2 + 1, '\0');
@@ -6699,6 +6810,7 @@ index 0000000..bc23799
 +		if (SQL_ERROR == Sql_QueryStr(mmysql_handle, q))
 +			Sql_ShowDebug(mmysql_handle);
 +	og_set_handlers(og_map_event, og_map_text, og_map_pong);
++	add_timer_func_list(og_lgp_flash_end, "og_lgp_flash_end");
 +	og_map_guard_init();
 +}
 +
@@ -6808,12 +6920,85 @@ index 0000000..bc23799
 +	int32 flags = og_flags(viewer);
 +	if (!(flags & OG_FLAG_LGP) || ((flags & OG_FLAG_LGP_AOES) && !og_lgp_in_aoes(skill_id)))
 +		return 0;
++	// clients with the colour patch (og_lgp.c) draw the palette units, others the blue fallback units
++	const s_og_info* info = og_info(viewer->fd);
++	bool palette = info != nullptr && info->lgp_palette;
++	uint16 base = og_lgp_unit_style("square", skill_id, palette);
++	if (base == 0)
++		return 0;
 +	int32 style = (int32)pc_readglobalreg(const_cast<map_session_data*>(viewer), add_str(OG_REG_LGP_STYLE));
++	if (style <= 0)
++		return base;
 +	char name[16];
 +	if (style == 1) safestrncpy(name, "circle", sizeof(name));
 +	else safesnprintf(name, sizeof(name), "set%d", style);
-+	uint16 unit = style > 0 ? og_lgp_unit_style(name, skill_id) : 0;
-+	return unit ? unit : og_lgp_unit(skill_id);
++	if (uint16 unit = og_lgp_unit_style(name, skill_id, palette); unit != 0)
++		return unit;
++	// @square <n>: every skill in colour n-1 of the og_lgp_color list
++	if (style >= 2 && style - 2 < og_lgp_color_count())
++		return og_lgp_color_unit(style - 2, palette);
++	return base;
++}
++
++// Flash cells: ground skills without a unit (Arrow Shower, Hammer Fall ...) only have the position effect. LGP
++// players get one lite unit per cell of the splash area instead, removed again after og_lgp_flash_ms. The ids
++// are only known to that viewer's client and come from the gap between account ids (END_ACCOUNT_NUM) and NPC/mob
++// ids (START_NPC_NUM) that no game object uses (the 2018 client ignores units with ids from 0x7E000000 on).
++#define OG_LGP_FLASH_BASE 100000000u
++#define OG_LGP_FLASH_IDS 0x100000u
++static uint32 og_lgp_flash_next = 0;
++
++TIMER_FUNC(og_lgp_flash_end) {
++	map_session_data* sd = map_id2sd(id);
++	if (sd == nullptr || sd->fd <= 0 || !session_isActive(sd->fd))
++		return 0;
++	uint32 first = OG_LGP_FLASH_BASE + (uint32)(data >> 8);
++	for (int32 i = 0; i < (int32)(data & 0xff); i++) {
++		unsigned char buf[6];
++		WBUFW(buf, 0) = 0x0120; // ZC_SKILL_DISAPPEAR
++		WBUFL(buf, 2) = first + i;
++		clif_send(buf, sizeof(buf), sd, SELF);
++	}
++	return 0;
++}
++
++void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y) {
++	og_map_lgp_flash_area(viewer, src, skill_id, skill_lv, x, y, skill_get_splash(skill_id, std::max<uint16>(skill_lv, 1)), false);
++}
++
++void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y, int32 range, bool skip_center) {
++	uint16 unit = og_map_lgp_unit(viewer, skill_id);
++	if (unit == 0)
++		return;
++	int32 r = std::clamp(range, 0, 3);
++	int32 n = (2 * r + 1) * (2 * r + 1);
++	if (og_lgp_flash_next + n >= OG_LGP_FLASH_IDS)
++		og_lgp_flash_next = 0;
++	uint32 start = og_lgp_flash_next;
++	og_lgp_flash_next += n;
++	int32 sent = 0;
++	for (int32 dy = -r; dy <= r; dy++) {
++		for (int32 dx = -r; dx <= r; dx++) {
++			int16 cx = x + dx, cy = y + dy;
++			if ((skip_center && dx == 0 && dy == 0) || cx < 0 || cy < 0 || cx >= map[src.m].xs || cy >= map[src.m].ys || map_getcell(src.m, cx, cy, CELL_CHKWALL))
++				continue;
++			unsigned char buf[23];
++			WBUFW(buf, 0) = 0x09ca; // ZC_SKILL_ENTRY5
++			WBUFW(buf, 2) = sizeof(buf);
++			WBUFL(buf, 4) = OG_LGP_FLASH_BASE + start + sent;
++			WBUFL(buf, 8) = src.id;
++			WBUFW(buf, 12) = cx;
++			WBUFW(buf, 14) = cy;
++			WBUFL(buf, 16) = unit;
++			WBUFB(buf, 20) = 0;
++			WBUFB(buf, 21) = 1;
++			WBUFB(buf, 22) = 1; // see clif_getareachar_skillunit: lite units always with level 1
++			clif_send(buf, sizeof(buf), viewer, SELF);
++			sent++;
++		}
++	}
++	if (sent > 0)
++		add_timer(gettick() + og_setting_int("og_lgp_flash_ms", 1000), og_lgp_flash_end, viewer->id, (intptr_t)((start << 8) | (uint32)sent));
 +}
 +
 +struct s_og_area { const block_list* src; const void* buf; int32 len; bool (*keep)(map_session_data*, const block_list&, void*); void* ctx; };
@@ -6837,8 +7022,13 @@ index 0000000..bc23799
 +	if (!strcmpi(arg, "on")) on = true;
 +	else if (!strcmpi(arg, "off")) on = false;
 +	else if (kind == 1 && atoi(arg) > 0) {
-+		int32 set = atoi(arg);
-+		if (set > 14) { clif_displaymessage(sd->fd, "Colour sets: 1-14."); return; }
++		int32 set = atoi(arg), sets = 1 + og_lgp_color_count();
++		if (set > sets) {
++			char m[CHAT_SIZE_MAX];
++			safesnprintf(m, sizeof(m), "Colour sets: 1 = every skill in its own colour, 2-%d = one colour for every skill.", sets);
++			clif_displaymessage(sd->fd, m);
++			return;
++		}
 +		style = set == 1 ? 0 : set;
 +		on = true;
 +	} else if (kind != 0 && *arg == '\0')
@@ -6854,8 +7044,8 @@ index 0000000..bc23799
 +	if (!on)
 +		safesnprintf(msg, sizeof(msg), "Lite ground skills off: normal skill effects.");
 +	else
-+		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat cell tiles.",
-+			style == 1 ? "circle" : style > 1 ? "colour set" : "square", style > 1 ? std::to_string(style).c_str() : "",
++		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat coloured cells.",
++			style == 1 ? "circle" : style > 1 ? "colour set " : "square", style > 1 ? std::to_string(style).c_str() : "",
 +			(flags & OG_FLAG_LGP_AOES) ? "Storm Gust, Lord of Vermilion and Meteor Storm" : "area skills");
 +	clif_displaymessage(sd->fd, msg);
 +}
@@ -6946,10 +7136,10 @@ index 0000000..bc23799
 +}
 diff --git a/src/map/og_map.hpp b/src/map/og_map.hpp
 new file mode 100644
-index 0000000..7cf1d8d
+index 0000000..413e336
 --- /dev/null
 +++ b/src/map/og_map.hpp
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,59 @@
 +// OdinGuard on the map-server: events, kicks and bans, chat commands (!ping, !vsync, !crash), machine limit.
 +#ifndef OG_MAP_HPP
 +#define OG_MAP_HPP
@@ -6979,7 +7169,11 @@ index 0000000..7cf1d8d
 +uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id);
 +/// sends buf to every player in the area of src for whom keep(viewer) is true
 +void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
-+/// @lgp (kind 0), @square (1), @circle (2), @aoes (3); arg "", "on", "off" or a colour set 1-14
++/// lite cells for a ground skill without a unit (position effect only), sent to this viewer and removed again
++void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y);
++/// the same for a square of the given range around x,y (single-cell units with an area: Meteor Storm impacts ...)
++void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y, int32 range, bool skip_center);
++/// @lgp (kind 0), @square (1), @circle (2), @aoes (3); arg "", "on", "off" or a colour set (1 + og_lgp_color lines)
 +void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg);
 +/// @namecolor: permanent name colour of a character (-1 = none)
 +void og_map_set_namecolor(map_session_data* sd, int32 rgb);
@@ -7356,3 +7550,15 @@ index bd0a113..419e79e 100755
  	if (st->sex != sd->status.sex) {
  		clif_authfail_fd(sd->fd, 0);
  		return false;
+diff --git a/src/map/skill.hpp b/src/map/skill.hpp
+index 73143bd..fc297da 100644
+--- a/src/map/skill.hpp
++++ b/src/map/skill.hpp
+@@ -554,6 +554,7 @@ bool skill_get_inf2_(uint16 skill_id, std::vector<e_skill_inf2> inf2);
+ #define skill_get_unit_flag(skill_id, unit) skill_get_unit_flag_(skill_id, { unit })
+ bool skill_get_unit_flag_(uint16 skill_id, std::vector<e_skill_unit_flag> unit);
+ int32 skill_get_unit_range(uint16 skill_id, uint16 skill_lv);
++int32 skill_get_unit_layout_type( uint16 skill_id, uint16 skill_lv );
+ // Accessor for skill requirements
+ int32 skill_get_hp( uint16 skill_id ,uint16 skill_lv );
+ int32 skill_get_mhp( uint16 skill_id ,uint16 skill_lv );

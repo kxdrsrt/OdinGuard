@@ -273,14 +273,15 @@ summary = "Splash screen with the operator name from the profile."
 
 [[module]]
 id = "lgp"
-version = "2.0.0"
+version = "3.0.0"
 kind = "gameplay"
-side = "server"
+side = "both"
 requires = ["core"]
-client_src = []
+client_src = ["og_lgp.c"]
+define = "OG_MOD_LGP"
 server_key = "og_lgp_enable"
 assets = ["lgp"]
-summary = "Lite ground skills (@lgp/@square/@circle/@aoes): flat cell tiles from odin.grf instead of heavy ground effects."
+summary = "Lite ground skills (@lgp/@square/@circle/@aoes): flat cell tiles in the skill's colour from odin.grf instead of heavy ground effects; the client patch adds 9 colours (2018-06-20 client, else blue)."
 
 
 [[module]]

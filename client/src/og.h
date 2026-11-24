@@ -42,6 +42,7 @@ int  og_contains_i(const char *hay, const char *needle);
 /* third-party software that hooks every process (banking protection, overlays, drivers) plus the allowlist
    paths of the signature package: never reported as injection or API hook */
 int  og_path_tolerated(const char *path);
+int  og_file_allowed(const char *path);    /* SHA-256 on the server allowlist (cached) */
 /* profile values stored masked in the DLL; unmasked into the caller's buffer */
 size_t og_profile_hwid_salt(char *out, size_t cap);
 void og_profile_proto_salt(uint8_t out[OG_SALT_LEN]);
@@ -171,6 +172,14 @@ static inline void og_assets_reset(void) {}
 void og_splash_show(HINSTANCE inst, DWORD hold_ms);
 #else
 static inline void og_splash_show(HINSTANCE inst, DWORD hold_ms) { (void)inst; (void)hold_ms; }
+#endif
+
+#if OG_MOD_LGP
+void og_lgp_init(void);
+int  og_lgp_palette_active(void);
+#else
+static inline void og_lgp_init(void) {}
+static inline int  og_lgp_palette_active(void) { return 0; }
 #endif
 
 #if OG_MOD_COLORS

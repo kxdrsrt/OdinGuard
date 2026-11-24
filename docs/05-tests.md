@@ -42,7 +42,7 @@ Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pu
 | Prüfung | Soll | Ergebnis |
 |---|---|---|
 | Minimal-Profil enthält nur Kern-Code | Linker-Map: nur og_main/og_log/og_net/og_sha256/og_challenge/og_wire; keine Strings anderer Module | grün (271 360 Byte; Pipeline bricht sonst ab) |
-| Default-Profil = Verhalten v0.3 | gleiche Module/Defaults wie v0.3; neue Module opt-in; E2E Abschnitt 1 grün | grün (Ausnahme: LGP-Standard-Units 0xc8/0xc9 statt 0x9b, siehe Abnahme A6) |
+| Default-Profil = Verhalten v0.3 | gleiche Module/Defaults wie v0.3; neue Module opt-in; E2E Abschnitt 1 grün | grün (Ausnahme: LGP jetzt mit Farbpalette, `07-darkworld-lgp.md` §1.0) |
 | Server kompiliert | xAthena `make server` (Docker, `-j3`) | grün |
 | Kein alter Servername im Repo | `grep -ri` nach dem bisherigen Betreibernamen: nur die Herkunftsdoku `07-darkworld-lgp.md` (Ordnername einer Quelle) | grün |
 
@@ -99,7 +99,7 @@ V = Verbindungsabbruch (Command ohne Wirkung, kein Absturz).
 | `!vsync [on\|off]` | Bildratenlimit aus/an | – | v0.3 | Konfig | Unit | v0.3 + Abnahme A3 |
 | `!crash` | Crash-Bericht ohne Absturz | – | – | Konfig | Unit | v0.3 + Abnahme A3 |
 | `@lgp [on\|off]` | LGP an/aus, gespeichert | – | E2E | Konfig | Unit | grün (E2E 1) + Abnahme A6 |
-| `@square [on\|off\|1-14]` | Farbset | – | E2E | Konfig | Unit | grün (E2E 4) + Abnahme A6 |
+| `@square [on\|off\|1-10]` | Farbset (2-10 einfarbig) | – | E2E | Konfig | Unit | grün (E2E 4) + Abnahme A6 |
 | `@circle [on\|off]` | runde Kacheln | – | – | Konfig | Unit | Abnahme A6 |
 | `@aoes [on\|off]` | nur SG/LoV/MS | – | E2E | Konfig | Unit | grün (E2E 5) |
 | `@showauras` | Auren anderer aus/an | – | – | Konfig | Unit | v0.3 (E2E 1 ruft ihn auf, ohne eigene Prüfung) |
@@ -144,7 +144,7 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
 | A3 | `!ping`, `!vsync off/on`, `!crash` | Antworten im Chat, Crash-Ordner geschrieben |
 | A4 | Farb-Nick (GM gold), Farb-Item | wie v0.3 |
 | A5 | (Aura-Feature, nicht OdinGuard) Aura Keeper (Prontera 160,192): Quest abschließen | Questlog-Eintrag sichtbar (braucht Lub-Text), Aura frei, `@aura <name>` zeigt sie anderen; `@showauras` blendet aus |
-| A6 | `@lgp`, `@square 2`, `@circle`, `@aoes` mit Storm Gust, LoV, Meteor Storm | flache blaue/orange Zellen pro Zelle, Charaktere sichtbar; Vergleich mit darkworld-Boden (Kontrast) |
+| A6 | `@lgp`, `@square 2..10`, `@circle`, `@aoes` mit Storm Gust, LoV, Meteor Storm und weiteren Bodenskills | flache Zellen in der Farbe des Skills (SG blau, LoV gelb, MS rot, Pneuma grün …), Charaktere sichtbar; Vergleich mit darkworld-Boden (Kontrast). **Vorab in der VM gemessen (2026-11-24):** alle 9 Farben, 14 Skills, Flash-Zellen; siehe `analysis/lgp/lgp-audit.md` §9 |
 | A7 | Competitive-Pack (Standard: Flachmaps WoE/BG/PvP, dunkle Böden, Bäume, Pneuma) | Ladereihenfolge `0=odin.grf`, `1=odin-dark.grf`; flache WoE-/BG-Maps mit dunklen Kacheln, Pneuma-Countdown; FPS/Ladezeit notieren; keine `grf:*`-Meldung |
 | A7b | GRF-Prüfung mit echtem Client | Dev-Client ohne Änderung: keine Meldung; darkworld `dark.grf` zusätzlich: keine Meldung (erlaubter Mod); geänderte data.grf: `grf:modified` |
 | A8 | Challenges einschalten (Stufe 1, je eins): nonce, code, time, file | keine Fehlschläge für ehrliche Spieler über 24 h |
@@ -160,7 +160,7 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
   bestätigt erst die Abnahme auf einem Testrechner.
 - Input-Filter: Parallels verwirft synthetische Eingaben schon vor dem Gast (v0.3-Befund), daher nur auf echter
   Hardware.
-- Questlog-Texte, Captcha-Fenster, LGP-Look: nur im echten Client.
+- Questlog-Texte, Captcha-Fenster: nur im echten Client. LGP-Look: in der VM im echten Client gemessen; offen sind der Fallback ohne Palette (anderer Client-Build) und zwei Betrachter gleichzeitig.
 - CFG nur mit llvm-mingw (`TOOLCHAIN=llvm`); der Standard-Build (mingw-gcc) hat es nicht. Visual-Studio-Builds des
   Server-Patches sind ungetestet.
 
@@ -168,3 +168,8 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
 
 Die Ergebnisse von v0.1–v0.3 (Handshake, Hardware-Bans, Rechner-Limit, Alive-Timeout, Farb-Nicks, Auren-IDs,
 Release-Paket) gelten weiter für den unveränderten Code; Details im Git-Verlauf dieser Datei (Commit `4ad6498`).
+
+**2026-11-24 (LGP-Palette, Sichttest in der VM):** Beim ersten Login mit dem echten Client meldete der Heartbeat
+`api-hook` (`kernel32!GetTickCount -> dxwrapper.dll`): DxWrapper hängt sich in `GetTickCount`, die Prüfung kannte nur
+Pfad-Ausnahmen. Behoben: Module mit einem SHA-256 aus der Allowlist (`OG_KIND_ALLOW_SHA256`, z. B. OG-ALLOW-004
+DxWrapper) gelten auch dort als bekannt (`og_file_allowed`, Hash je Datei gecacht). Danach keine Meldung mehr.

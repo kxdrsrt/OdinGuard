@@ -146,6 +146,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res)
         if (!og_cmds_init()) og_log("command hooks failed");
         if (!og_text_init()) og_log("text hook failed");
         og_ui_init();
+        og_lgp_init();
 #ifdef OG_TEST_CURSOR
         { void og_test_cursor_init(void); og_test_cursor_init(); }
 #endif

@@ -52,6 +52,32 @@ int og_contains_i(const char *hay, const char *needle)
     return 0;
 }
 
+/* the file's SHA-256 is on the server's allowlist (OG_KIND_ALLOW_SHA256); the last answers are cached by path,
+   so a large legit DLL is hashed once and not with every heartbeat */
+int og_file_allowed(const char *path)
+{
+    static struct { char path[MAX_PATH]; FILETIME mtime; int allowed; } cache[8];
+    static int next;
+    WIN32_FILE_ATTRIBUTE_DATA fa;
+    char hex[65];
+    int i, k, hit = 0;
+    if (!GetFileAttributesExA(path, GetFileExInfoStandard, &fa)) return 0;
+    for (i = 0; i < 8; i++)
+        if (!_stricmp(cache[i].path, path) && !CompareFileTime(&cache[i].mtime, &fa.ftLastWriteTime)) return cache[i].allowed;
+    if (!og_sha256_file(path, hex)) return 0;
+    EnterCriticalSection(&og_policy_lock);
+    for (k = 0; k < og_policy.nsig && !hit; k++)
+        if (og_policy.sig[k].kind == OG_KIND_ALLOW_SHA256 && !_stricmp(og_policy.sig[k].pattern, hex)) hit = 1;
+    LeaveCriticalSection(&og_policy_lock);
+    if (og_policy.nsig) { /* only cache once the server list is there */
+        i = next++ % 8;
+        snprintf(cache[i].path, sizeof cache[i].path, "%s", path);
+        cache[i].mtime = fa.ftLastWriteTime;
+        cache[i].allowed = hit;
+    }
+    return hit;
+}
+
 int og_path_tolerated(const char *path)
 {
     static const char *ok[] = { "\\Warsaw\\", "\\GAS Tecnologia\\", "\\Diebold\\", "\\Topaz OFD\\",

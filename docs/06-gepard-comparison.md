@@ -34,7 +34,7 @@ xAthena (`05-tests.md`). Gepard facts are from its public feature list; its code
 | Synthetic input block | low-level hooks reject injected mouse/keyboard events | built, **untested** (Parallels drops synthetic input) |
 | Nodelay / animation delay | server-side `min_skill_delay_limit` + exe code hash | tested (hash) |
 | GRF override protection | resource rules (loose files, GRF order), action per server rule | tested (report) |
-| LGP | server-side: flat ground units per viewer (`@lgp`) | tested; **better**: no client files, no BMP errors, works for every client with OdinGuard |
+| LGP | flat cells per viewer in the colour of each skill (`@lgp`, 9 colours, flash cells for skills without a unit), colours via a guarded client patch | tested in the real client; colours only for the 2018-06-20 client (others: blue); needs `odin.grf` |
 | Custom auras | hat effects, allow list `og_aura`, `@aura` | tested; resource check tool |
 | Colour nicks | server colour list, drawn by the exe text hook | tested |
 | Colour items | server colour list per item id | tested |

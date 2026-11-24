@@ -71,6 +71,8 @@ static void heartbeat(void)
         if (!g_grf_reported) { g_grf_reported = 1; report(OG_KIND_GRF, detail); }
     }
 
+    if (og_lgp_palette_active()) flags |= OG_ALIVE_LGP_PALETTE;
+
     memset(m, 0, sizeof m);
     m[0] = OG_C_ALIVE;
     g_seq++;
