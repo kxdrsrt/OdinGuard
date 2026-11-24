@@ -85,6 +85,17 @@ help_en = "Coloured areas only for Storm Gust, Lord of Vermilion and Meteor Stor
 help_de = "farbige Flächen nur für Storm Gust, Lord of Vermilion und Meteor Storm"
 
 [[command]]
+id = "lgpsound"
+kind = "server"
+name = "lgpsound"
+module = "lgp"
+group = 0
+rate_ms = 1000
+params = "[on|off]"
+help_en = "Sound of the ground skills for lite ground skill players (the client's /sound switch still mutes it)."
+help_de = "Skill-Sound der Bodenskills für LGP-Spieler (der Client-Schalter /sound schaltet ihn weiterhin stumm)"
+
+[[command]]
 id = "namecolor"
 kind = "server"
 name = "namecolor"

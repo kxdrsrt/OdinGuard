@@ -30,6 +30,7 @@ uint32 og_map_lgp_marker(const map_session_data* viewer, uint16 skill_id);
 /// sends buf to every player in the area of src for whom keep(viewer) is true
 void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
 /// lite cells for a ground skill without a unit (position effect only), sent to this viewer and removed again
+void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id);
 void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y);
 /// the same for a square of the given range around x,y (single-cell units with an area: Meteor Storm impacts ...)
 void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y, int32 range, bool skip_center);

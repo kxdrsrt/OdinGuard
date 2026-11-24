@@ -98,7 +98,18 @@ Bodenzellen und damit auch keine LGP.
    (ohne + 25 Symbole) = 728 Dateien (komprimiert ≈ 1,4 MB) und `hanmoon1/2.tga` (Fallback), 128×128 TGA32, erzeugt mit
    `analysis/lgp/tools/make_lgp_tiles.py` (Vorschau: `analysis/lgp/lgp-symbols-sheet.png`). Wer ein Symbol oder eine
    Farbe ergänzt, trägt es in `make_lgp_tiles.py`, `client/src/og_lgp.c` und der Serverkonfig ein.
-5. **Test-NPC:** „LGP Test“ in Prontera (156,186) bzw. `@lgptest [skill]` (Admins) wirkt alle Skills nacheinander,
+5. **Sound:** Die schwere Bodenanimation trägt den Skill-Sound; LGP-Spieler bekommen sie nicht. Der Server schickt
+   deshalb den Sound allein (Paket ZC_SOUND 0x1d3, vom Zauberer aus) für die Skills in `og_lgp_sound_skills`
+   (23 Skills: Storm Gust, Meteor Storm, Thunderstorm, Fire Pillar, Fire Wall, Eiswand, Safety Wall, Quagmire,
+   Sanctuary, Magnus, B.S. Sacramenti, Grand Cross, Hammer Fall, Venom Dust, alle Fallen; Zuordnung
+   `assets/lgp-sound/sounds.tsv`, Zuordnung teils **[vermutet]**). Das Paket erlaubt nur 23 Zeichen Dateiname, die
+   Originale heißen länger (`effect\wizard_stormgust.wav`): `tools/pack/build_lgp_sounds.sh <Client-Ordner>` kopiert
+   sie unter `data\wav\og_<skill id>.wav` aus dem eigenen Client des Betreibers in einen Ordner außerhalb des
+   Repos; im Profil `[assets.odin_grf] lgp-sound = "<Ordner>"`, dann landen sie in `odin.grf` (ohne den Ordner gibt
+   der Build nur eine Warnung). Einstellbar: global `og_lgp_sound: yes/no`, je Spieler `@lgpsound [on|off]`
+   (Standard an, wird gespeichert), und `/sound` des Clients schaltet den Effekt-Ton weiterhin stumm **[vermutet,
+   nicht gehört]**. Ein Client ohne die Dateien bleibt still.
+6. **Test-NPC:** „LGP Test“ in Prontera (156,186) bzw. `@lgptest [skill]` (Admins) wirkt alle Skills nacheinander,
    jeweils auf leerem Feld (Skript-Befehl `og_clearskillunits`: sonst verdecken Lieder und Felder des Vorgängers die
    nächsten Skills), nie auf der eigenen Zelle (kleine Skills lägen unter dem Charakter) und mit den nötigen
    Verbrauchsgütern (Gems per `bNoGemStone`, Fallen, Flaschen, Steine). Beim Ansprechen während des Laufs lässt sich

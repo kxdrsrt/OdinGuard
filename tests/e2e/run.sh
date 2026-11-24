@@ -85,12 +85,13 @@ EOF
 stage_client "$R"
 
 echo "== 1 handshake, commands, challenges, self integrity (GM, 60 s)"
-out=$(nettest Mave OgTester '!ping;+aura;+lgp;+square 2;+aoes;+lgp off;+showauras;+showauras;+oginfo;+ogflags;+whosell' 60)
+out=$(nettest Mave OgTester '!ping;+aura;+lgp;+square 2;+aoes;+lgpsound off;+lgp off;+showauras;+showauras;+oginfo;+ogflags;+whosell' 60)
 printf '%s\n' "$out" | sed 's/^/   /' | head -40
 check "login and map enter with the profile guard" 'printf '%s\n' "$out" | grep -q "MAP: .* bytes after enter"'
 check "!ping answered by the guard" 'printf '%s\n' "$out" | grep -q "Ping: [0-9]* ms"'
 check "@aura lists the catalog with unlock conditions" 'printf '%s\n' "$out" | grep -q "quest:aura_t1"'
 check "@square 2 selects colour set 2" 'printf '%s\n' "$out" | grep -q "colour set 2"'
+check "@lgpsound off is acknowledged" 'printf '%s\n' "$out" | grep -q "sounds off"'
 check "@aoes limits LGP to SG/LoV/MS" 'printf '%s\n' "$out" | grep -q "Storm Gust, Lord of Vermilion and Meteor Storm"'
 check "@whosell without parameter answers in the chat (market overview)" 'printf '%s\n' "$out" | grep -q "No vending shop is open right now\|Market (selling)"'
 check "@oginfo shows protocol v2 and signatures" 'printf '%s\n' "$out" | grep -q "protocol v2.*signatures v1"'

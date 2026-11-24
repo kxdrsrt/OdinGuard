@@ -93,6 +93,7 @@ static struct {
 	std::vector<s_og_lgp> lgp;
 	std::vector<s_og_lgp_symbol> lgp_symbols;
 	std::vector<std::pair<uint16, int32>> lgp_symbol; // skill id -> symbol number
+	std::vector<uint16> lgp_sound; // skills whose sound (data\\wav\\og_<id>.wav) is sent to LGP players
 	std::vector<uint16> lgp_attack; // hostile skills: triangles instead of squares
 	std::vector<std::pair<std::string, std::string>> switches; // module switches and other plain values
 	s_og_challenge_cfg ch[5]; // index = OG_CH_*
@@ -388,6 +389,11 @@ static bool og_config_read(const char* file) {
 					if (index > 0) og_cfg.lgp_symbol.emplace_back(id, index);
 				}
 		}
+		else if (!strcmpi(w1, "og_lgp_sound_skills")) {
+			for (char* t = strtok(w2, ", \t\r\n"); t != nullptr; t = strtok(nullptr, ", \t\r\n"))
+				if (uint16 id = (uint16)strtoul(t, nullptr, 0); id != 0 && std::find(og_cfg.lgp_sound.begin(), og_cfg.lgp_sound.end(), id) == og_cfg.lgp_sound.end())
+					og_cfg.lgp_sound.push_back(id);
+		}
 		else if (!strcmpi(w1, "og_lgp_attack")) {
 			// skill ids shown as triangles (damage or harm to enemies); every other LGP skill is a square (protective)
 			for (char* t = strtok(w2, ", \t\r\n"); t != nullptr; t = strtok(nullptr, ", \t\r\n"))
@@ -651,6 +657,10 @@ bool og_lgp_entry(const char* style, uint16 skill_id, uint16* unit, int32* color
 
 bool og_lgp_attacks(uint16 skill_id) {
 	return std::find(og_cfg.lgp_attack.begin(), og_cfg.lgp_attack.end(), skill_id) != og_cfg.lgp_attack.end();
+}
+
+bool og_lgp_has_sound(uint16 skill_id) {
+	return std::find(og_cfg.lgp_sound.begin(), og_cfg.lgp_sound.end(), skill_id) != og_cfg.lgp_sound.end();
 }
 
 int32 og_lgp_symbol(uint16 skill_id) {

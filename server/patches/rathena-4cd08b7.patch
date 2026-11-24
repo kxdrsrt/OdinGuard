@@ -3543,10 +3543,10 @@ index 0000000..07cc4b8
 +
 +#endif // MONOCYPHER_H
 diff --git a/conf/groups.yml b/conf/groups.yml
-index ce4d0b1..1baaace 100644
+index ce4d0b1..f1a6908 100644
 --- a/conf/groups.yml
 +++ b/conf/groups.yml
-@@ -48,6 +48,11 @@ Body:
+@@ -48,6 +48,12 @@ Body:
      Commands:
        changedress: true
        resurrect: true
@@ -3555,15 +3555,16 @@ index ce4d0b1..1baaace 100644
 +      square: true
 +      circle: true
 +      aoes: true
++      lgpsound: true
      Permissions:
        # without this basic permissions regular players could not trade or party
        can_trade: true
 diff --git a/conf/odinguard_athena.conf b/conf/odinguard_athena.conf
 new file mode 100644
-index 0000000..82ab9aa
+index 0000000..bd7bb2a
 --- /dev/null
 +++ b/conf/odinguard_athena.conf
-@@ -0,0 +1,332 @@
+@@ -0,0 +1,340 @@
 +// OdinGuard Anti Cheat settings. Local overrides: conf/import/odinguard_conf.txt (created at the first start).
 +// The OdinGuard Studio generates the profile values (key, proto salt, build secret, signature package, module
 +// switches, commands, auras) into conf/import/odinguard_conf.txt; the environment variables ODINGUARD_KEY,
@@ -3670,7 +3671,7 @@ index 0000000..82ab9aa
 +//     Not covered on purpose: Warp Portal (the portal itself), Scribble, summons (Flora, Marine Sphere), guild auras.
 +//   og_lgp_symbol_def: <name>,<symbol number>   symbols of the client patch (effect\odinlgp_<colour>[_t]_<name>.tga)
 +//   og_lgp_symbol: <name | none>,<skill id>[,<skill id> ...]   small symbol in the middle of the skill's tiles:
-+//     + beneficial field (Volcano, Deluge, Violent Gale, Sanctuary), - debuff zone (Quagmire, Blinding Mist),
++//     sword+ = damage-boosting field (Volcano, Deluge, Violent Gale), + beneficial field (Sanctuary, Gospel ...), web = Fiber Lock, - debuff zone (Quagmire, Blinding Mist),
 +//     shield = protection (Pneuma, Safety Wall, Basilica), one symbol per song, ! traps. Only in the skill's own colour
 +//     (@square 1); the one-colour sets (@square 2-15) stay plain.
 +og_lgp_color: blue,0
@@ -3688,6 +3689,10 @@ index 0000000..82ab9aa
 +og_lgp_color: lightgrey,12
 +og_lgp_color: lime,13
 +og_lgp_flash_ms: 1500
++// The ground skill's sound for LGP players (they get no animation): og_<id>.wav from odin.grf's group lgp-sound, see
++// OdinGuard assets/lgp-sound/sounds.tsv and tools/pack/build_lgp_sounds.sh. Switch: og_lgp_sound: yes/no.
++og_lgp_sound: yes
++og_lgp_sound_skills: 89,83,21,80,18,87,12,92,70,79,69,254,110,140,115,116,117,118,119,120,121,122,123
 +og_lgp_symbol_def: plus,1
 +og_lgp_symbol_def: minus,2
 +og_lgp_symbol_def: shield,3
@@ -3711,7 +3716,9 @@ index 0000000..82ab9aa
 +og_lgp_symbol_def: sun,21
 +og_lgp_symbol_def: flame,22
 +og_lgp_symbol_def: wand,23
-+og_lgp_attack: 89,86,21,85,83,80,91,92,18,254,79,47,8208,110,140,229,115,116,117,118,119,120,121,122,123,8209,8210,8211,8212,405,306,308,311,317,325,328,484,516,521,535,536,539,541,339,670,653
++og_lgp_symbol_def: web,24
++og_lgp_symbol_def: swordplus,25
++og_lgp_attack: 89,86,21,85,83,80,91,92,18,254,79,47,8208,110,140,229,115,116,117,118,119,120,121,122,123,8209,8210,8211,8212,306,308,311,317,325,328,484,516,521,535,536,539,541,339,670,653
 +// Wizard / Sage
 +og_lgp: 89,blue
 +og_lgp: 86,blue
@@ -3802,8 +3809,10 @@ index 0000000..82ab9aa
 +og_lgp: circle,83,0x9a
 +og_lgp: circle,85,0x9c
 +og_lgp_aoes: 89,83,85
-+og_lgp_symbol: plus,285,286,287,70,69,369,478
-+og_lgp_symbol: minus,92,405,404,140,670,325
++og_lgp_symbol: plus,70,69,369,478
++og_lgp_symbol: swordplus,285,286,287
++og_lgp_symbol: minus,92,404,140,670,325
++og_lgp_symbol: web,405
 +og_lgp_symbol: shield,12,25,362,527,313,488
 +og_lgp_symbol: note,319,327
 +og_lgp_symbol: dnote,321
@@ -4027,10 +4036,10 @@ index 62b4259..d6b0cf7 100644
      </ClCompile>
 diff --git a/src/common/odinguard.cpp b/src/common/odinguard.cpp
 new file mode 100644
-index 0000000..eb46eed
+index 0000000..4d68cb6
 --- /dev/null
 +++ b/src/common/odinguard.cpp
-@@ -0,0 +1,1266 @@
+@@ -0,0 +1,1276 @@
 +// OdinGuard Anti Cheat – server side. See odinguard.hpp, og_proto.h and og_wire.h.
 +
 +#include "odinguard.hpp"
@@ -4126,6 +4135,7 @@ index 0000000..eb46eed
 +	std::vector<s_og_lgp> lgp;
 +	std::vector<s_og_lgp_symbol> lgp_symbols;
 +	std::vector<std::pair<uint16, int32>> lgp_symbol; // skill id -> symbol number
++	std::vector<uint16> lgp_sound; // skills whose sound (data\\wav\\og_<id>.wav) is sent to LGP players
 +	std::vector<uint16> lgp_attack; // hostile skills: triangles instead of squares
 +	std::vector<std::pair<std::string, std::string>> switches; // module switches and other plain values
 +	s_og_challenge_cfg ch[5]; // index = OG_CH_*
@@ -4421,6 +4431,11 @@ index 0000000..eb46eed
 +					if (index > 0) og_cfg.lgp_symbol.emplace_back(id, index);
 +				}
 +		}
++		else if (!strcmpi(w1, "og_lgp_sound_skills")) {
++			for (char* t = strtok(w2, ", \t\r\n"); t != nullptr; t = strtok(nullptr, ", \t\r\n"))
++				if (uint16 id = (uint16)strtoul(t, nullptr, 0); id != 0 && std::find(og_cfg.lgp_sound.begin(), og_cfg.lgp_sound.end(), id) == og_cfg.lgp_sound.end())
++					og_cfg.lgp_sound.push_back(id);
++		}
 +		else if (!strcmpi(w1, "og_lgp_attack")) {
 +			// skill ids shown as triangles (damage or harm to enemies); every other LGP skill is a square (protective)
 +			for (char* t = strtok(w2, ", \t\r\n"); t != nullptr; t = strtok(nullptr, ", \t\r\n"))
@@ -4684,6 +4699,10 @@ index 0000000..eb46eed
 +
 +bool og_lgp_attacks(uint16 skill_id) {
 +	return std::find(og_cfg.lgp_attack.begin(), og_cfg.lgp_attack.end(), skill_id) != og_cfg.lgp_attack.end();
++}
++
++bool og_lgp_has_sound(uint16 skill_id) {
++	return std::find(og_cfg.lgp_sound.begin(), og_cfg.lgp_sound.end(), skill_id) != og_cfg.lgp_sound.end();
 +}
 +
 +int32 og_lgp_symbol(uint16 skill_id) {
@@ -5299,10 +5318,10 @@ index 0000000..eb46eed
 +}
 diff --git a/src/common/odinguard.hpp b/src/common/odinguard.hpp
 new file mode 100644
-index 0000000..851ae4b
+index 0000000..e9a926f
 --- /dev/null
 +++ b/src/common/odinguard.hpp
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,90 @@
 +// OdinGuard server side: handshake, encrypted record layer and policy for client connections.
 +// Wire format: og_proto.h (shared with the OdinGuard client DLL).
 +
@@ -5384,6 +5403,7 @@ index 0000000..851ae4b
 +// entry of a style (square | circle | setN): the ground unit and the colour number (-1 = fixed unit, no colour)
 +bool og_lgp_entry(const char* style, uint16 skill_id, uint16* unit, int32* color_index);
 +bool og_lgp_attacks(uint16 skill_id);                                 // hostile skill: triangle
++bool og_lgp_has_sound(uint16 skill_id);                               // sound og_<id>.wav is sent to LGP players
 +int32 og_lgp_symbol(uint16 skill_id);                                 // symbol number inside the tiles (0 = none)
 +int32 og_lgp_color_count();                                           // og_lgp_color lines
 +int32 og_lgp_color_value(int32 pos);                                  // colour number of the pos-th og_lgp_color line
@@ -6336,7 +6356,7 @@ index 0000000..0b53fad
 +
 +#endif /* OG_LOGIN_HPP */
 diff --git a/src/map/atcommand.cpp b/src/map/atcommand.cpp
-index f367e9b..d3fc08d 100644
+index f367e9b..437d9c1 100644
 --- a/src/map/atcommand.cpp
 +++ b/src/map/atcommand.cpp
 @@ -45,6 +45,7 @@
@@ -6347,13 +6367,13 @@ index f367e9b..d3fc08d 100644
  #include "party.hpp"
  #include "pc.hpp"
  #include "pc_groups.hpp"
-@@ -8746,6 +8747,145 @@ ACMD_FUNC(whodrops)
+@@ -8746,6 +8747,146 @@ ACMD_FUNC(whodrops)
  	return 0;
  }
  
 +/// OdinGuard: lite ground skills (flat cell tiles from odin.grf). @lgp|@square|@circle|@aoes [on|off|1-14]
 +static int32 og_lgp_acmd(map_session_data* sd, const char* command, const char* message, int32 kind) {
-+	static const char* ids[] = { "lgp", "square", "circle", "aoes" };
++	static const char* ids[] = { "lgp", "square", "circle", "aoes", "lgpsound" };
 +	if (!og_map_command_allowed(sd, ids[kind], 1000))
 +		return -1;
 +	(void)command;
@@ -6364,6 +6384,7 @@ index f367e9b..d3fc08d 100644
 +ACMD_FUNC(square) { nullpo_retr(-1, sd); return og_lgp_acmd(sd, command, message, 1); }
 +ACMD_FUNC(circle) { nullpo_retr(-1, sd); return og_lgp_acmd(sd, command, message, 2); }
 +ACMD_FUNC(aoes) { nullpo_retr(-1, sd); return og_lgp_acmd(sd, command, message, 3); }
++ACMD_FUNC(lgpsound) { nullpo_retr(-1, sd); return og_lgp_acmd(sd, command, message, 4); }
 +
 +/// OdinGuard: permanent name colour (needs OdinGuard on the viewers' clients). @namecolor <RRGGBB|off>[, character]
 +ACMD_FUNC(namecolor)
@@ -6493,7 +6514,7 @@ index f367e9b..d3fc08d 100644
  ACMD_FUNC(whereis)
  {
  	uint16 mob_ids[MAX_SEARCH] = {0}, count;
-@@ -11718,6 +11858,16 @@ void atcommand_basecommands(void) {
+@@ -11718,6 +11859,17 @@ void atcommand_basecommands(void) {
  		ACMD_DEF(rates),
  		ACMD_DEF(iteminfo),
  		ACMD_DEF(whodrops),
@@ -6506,12 +6527,13 @@ index f367e9b..d3fc08d 100644
 +		ACMD_DEF(square),
 +		ACMD_DEF(circle),
 +		ACMD_DEF(aoes),
++		ACMD_DEF(lgpsound),
 +		ACMD_DEF(namecolor),
  		ACMD_DEF(whereis),
  		ACMD_DEF(mapflag),
  		ACMD_DEF(me),
 diff --git a/src/map/clif.cpp b/src/map/clif.cpp
-index fdca8ba..42e4093 100644
+index fdca8ba..fd36d18 100644
 --- a/src/map/clif.cpp
 +++ b/src/map/clif.cpp
 @@ -17,6 +17,7 @@
@@ -6614,7 +6636,7 @@ index fdca8ba..42e4093 100644
  	clif_send(buf, len, bl, target);
  
  	if (unit->group->skill_id == WZ_ICEWALL)
-@@ -6209,6 +6274,18 @@ void clif_skill_poseffect( block_list& bl, uint16 skill_id, uint16 skill_lv, uin
+@@ -6209,6 +6274,19 @@ void clif_skill_poseffect( block_list& bl, uint16 skill_id, uint16 skill_lv, uin
  		
  		packet.AID = disguised_bl_id( bl.id );
  		clif_send( &packet, sizeof( packet ), &bl, SELF );
@@ -6626,6 +6648,7 @@ index fdca8ba..42e4093 100644
 +			s_lgp_pos* p = static_cast<s_lgp_pos*>( ctx );
 +			if( og_map_lgp_unit( viewer, p->skill_id ) == 0 )
 +				return true;
++			og_map_lgp_sound( viewer, src, p->skill_id );
 +			if( p->flash )
 +				og_map_lgp_flash( viewer, src, p->skill_id, p->skill_lv, p->x, p->y );
 +			return false;
@@ -6633,7 +6656,7 @@ index fdca8ba..42e4093 100644
  	} else {
  		clif_send( &packet, sizeof( packet ), &bl, AREA );
  	}
-@@ -10697,6 +10774,12 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
+@@ -10697,6 +10775,12 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
  		return;
  	}
  
@@ -6646,7 +6669,7 @@ index fdca8ba..42e4093 100644
  	//Check for double login.
  	bl = map_id2bl(account_id);
  	if(bl && bl->type != BL_PC) {
-@@ -10811,6 +10894,9 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
+@@ -10811,6 +10895,9 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
  	// reset the callshop flag if the player changes map
  	sd->state.callshop = 0;
  
@@ -6656,7 +6679,7 @@ index fdca8ba..42e4093 100644
  	if(map_addblock(sd))
  		return;
  	clif_spawn(sd);
-@@ -11516,6 +11602,9 @@ void clif_parse_GlobalMessage(int32 fd, map_session_data* sd)
+@@ -11516,6 +11603,9 @@ void clif_parse_GlobalMessage(int32 fd, map_session_data* sd)
  	if( !clif_process_message(sd, false, name, message, output ) )
  		return;
  
@@ -6666,7 +6689,7 @@ index fdca8ba..42e4093 100644
  	if( sd->gcbind && ((sd->gcbind->opt&CHAN_OPT_CAN_CHAT) || pc_has_permission(sd, PC_PERM_CHANNEL_ADMIN)) ) {
  		channel_send(sd->gcbind,sd,message);
  		return;
-@@ -11711,6 +11800,8 @@ void clif_parse_ActionRequest_sub( map_session_data& sd, uint8 action_type, int3
+@@ -11711,6 +11801,8 @@ void clif_parse_ActionRequest_sub( map_session_data& sd, uint8 action_type, int3
  
  	if(target_id<0 && -target_id == sd.id) // for disguises [Valaris]
  		target_id = sd.id;
@@ -6675,7 +6698,7 @@ index fdca8ba..42e4093 100644
  
  	switch(action_type)
  	{
-@@ -12101,6 +12192,7 @@ void clif_parse_UseItem(int32 fd, map_session_data *sd)
+@@ -12101,6 +12193,7 @@ void clif_parse_UseItem(int32 fd, map_session_data *sd)
  
  	if(n <0 || n >= MAX_INVENTORY)
  		return;
@@ -6683,7 +6706,7 @@ index fdca8ba..42e4093 100644
  	if (!pc_useitem(sd,n))
  		clif_useitemack(sd,n,0,false); //Send an empty ack packet or the client gets stuck.
  }
-@@ -12929,12 +13021,16 @@ void clif_parse_skill_toid( map_session_data* sd, uint16 skill_id, uint16 skill_
+@@ -12929,12 +13022,16 @@ void clif_parse_skill_toid( map_session_data* sd, uint16 skill_id, uint16 skill_
  
  	if( target_id < 0 && -target_id == sd->id ) // for disguises [Valaris]
  		target_id = sd->id;
@@ -6700,7 +6723,7 @@ index fdca8ba..42e4093 100644
  			clif_skill_fail( *sd, skill_id, USESKILL_FAIL_SKILLINTERVAL );
  			return;
  		}
-@@ -13051,6 +13147,7 @@ static void clif_parse_UseSkillToPosSub( int32 fd, map_session_data& sd, uint16
+@@ -13051,6 +13148,7 @@ static void clif_parse_UseSkillToPosSub( int32 fd, map_session_data& sd, uint16
  
  	if( DIFF_TICK(tick, sd.ud.canact_tick) < 0 ) {
  		if( sd.skillitem != skill_id ) {
@@ -6708,7 +6731,7 @@ index fdca8ba..42e4093 100644
  			clif_skill_fail( sd, skill_id, USESKILL_FAIL_SKILLINTERVAL );
  			return;
  		}
-@@ -25783,6 +25880,8 @@ static int32 clif_parse(int32 fd)
+@@ -25783,6 +25881,8 @@ static int32 clif_parse(int32 fd)
  		sd->cryptKey = ((sd->cryptKey * clif_cryptKey[1]) + clif_cryptKey[2]) & 0xFFFFFFFF; // Update key for the next packet
  #endif
  
@@ -6857,10 +6880,10 @@ index 4130361..ae2e677 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 0000000..6f47c77
+index 0000000..fab3c29
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,465 @@
+@@ -0,0 +1,491 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
@@ -6894,6 +6917,7 @@ index 0000000..6f47c77
 +#define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
 +#define OG_FLAG_LGP 2
 +#define OG_FLAG_LGP_AOES 8
++#define OG_FLAG_LGP_NOSOUND 16 // @lgpsound off: no skill sounds for the lite ground skills
 +
 +TIMER_FUNC(og_lgp_flash_end);
 +
@@ -7153,6 +7177,21 @@ index 0000000..6f47c77
 +	return 0;
 +}
 +
++// The heavy animation of a ground skill carries its sound; an LGP player does not get it, so the sound is sent alone
++// (ZC_SOUND from the caster). The file is data\wav\og_<skill id>.wav of odin.grf (the packet only has 23 characters
++// for the name, the original files are named longer); a client without the file stays silent.
++void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id) {
++	if (viewer == nullptr || !og_lgp_has_sound(skill_id) || !og_module_on("og_lgp_sound", true) || (og_flags(viewer) & OG_FLAG_LGP_NOSOUND))
++		return;
++	unsigned char buf[35] = {};
++	WBUFW(buf, 0) = 0x01d3; // ZC_SOUND
++	safesnprintf((char*)buf + 2, 24, "og_%d.wav", (int32)skill_id);
++	WBUFB(buf, 26) = 0;
++	WBUFL(buf, 27) = 0;
++	WBUFL(buf, 31) = src.id;
++	clif_send(buf, sizeof(buf), viewer, SELF);
++}
++
 +void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y) {
 +	og_map_lgp_flash_area(viewer, src, skill_id, skill_lv, x, y, skill_get_splash(skill_id, std::max<uint16>(skill_lv, 1)), false);
 +}
@@ -7207,8 +7246,18 @@ index 0000000..6f47c77
 +	}, const_cast<block_list*>(&src), AREA_SIZE, BL_PC, &a);
 +}
 +
-+/// @lgp / @square / @circle / @aoes. kind: 0 lgp, 1 square, 2 circle, 3 aoes; arg: "", "on", "off" or a set number
++/// @lgp / @square / @circle / @aoes / @lgpsound. kind: 0 lgp, 1 square, 2 circle, 3 aoes, 4 lgpsound; arg: "", "on", "off" or a set number
 +void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
++	if (kind == 4) {
++		int32 f = og_flags(sd);
++		bool on = (f & OG_FLAG_LGP_NOSOUND) != 0; // no argument: toggle
++		if (!strcmpi(arg, "on")) on = true;
++		else if (!strcmpi(arg, "off")) on = false;
++		pc_setglobalreg(sd, add_str(OG_REG_FLAGS), on ? (f & ~OG_FLAG_LGP_NOSOUND) : (f | OG_FLAG_LGP_NOSOUND));
++		clif_displaymessage(sd->fd, !og_module_on("og_lgp_sound", true) ? "Skill sounds for lite ground skills are switched off on this server."
++			: on ? "Lite ground skill sounds on (the client's /sound switch still mutes them)." : "Lite ground skill sounds off.");
++		return;
++	}
 +	int32 flags = og_flags(sd), style = (int32)pc_readglobalreg(sd, add_str(OG_REG_LGP_STYLE));
 +	bool on = !(flags & OG_FLAG_LGP);
 +	if (!strcmpi(arg, "on")) on = true;
@@ -7328,10 +7377,10 @@ index 0000000..6f47c77
 +}
 diff --git a/src/map/og_map.hpp b/src/map/og_map.hpp
 new file mode 100644
-index 0000000..9bda800
+index 0000000..0cb6193
 --- /dev/null
 +++ b/src/map/og_map.hpp
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,62 @@
 +// OdinGuard on the map-server: events, kicks and bans, chat commands (!ping, !vsync, !crash), machine limit.
 +#ifndef OG_MAP_HPP
 +#define OG_MAP_HPP
@@ -7364,6 +7413,7 @@ index 0000000..9bda800
 +/// sends buf to every player in the area of src for whom keep(viewer) is true
 +void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
 +/// lite cells for a ground skill without a unit (position effect only), sent to this viewer and removed again
++void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id);
 +void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y);
 +/// the same for a square of the given range around x,y (single-cell units with an area: Meteor Storm impacts ...)
 +void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y, int32 range, bool skip_center);

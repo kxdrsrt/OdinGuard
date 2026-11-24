@@ -1,0 +1,24 @@
+skill_id	source (data\wav\effect\...)	note
+89	wizard_stormgust.wav	Storm Gust [vermutet]
+83	wizard_meteor.wav	Meteor Storm [vermutet]
+21	ef_thunderstorm.wav	Thunderstorm
+80	wizard_fire_pillar_a.wav	Fire Pillar
+18	ef_firewall.wav	Fire Wall
+87	wizard_icewall.wav	Ice Wall
+12	ef_glasswall.wav	Safety Wall [vermutet]
+92	wizard_quagmire.wav	Quagmire
+70	priest_sanctuary.wav	Sanctuary
+79	priest_magnus.wav	Magnus Exorcismus
+69	priest_benedictio.wav	B.S. Sacramenti
+254	cru_grand cross.wav	Grand Cross
+110	black_hammerfall.wav	Hammer Fall
+140	assasin_venomdust.wav	Venom Dust
+115	hunter_skidtrap.wav	Skid Trap
+116	hunter_landmine.wav	Land Mine
+117	hunter_anklesnare.wav	Ankle Snare
+118	hunter_shockwavetrap.wav	Shockwave Trap
+119	hunter_sandman.wav	Sandman
+120	hunter_flasher.wav	Flasher
+121	hunter_freezingtrap.wav	Freezing Trap
+122	hunter_blastmine.wav	Blast Mine
+123	hunter_claymoretrap.wav	Claymore Trap

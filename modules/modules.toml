@@ -280,8 +280,8 @@ requires = ["core"]
 client_src = ["og_lgp.c"]
 define = "OG_MOD_LGP"
 server_key = "og_lgp_enable"
-assets = ["lgp"]
-summary = "Lite ground skills (@lgp/@square/@circle/@aoes): flat cell tiles in the skill's colour from odin.grf instead of heavy ground effects; the client patch adds 9 colours (2018-06-20 client, else blue)."
+assets = ["lgp", "lgp-sound"]
+summary = "Lite ground skills (@lgp/@square/@circle/@aoes): flat cell tiles in the skill's colour from odin.grf instead of heavy ground effects; the client patch adds 14 colours and symbols (2018-06-20 client, else blue). Group lgp-sound (optional, made from the operator's own client by tools/pack/build_lgp_sounds.sh) holds short-named copies of the skill sounds."
 
 
 [[module]]

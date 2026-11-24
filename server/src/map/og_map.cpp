@@ -31,6 +31,7 @@
 #define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
 #define OG_FLAG_LGP 2
 #define OG_FLAG_LGP_AOES 8
+#define OG_FLAG_LGP_NOSOUND 16 // @lgpsound off: no skill sounds for the lite ground skills
 
 TIMER_FUNC(og_lgp_flash_end);
 
@@ -290,6 +291,21 @@ TIMER_FUNC(og_lgp_flash_end) {
 	return 0;
 }
 
+// The heavy animation of a ground skill carries its sound; an LGP player does not get it, so the sound is sent alone
+// (ZC_SOUND from the caster). The file is data\wav\og_<skill id>.wav of odin.grf (the packet only has 23 characters
+// for the name, the original files are named longer); a client without the file stays silent.
+void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id) {
+	if (viewer == nullptr || !og_lgp_has_sound(skill_id) || !og_module_on("og_lgp_sound", true) || (og_flags(viewer) & OG_FLAG_LGP_NOSOUND))
+		return;
+	unsigned char buf[35] = {};
+	WBUFW(buf, 0) = 0x01d3; // ZC_SOUND
+	safesnprintf((char*)buf + 2, 24, "og_%d.wav", (int32)skill_id);
+	WBUFB(buf, 26) = 0;
+	WBUFL(buf, 27) = 0;
+	WBUFL(buf, 31) = src.id;
+	clif_send(buf, sizeof(buf), viewer, SELF);
+}
+
 void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y) {
 	og_map_lgp_flash_area(viewer, src, skill_id, skill_lv, x, y, skill_get_splash(skill_id, std::max<uint16>(skill_lv, 1)), false);
 }
@@ -344,8 +360,18 @@ void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*
 	}, const_cast<block_list*>(&src), AREA_SIZE, BL_PC, &a);
 }
 
-/// @lgp / @square / @circle / @aoes. kind: 0 lgp, 1 square, 2 circle, 3 aoes; arg: "", "on", "off" or a set number
+/// @lgp / @square / @circle / @aoes / @lgpsound. kind: 0 lgp, 1 square, 2 circle, 3 aoes, 4 lgpsound; arg: "", "on", "off" or a set number
 void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
+	if (kind == 4) {
+		int32 f = og_flags(sd);
+		bool on = (f & OG_FLAG_LGP_NOSOUND) != 0; // no argument: toggle
+		if (!strcmpi(arg, "on")) on = true;
+		else if (!strcmpi(arg, "off")) on = false;
+		pc_setglobalreg(sd, add_str(OG_REG_FLAGS), on ? (f & ~OG_FLAG_LGP_NOSOUND) : (f | OG_FLAG_LGP_NOSOUND));
+		clif_displaymessage(sd->fd, !og_module_on("og_lgp_sound", true) ? "Skill sounds for lite ground skills are switched off on this server."
+			: on ? "Lite ground skill sounds on (the client's /sound switch still mutes them)." : "Lite ground skill sounds off.");
+		return;
+	}
 	int32 flags = og_flags(sd), style = (int32)pc_readglobalreg(sd, add_str(OG_REG_LGP_STYLE));
 	bool on = !(flags & OG_FLAG_LGP);
 	if (!strcmpi(arg, "on")) on = true;

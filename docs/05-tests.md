@@ -102,6 +102,7 @@ V = Verbindungsabbruch (Command ohne Wirkung, kein Absturz).
 | `@square [on\|off\|1-15]` | Farbset (2-15 einfarbig) | – | E2E | Konfig | Unit | grün (E2E 4) + Abnahme A6 |
 | `@circle [on\|off]` | runde Kacheln | – | – | Konfig | Unit | Abnahme A6 |
 | `@aoes [on\|off]` | nur SG/LoV/MS | – | E2E | Konfig | Unit | grün (E2E 5) |
+| `@lgpsound [on\|off]` | Skill-Sound der Bodenskills für LGP-Spieler | – | E2E | Konfig | Unit | Meldung geprüft; Hören nicht prüfbar (VM ohne Ton) |
 | `@showauras` | Auren anderer aus/an | – | – | Konfig | Unit | v0.3 (E2E 1 ruft ihn auf, ohne eigene Prüfung) |
 | `@aura [name\|off]` | nur freigeschaltete | E2E | E2E | Konfig | Unit | grün (E2E 3, 10–15) |
 | `@auraunlock <aura>, <char>` | GM-Freischaltung | E2E | E2E | – | Unit | grün (E2E 11–16) |
