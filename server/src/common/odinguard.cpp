@@ -59,8 +59,8 @@ struct s_og_file {
 	std::string path;
 };
 
-struct s_og_lgp_color { std::string name; uint16 palette, fallback; };
-struct s_og_lgp { std::string style; uint16 skill, unit; int32 color; }; // color: index into lgp_colors, -1 = fixed unit
+struct s_og_lgp_color { std::string name; int32 index; }; // index: colour number in the client patch (og_lgp.c)
+struct s_og_lgp { std::string style; uint16 skill, unit; int32 color; }; // color: position in lgp_colors, -1 = fixed unit
 
 static struct {
 	bool enable = false;
@@ -90,6 +90,7 @@ static struct {
 	std::vector<std::pair<int32, uint32>> item_colors, group_colors;
 	std::vector<s_og_lgp_color> lgp_colors;
 	std::vector<s_og_lgp> lgp;
+	std::vector<uint16> lgp_attack; // hostile skills: triangles instead of squares
 	std::vector<std::pair<std::string, std::string>> switches; // module switches and other plain values
 	s_og_challenge_cfg ch[5]; // index = OG_CH_*
 	std::vector<s_og_file> files;
@@ -349,14 +350,20 @@ static bool og_config_read(const char* file) {
 				(w1[3] == 'i' ? og_cfg.item_colors : og_cfg.group_colors).emplace_back(id, rgb & 0xFFFFFF);
 		}
 		else if (!strcmpi(w1, "og_lgp_color")) {
-			// name,palette unit,fallback unit: the palette unit for clients with the colour patch, else the fallback
+			// name,colour number (the number is the colour in the client patch, see og_lgp.c)
 			char name[16];
-			unsigned int palette, fallback;
-			if (sscanf(w2, "%15[a-z] , %i , %i", name, &palette, &fallback) == 3) {
+			int32 index;
+			if (sscanf(w2, "%15[a-z] , %i", name, &index) == 2) {
 				auto it = std::find_if(og_cfg.lgp_colors.begin(), og_cfg.lgp_colors.end(), [&](const auto& c) { return !strcmpi(c.name.c_str(), name); });
-				if (it != og_cfg.lgp_colors.end()) { it->palette = (uint16)palette; it->fallback = (uint16)fallback; }
-				else og_cfg.lgp_colors.push_back({ name, (uint16)palette, (uint16)fallback });
+				if (it != og_cfg.lgp_colors.end()) it->index = index;
+				else og_cfg.lgp_colors.push_back({ name, index });
 			}
+		}
+		else if (!strcmpi(w1, "og_lgp_attack")) {
+			// skill ids shown as triangles (damage or harm to enemies); every other LGP skill is a square (protective)
+			for (char* t = strtok(w2, ", \t\r\n"); t != nullptr; t = strtok(nullptr, ", \t\r\n"))
+				if (uint16 id = (uint16)strtoul(t, nullptr, 0); id != 0 && std::find(og_cfg.lgp_attack.begin(), og_cfg.lgp_attack.end(), id) == og_cfg.lgp_attack.end())
+					og_cfg.lgp_attack.push_back(id);
 		}
 		else if (!strcmpi(w1, "og_lgp")) {
 			// [style,]skill,<colour name | unit id>  (style: square = default, circle, set2 .. set10); unit 0 removes the entry
@@ -374,7 +381,7 @@ static bool og_config_read(const char* file) {
 					auto it = std::find_if(og_cfg.lgp_colors.begin(), og_cfg.lgp_colors.end(), [&](const auto& col) { return !strcmpi(col.name.c_str(), value); });
 					if (it == og_cfg.lgp_colors.end()) { ShowWarning("OdinGuard: og_lgp %s: unknown colour '%s' (og_lgp_color first)\n", w2, value); continue; }
 					e.color = (int32)(it - og_cfg.lgp_colors.begin());
-					e.unit = it->palette;
+					e.unit = 0xc8; // the plain unit; the colour travels in the marker
 				}
 				og_cfg.lgp.erase(std::remove_if(og_cfg.lgp.begin(), og_cfg.lgp.end(), [&](const auto& x) { return x.skill == skill && !strcmpi(x.style.c_str(), style); }), og_cfg.lgp.end());
 				if (e.unit != 0) og_cfg.lgp.push_back(e);
@@ -596,22 +603,31 @@ bool og_send_control(int32 fd, const std::vector<uint8>& msg) {
 const std::vector<std::pair<int32, uint32>>& og_item_colors() { return og_cfg.item_colors; }
 const std::vector<std::pair<int32, uint32>>& og_group_namecolors() { return og_cfg.group_colors; }
 uint16 og_lgp_unit(uint16 skill_id) {
-	return og_lgp_unit_style("square", skill_id, true);
-}
-
-uint16 og_lgp_unit_style(const char* style, uint16 skill_id, bool palette) {
 	if (!og_cfg.enable) return 0;
 	for (const auto& e : og_cfg.lgp)
-		if (e.skill == skill_id && !strcmpi(e.style.c_str(), style))
-			return e.color < 0 ? e.unit : og_lgp_color_unit(e.color, palette);
+		if (e.skill == skill_id && !strcmpi(e.style.c_str(), "square")) return e.unit;
 	return 0;
+}
+
+bool og_lgp_entry(const char* style, uint16 skill_id, uint16* unit, int32* color_index) {
+	if (!og_cfg.enable) return false;
+	for (const auto& e : og_cfg.lgp) {
+		if (e.skill != skill_id || strcmpi(e.style.c_str(), style)) continue;
+		*unit = e.unit;
+		*color_index = e.color < 0 ? -1 : og_cfg.lgp_colors[e.color].index;
+		return true;
+	}
+	return false;
+}
+
+bool og_lgp_attacks(uint16 skill_id) {
+	return std::find(og_cfg.lgp_attack.begin(), og_cfg.lgp_attack.end(), skill_id) != og_cfg.lgp_attack.end();
 }
 
 int32 og_lgp_color_count() { return (int32)og_cfg.lgp_colors.size(); }
 
-uint16 og_lgp_color_unit(int32 index, bool palette) {
-	if (index < 0 || index >= (int32)og_cfg.lgp_colors.size()) return 0;
-	return palette ? og_cfg.lgp_colors[index].palette : og_cfg.lgp_colors[index].fallback;
+int32 og_lgp_color_value(int32 pos) {
+	return pos >= 0 && pos < (int32)og_cfg.lgp_colors.size() ? og_cfg.lgp_colors[pos].index : -1;
 }
 
 bool og_send_ping(int32 fd) {
@@ -855,7 +871,7 @@ static void og_handle_control(int32 fd, s_og_state* o, const uint8* p, size_t n)
 		if (a.flags & OG_ALIVE_HW_BREAKPOINT) og_event(fd, "hw-breakpoint", "debug registers set", og_cfg.tamper_action);
 		if (a.flags & OG_ALIVE_API_HOOKED) og_event(fd, "api-hook", "timing/input API patched", og_cfg.tamper_action);
 		if (a.flags & OG_ALIVE_GRF_VIOLATION) og_event(fd, "grf", "protected resource overridden", og_cfg.grf_action);
-		o->info.lgp_palette = (a.flags & OG_ALIVE_LGP_PALETTE) != 0;
+		o->info.lgp_palette = (a.flags & OG_ALIVE_LGP_PALETTE) != 0 || o->info.lgp_palette;
 		break;
 	}
 	case OG_C_DETECT: {
@@ -906,6 +922,7 @@ static bool og_handle_hello(int32 fd, s_og_state* o) {
 
 	o->info.version = h.version;
 	o->info.flags = h.flags;
+	o->info.lgp_palette = (h.flags & OG_FLAG_LGP_PALETTE) != 0;
 	o->info.unique_id = to_hex(h.unique_id, 32);
 	o->info.exe_code = to_hex(h.exe_code, 32);
 	o->info.build.assign((const char*)h.build, strnlen((const char*)h.build, 16));

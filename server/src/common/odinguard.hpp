@@ -76,9 +76,11 @@ void og_set_handlers(og_event_handler ev, og_text_handler text, og_pong_handler 
 const std::vector<std::pair<int32, uint32>>& og_item_colors();       // item id, 0xRRGGBB
 const std::vector<std::pair<int32, uint32>>& og_group_namecolors();  // group id, 0xRRGGBB
 uint16 og_lgp_unit(uint16 skill_id);                                  // square style; 0 = no lite display for the skill
-uint16 og_lgp_unit_style(const char* style, uint16 skill_id, bool palette); // square | circle | setN, 0 = not configured
+// entry of a style (square | circle | setN): the ground unit and the colour number (-1 = fixed unit, no colour)
+bool og_lgp_entry(const char* style, uint16 skill_id, uint16* unit, int32* color_index);
+bool og_lgp_attacks(uint16 skill_id);                                 // hostile skill: triangle
 int32 og_lgp_color_count();                                           // og_lgp_color lines
-uint16 og_lgp_color_unit(int32 index, bool palette);                  // unit of a colour: palette or fallback
+int32 og_lgp_color_value(int32 pos);                                  // colour number of the pos-th og_lgp_color line
 
 // CREATE TABLE IF NOT EXISTS statements (login and map server run them at start)
 const std::vector<const char*>& og_sql_ddl();

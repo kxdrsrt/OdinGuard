@@ -43,6 +43,7 @@
 /* client hello flags */
 #define OG_FLAG_VM        0x01
 #define OG_FLAG_DEBUGGER  0x02
+#define OG_FLAG_LGP_PALETTE 0x04 /* the client draws LGP colours and shapes (og_lgp.c) */
 
 /* server hello status */
 #define OG_STATUS_OK       0

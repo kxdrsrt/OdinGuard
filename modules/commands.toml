@@ -58,9 +58,9 @@ name = "square"
 module = "lgp"
 group = 0
 rate_ms = 1000
-params = "[on|off|1-10]"
-help_en = "Lite ground skills with square tiles; 1 = each skill in its colour, 2-10 = one colour for every skill."
-help_de = "LGP mit Quadrat-Kacheln; 1 = jeder Skill in seiner Farbe, 2-10 = eine Farbe für alle Skills"
+params = "[on|off|1-13]"
+help_en = "Lite ground skills with square tiles; 1 = each skill in its colour, 2-13 = one colour for every skill."
+help_de = "LGP mit Quadrat-Kacheln; 1 = jeder Skill in seiner Farbe, 2-13 = eine Farbe für alle Skills"
 
 [[command]]
 id = "circle"

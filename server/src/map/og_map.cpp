@@ -210,30 +210,60 @@ static bool og_lgp_in_aoes(uint16 skill_id) {
 	return false;
 }
 
-uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id) {
+// What this viewer sees for a skill: the ground unit and, for colour entries, the marker in the creator id that
+// tells the client patch (og_lgp.c) the colour and shape. Clients without the patch get the plain units: 0xc8
+// (square, protective) or 0xc9 (triangle, hostile), tinted blue by the client.
+static bool og_lgp_pick(const map_session_data* viewer, uint16 skill_id, uint16* unit, uint32* marker) {
+	*marker = 0;
 	if (viewer == nullptr || !og_module_on("og_lgp_enable", true))
-		return 0;
+		return false;
 	int32 flags = og_flags(viewer);
 	if (!(flags & OG_FLAG_LGP) || ((flags & OG_FLAG_LGP_AOES) && !og_lgp_in_aoes(skill_id)))
-		return 0;
-	// clients with the colour patch (og_lgp.c) draw the palette units, others the blue fallback units
+		return false;
 	const s_og_info* info = og_info(viewer->fd);
 	bool palette = info != nullptr && info->lgp_palette;
-	uint16 base = og_lgp_unit_style("square", skill_id, palette);
-	if (base == 0)
-		return 0;
+	uint16 u = 0;
+	int32 color = -1;
+	if (!og_lgp_entry("square", skill_id, &u, &color))
+		return false;
 	int32 style = (int32)pc_readglobalreg(const_cast<map_session_data*>(viewer), add_str(OG_REG_LGP_STYLE));
-	if (style <= 0)
-		return base;
-	char name[16];
-	if (style == 1) safestrncpy(name, "circle", sizeof(name));
-	else safesnprintf(name, sizeof(name), "set%d", style);
-	if (uint16 unit = og_lgp_unit_style(name, skill_id, palette); unit != 0)
-		return unit;
-	// @square <n>: every skill in colour n-1 of the og_lgp_color list
-	if (style >= 2 && style - 2 < og_lgp_color_count())
-		return og_lgp_color_unit(style - 2, palette);
-	return base;
+	if (style > 0) {
+		char name[16];
+		if (style == 1) safestrncpy(name, "circle", sizeof(name));
+		else safesnprintf(name, sizeof(name), "set%d", style);
+		uint16 u2 = 0;
+		int32 c2 = -1;
+		if (og_lgp_entry(name, skill_id, &u2, &c2)) {
+			u = u2;
+			color = c2;
+		} else if (style >= 2 && style - 2 < og_lgp_color_count()) {
+			// @square <n>: every skill in colour n-1 of the og_lgp_color list
+			color = og_lgp_color_value(style - 2);
+		}
+	}
+	bool attack = og_lgp_attacks(skill_id);
+	if (color < 0) { // fixed unit (circle bands)
+		*unit = u;
+		return true;
+	}
+	if (palette) {
+		*unit = 0xc8;
+		*marker = 0x7C000000u | (attack ? 0x100u : 0u) | (uint32)color;
+	} else
+		*unit = attack ? 0xc9 : 0xc8;
+	return true;
+}
+
+uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id) {
+	uint16 unit = 0;
+	uint32 marker = 0;
+	return og_lgp_pick(viewer, skill_id, &unit, &marker) ? unit : 0;
+}
+
+uint32 og_map_lgp_marker(const map_session_data* viewer, uint16 skill_id) {
+	uint16 unit = 0;
+	uint32 marker = 0;
+	return og_lgp_pick(viewer, skill_id, &unit, &marker) ? marker : 0;
 }
 
 // Flash cells: ground skills without a unit (Arrow Shower, Hammer Fall ...) only have the position effect. LGP
@@ -266,6 +296,7 @@ void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint
 	uint16 unit = og_map_lgp_unit(viewer, skill_id);
 	if (unit == 0)
 		return;
+	uint32 marker = og_map_lgp_marker(viewer, skill_id);
 	int32 r = std::clamp(range, 0, 3);
 	int32 n = (2 * r + 1) * (2 * r + 1);
 	if (og_lgp_flash_next + n >= OG_LGP_FLASH_IDS)
@@ -282,7 +313,7 @@ void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint
 			WBUFW(buf, 0) = 0x09ca; // ZC_SKILL_ENTRY5
 			WBUFW(buf, 2) = sizeof(buf);
 			WBUFL(buf, 4) = OG_LGP_FLASH_BASE + start + sent;
-			WBUFL(buf, 8) = src.id;
+			WBUFL(buf, 8) = marker != 0 ? marker : src.id;
 			WBUFW(buf, 12) = cx;
 			WBUFW(buf, 14) = cy;
 			WBUFL(buf, 16) = unit;

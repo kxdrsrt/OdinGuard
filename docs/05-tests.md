@@ -99,7 +99,7 @@ V = Verbindungsabbruch (Command ohne Wirkung, kein Absturz).
 | `!vsync [on\|off]` | Bildratenlimit aus/an | – | v0.3 | Konfig | Unit | v0.3 + Abnahme A3 |
 | `!crash` | Crash-Bericht ohne Absturz | – | – | Konfig | Unit | v0.3 + Abnahme A3 |
 | `@lgp [on\|off]` | LGP an/aus, gespeichert | – | E2E | Konfig | Unit | grün (E2E 1) + Abnahme A6 |
-| `@square [on\|off\|1-10]` | Farbset (2-10 einfarbig) | – | E2E | Konfig | Unit | grün (E2E 4) + Abnahme A6 |
+| `@square [on\|off\|1-13]` | Farbset (2-13 einfarbig) | – | E2E | Konfig | Unit | grün (E2E 4) + Abnahme A6 |
 | `@circle [on\|off]` | runde Kacheln | – | – | Konfig | Unit | Abnahme A6 |
 | `@aoes [on\|off]` | nur SG/LoV/MS | – | E2E | Konfig | Unit | grün (E2E 5) |
 | `@showauras` | Auren anderer aus/an | – | – | Konfig | Unit | v0.3 (E2E 1 ruft ihn auf, ohne eigene Prüfung) |
@@ -144,7 +144,7 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
 | A3 | `!ping`, `!vsync off/on`, `!crash` | Antworten im Chat, Crash-Ordner geschrieben |
 | A4 | Farb-Nick (GM gold), Farb-Item | wie v0.3 |
 | A5 | (Aura-Feature, nicht OdinGuard) Aura Keeper (Prontera 160,192): Quest abschließen | Questlog-Eintrag sichtbar (braucht Lub-Text), Aura frei, `@aura <name>` zeigt sie anderen; `@showauras` blendet aus |
-| A6 | `@lgp`, `@square 2..10`, `@circle`, `@aoes` mit Storm Gust, LoV, Meteor Storm und weiteren Bodenskills | flache Zellen in der Farbe des Skills (SG blau, LoV gelb, MS rot, Pneuma grün …), Charaktere sichtbar; Vergleich mit darkworld-Boden (Kontrast). **Vorab in der VM gemessen (2026-11-24):** alle 9 Farben, 14 Skills, Flash-Zellen; siehe `analysis/lgp/lgp-audit.md` §9 |
+| A6 | `@lgp`, `@square 2..13`, `@circle`, `@aoes` mit Storm Gust, LoV, Meteor Storm und weiteren Bodenskills | flache Zellen in der Farbe des Skills (SG blau, LoV gelb, MS rot, Pneuma grün …), Charaktere sichtbar; Vergleich mit darkworld-Boden (Kontrast). **Vorab in der VM gemessen (2026-11-24):** alle 12 Farben in Quadrat und Dreieck, kompletter Test-NPC-Durchlauf (76 Skills); siehe `analysis/lgp/lgp-audit.md` §9 |
 | A7 | Competitive-Pack (Standard: Flachmaps WoE/BG/PvP, dunkle Böden, Bäume, Pneuma) | Ladereihenfolge `0=odin.grf`, `1=odin-dark.grf`; flache WoE-/BG-Maps mit dunklen Kacheln, Pneuma-Countdown; FPS/Ladezeit notieren; keine `grf:*`-Meldung |
 | A7b | GRF-Prüfung mit echtem Client | Dev-Client ohne Änderung: keine Meldung; darkworld `dark.grf` zusätzlich: keine Meldung (erlaubter Mod); geänderte data.grf: `grf:modified` |
 | A8 | Challenges einschalten (Stufe 1, je eins): nonce, code, time, file | keine Fehlschläge für ehrliche Spieler über 24 h |

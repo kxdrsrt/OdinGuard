@@ -36,6 +36,9 @@ PALETTE = [
     ("purple", (170, 70, 255)),
     ("brown", (176, 108, 44)),
     ("pink", (255, 80, 190)),
+    ("white", (245, 245, 245)),
+    ("gold", (255, 190, 60)),
+    ("grey", (150, 150, 160)),
 ]
 BLUE = (110, 165, 255)
 
@@ -60,6 +63,22 @@ def polygon(cx, cy, half, diamond, ss):
     if diamond:
         return [(c, c - h), (c + h, c), (c, c + h), (c - h, c)]
     return [(c - h, c - h), (c + h, c - h), (c + h, c + h), (c - h, c + h)]
+
+
+def tri_polygon(cx, cy, half, ss):
+    """Upright triangle in the same box as the square tile (hostile skills)."""
+    c, h = cx * ss, half * ss
+    return [(c, c - h), (c + h, c + h), (c - h, c + h)]
+
+
+def tri_tile(rgb, half, border, fill_alpha=170, border_scale=0.45, hollow=False):
+    dark = tuple(int(v * border_scale) for v in rgb)
+
+    def draw(d, ss):
+        d.polygon(tri_polygon(SIZE / 2, SIZE / 2, half, ss), fill=dark + (255,))
+        # the inner triangle keeps the border width perpendicular to the sides
+        d.polygon(tri_polygon(SIZE / 2, SIZE / 2 + border * 0.55, half - border * 1.6, ss), fill=rgb + ((40 if hollow else fill_alpha),))
+    return supersample(draw)
 
 
 def tile(rgb, diamond, half, border, fill_alpha=170, border_scale=0.45, hollow=False):
@@ -94,9 +113,11 @@ def build(root):
     eff.mkdir(parents=True, exist_ok=True)
     out = {}
     out["hanmoon1.tga"] = (tile(BLUE, False, H3, 3, fill_alpha=150), "vanilla")
-    out["hanmoon2.tga"] = (hollow_tile((170, 210, 255), False, H3, 4), "vanilla")
+    # fallback without the client patch: 0xc8 = protective (square), 0xc9 = hostile (triangle), both tinted blue
+    out["hanmoon2.tga"] = (tri_tile((170, 210, 255), H3, 3, fill_alpha=150), "vanilla")
     for name, rgb in PALETTE:
         out[f"odinlgp_{name}.tga"] = (tile(rgb, False, H3, 3, fill_alpha=140, border_scale=0.40), "patch")
+        out[f"odinlgp_{name}_t.tga"] = (tri_tile(rgb, H3 * 1.12, 3, fill_alpha=150, border_scale=0.40), "patch")
     for name, (im, _) in out.items():
         (eff / name).write_bytes(tga_bytes(im))
     return out

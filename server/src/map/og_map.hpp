@@ -25,6 +25,8 @@ void og_map_on_load(map_session_data* sd, bool first);
 void og_map_on_quit(map_session_data* sd);
 /// lite ground skill unit id for this viewer, 0 = normal display
 uint16 og_map_lgp_unit(const map_session_data* viewer, uint16 skill_id);
+/// marker for the creator id field of the unit packet (colour and shape for the client patch), 0 = none
+uint32 og_map_lgp_marker(const map_session_data* viewer, uint16 skill_id);
 /// sends buf to every player in the area of src for whom keep(viewer) is true
 void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
 /// lite cells for a ground skill without a unit (position effect only), sent to this viewer and removed again
