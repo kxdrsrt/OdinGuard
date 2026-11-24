@@ -146,7 +146,16 @@ restart_map
 nettest ogtest2 OgPlayer '!ping' 45 >/dev/null
 check "wrong build secret: nonce/time challenges fail" '[ "$(sql "SELECT COUNT(*) FROM og_event WHERE type IN (\"challenge:nonce\",\"challenge:time\")")" -ge 1 ]'
 sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
-printf 'X' | dd of="$X/conf/odinguard/odin.grf" bs=1 seek=100 conv=notrunc 2>/dev/null
+# a byte every 4000 bytes: every challenge window (at least 4096 bytes) of the 1.2 MB file contains one
+python3 - "$X/conf/odinguard/odin.grf" <<'PY'
+import sys
+with open(sys.argv[1], "r+b") as f:
+    f.seek(0, 2)
+    n = f.tell()
+    for off in range(100, n, 4000):
+        f.seek(off)
+        f.write(b"X")
+PY
 restart_map
 sql "DELETE FROM og_event"
 check "modified odin.grf on one side: file challenge fails" 'file_challenge_fails'
