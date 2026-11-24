@@ -1,6 +1,6 @@
 # 05 – Tests und Testmatrix (OdinGuard Anti Cheat 1.0)
 
-Stand 2026-11-23. Ergebnis-Spalte: **grün** = automatisch getestet und bestanden (mit Beleg), **v0.3** = in v0.3
+Stand 2026-11-24. Ergebnis-Spalte: **grün** = automatisch getestet und bestanden (mit Beleg), **v0.3** = in v0.3
 getestet, Code unverändert übernommen, **Abnahme** = nur im echten Client/auf echter Hardware prüfbar (Abschnitt 6),
 **offen** = noch kein Test. Ein Command, eine Challenge oder Detection gilt erst als fertig, wenn ihr Test grün ist
 und die Doku generiert wurde (`og docs`).
@@ -12,16 +12,18 @@ Umgebung: macOS (Cross-Compile mingw-w64), Docker (MariaDB + xAthena login/char/
 
 | Suite | Befehl | Umfang | Ergebnis |
 |---|---|---|---|
-| Rust Unit-Tests | `cd studio && cargo test --workspace` | 18 Tests (Liste unten) | grün, 18/18 |
+| Rust Unit-Tests | `cd studio && cargo test --workspace` | 22 Tests (Liste unten) | grün, 22/22 (auch mit `rgrf-core` aus GitHub in frischem Target) |
 | Rust Lints | `cargo clippy --workspace --all-targets` (+ `apps/studio/src-tauri`) | alle Lints deny | grün, 0 Warnungen |
 | Parser-Fuzzing | `make -C client fuzz` | Handshake, Records, Policy, Challenge, Sigs, Colors; ASan + UBSan | grün, 2 000 000 Iterationen |
-| Detection-Test | `dettest.exe <sigpack> positive <leerer Ordner>` (VM) | Prozess, Modul, Fensterklasse, Fenstertitel, Dateiname, Datei-Hash, GRF-Hash, Einmal-Meldung, Allowlist | grün, 11/11 |
-| Fehlalarm-Test | `dettest.exe <sigpack> clean <client-dev/ragnarok>` (VM) | 17 Client-DLLs gemappt (ROExt `ijl15r.dll`, dxwrapper, ddraw, …) + Ordner-Scan | grün, 0 Signaturtreffer |
-| E2E | `sh tests/e2e/run.sh <xathena> dist/e2e dist/minimal` | 30 Prüfungen (Abschnitt 3) | grün, 30/30 (Lauf 2026-11-23) |
+| Detection-Test | `dettest.exe <sigpack> positive <leerer Ordner>` (VM) | Prozess, Modul, Fensterklasse, Fenstertitel, Dateiname, Datei-Hash, GRF-Hash, Mutex, Registry (vorhanden/fehlend), Treiber (aktiver Systemtreiber), Einmal-Meldung, Allowlist | grün, 15/15 (Paket mit 300 Signaturen) |
+| Fehlalarm-Test | `dettest.exe <sigpack> clean <client-dev/ragnarok>` (VM) | 17 Client-DLLs gemappt (ROExt `ijl15r.dll`, dxwrapper, ddraw, …) + Ordner-, Fenster-, Prozess-, Treiber-, Mutex-, Registry-Scan | grün, 0 Signaturtreffer (300er-Paket) |
+| E2E | `sh tests/e2e/run.sh <xathena> dist/e2e dist/minimal` | 42 Prüfungen (Abschnitt 3) | grün, 42/42 (Lauf 2026-11-24) |
 | Reproduzierbarkeit | `og build` zweimal je Profil | DLL-, GRF-, Manifest-Hashes | grün (default, minimal, Betreiber-Profil) |
 | Release-Signatur | `og verify-release <ordner>` | Manifest-Signatur + jede Datei | grün (default, minimal, e2e, cptest, Betreiber) |
 | Studio-Release | `tools/release_studio.sh beta https://…` + `og update-verify` | Build, Signatur Artefakt + Manifest | grün; Manipulation von Manifest bzw. Artefakt abgelehnt |
-| GUI-Smoke | Tauri-App startet; UI im Browser-Mock: Profil laden, Module (Parameter, Grenzen, Abhängigkeiten), Commands | sichtbar und bedienbar | grün (Screenshots im Arbeitsverlauf) |
+| GUI-Smoke | Tauri-App startet; UI im Browser-Mock mit echten Daten (Betreiber-Profil): Profil, Module, Commands, Signaturen (22 Gruppen), GRF & Mods, Competitive-Pack (12 Ordner) | sichtbar und bedienbar | grün |
+| CFG-Build | `make TOOLCHAIN=llvm` / `OG_TOOLCHAIN=llvm og build` | GuardFlags (REA), Laufzeit in der VM: Handshake, `!ping`, `!crash`, Selbstintegrität gegen die llvm-Referenz | grün: `guard_cf` + `cfg_instrumented` gesetzt, keine Ereignisse |
+| rAthena-Upstream | `server/patches/rathena-4cd08b7.patch` | `git apply --check`, Make- und CMake-Build, Start aller Server mit `og_enable`, Tabellen angelegt | grün (Docker) |
 
 Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pulls_in_dependencies`,
 `profile::new_profile_validates_and_round_trips`, `profile::validation_catches_errors`,
@@ -30,6 +32,8 @@ Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pu
 `manifest::signed_release_detects_changes`, `update::update_n_to_n1_tamper_downgrade_and_rollback`,
 `update::only_https_outside_tests`, `update::release_folder_roundtrip_and_tamper`, `update::versions`,
 `rollout::gate_blocks_on_false_alarm_candidates_and_coverage`, `crypto::sign_verify_and_tamper`,
+`grf::tail_hash_covers_header_and_table_only`, `grf::scan_and_merge_keep_rollout_versions`,
+`pack::repository_recipe_orders_flat_floor_after_flat_maps`, `pipeline::tests::linker_maps_of_gnu_ld_and_lld`,
 `sigpack::build_verify_cap_and_skip`, `sigpack::tampered_or_foreign_package_is_rejected`,
 `sigpack::repository_signatures_compile`.
 
@@ -48,7 +52,7 @@ Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pu
 |---|---|---|
 | 1 | Login und Map-Eintritt mit dem Profil-Guard | grün |
 | 2 | `!ping` vom Guard beantwortet | grün |
-| 3 | `@aura` listet Katalog mit Freischalt-Bedingungen | grün |
+| 3 | `@aura` listet Katalog mit Freischalt-Bedingungen (Aura-Feature von xAthena, nicht mehr OdinGuard) | grün |
 | 4 | `@square 2` wählt Farbset 2 | grün |
 | 5 | `@aoes` begrenzt LGP auf SG/LoV/MS | grün |
 | 6 | `@oginfo` zeigt Protokoll v2 und Signaturversion | grün |
@@ -68,6 +72,17 @@ Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pu
 | 28 | optionales Competitive-Pack fehlt beim Client → kein Fehlschlag | grün |
 | 29 | manipuliertes Competitive-Pack → file-Challenge schlägt fehl (GRF-Allowlist) | grün |
 | 30 | Client eines fremden Profils → abgewiesen mit Meldung (Status 3) | grün |
+| 31 | `@whosell` ohne Parameter antwortet im Chat (Marktübersicht) | grün |
+| 32 | ehrlicher Client: keine GRF-Meldung | grün |
+| 33 | GRF weder gelistet noch erlaubter Mod → `grf:unknown` | grün |
+| 34 | erlaubter Mod (anderer Name, gleicher Tabellen-Hash) wird akzeptiert | grün |
+| 35 | geänderte Dateitabelle einer gelisteten GRF → `grf:modified` | grün |
+| 36 | gleiche Tabelle, geänderter Inhalt → Hintergrund-Hash `grf:modified (content)` (auch auf der Map-Verbindung) | grün |
+| 37 | Pflicht-GRF fehlt in DATA.INI → `grf:missing` | grün |
+| 38 | Speedhack-Stub (GetTickCount/QPC ×3): API-Hook gemeldet (`api-hook`) | grün |
+| 39 | Speedhack-Stub: Zeit-Challenge schlägt fehl (`client clock +200%` nach > 120 s) | grün |
+| 40 | Guard-Code im Speicher gepatcht → `guard-code` | grün |
+| 41 | unveränderte Exe passt zum erlaubten Exe-Hash; Exe-Code im Speicher gepatcht → `exe-code` | grün |
 
 Replay-Schutz: Records mit falschem Zähler und Antworten auf unbekannte Challenge-IDs werden verworfen
 (`challenge:replay`); abgedeckt durch Fuzzing (Parser) und Server-Logik, ein eigener E2E-Fall mit
@@ -104,8 +119,8 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
 | Element | Soll | Fehlerfälle | Ergebnis |
 |---|---|---|---|
 | ch-nonce | gültiger Digest mit Build-Secret | falsches Secret → Fehlschlag; Replay → `challenge:replay`; Timeout | grün (E2E 8, 26) |
-| ch-code | Bereich des kanonischen Images stimmt | gepatchter Code → Fehlschlag | grün (ehrlicher Client E2E 8); Patch-Fall: Abnahme A8 |
-| ch-time | Uhr-Drift ≤ `max_drift_percent` | Speedhack | grün (E2E 8, 26); Speedhack: Abnahme A8 |
+| ch-code | Bereich des kanonischen Images stimmt | gepatchter Code → Fehlschlag | grün (ehrlicher Client E2E 8; Patch-Fall über Heartbeat-Hash E2E 40/41) |
+| ch-time | Uhr-Drift ≤ `max_drift_percent` | Speedhack | grün (E2E 8, 26, 39) |
 | ch-file | Bereich von `odin.grf`/Pack stimmt | Pflichtdatei fehlt/anders → Fehlschlag; optional fehlt → ok | grün (E2E 27–29) |
 | ch-honeypot | nur Bots treffen den Lockvogel | Treffer → flagban | grün (E2E 17) |
 | ch-captcha | Captcha nach Verhaltens-Flags, nie WoE/BG | falsche Antwort/Timeout | Server-Logik gebaut, Spiel-UI: Abnahme A9 |
@@ -113,8 +128,10 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
 | rate-limit | > pps → Aktion | Warnmodus = Log | grün (E2E 19) |
 | Signaturen process/module/window_class/window_title/file_name | Treffer gemeldet, einmal pro Verbindung | Allowlist unterdrückt | grün (`dettest`) |
 | file_sha256 / grf_sha256 | Hash-Treffer | Allowlist-Hash unterdrückt | grün (`dettest`, synthetische Fixtures) |
-| driver | Treiber/Dienst-Name | – | **offen** (braucht installierten Treiber; nur Abnahme auf Testrechner) |
-| grf_entry / import_pattern / string_pattern / registry | nur Analyse, nicht client-prüfbar | – | dokumentiert (Paket überspringt sie, `sigpack::build_verify_cap_and_skip`) |
+| driver | Treiber/Dienst-Name | – | grün (`dettest`: aktiver Systemtreiber als synthetische Signatur) |
+| mutex / registry | benannte Objekte, Registry-Schlüssel | fehlender Schlüssel → kein Treffer | grün (`dettest`) |
+| GRF-Manifest | Tabellen-Hash, Voll-Hash, Mods, Pflicht | Patch-Rollout mit mehreren Versionen | grün (E2E 32–37, Unit `grf::*`) |
+| grf_entry / import_pattern / string_pattern | nur Analyse, nicht client-prüfbar | – | dokumentiert (Paket überspringt sie, `sigpack::build_verify_cap_and_skip`) |
 | Fehlalarme legitimer Client | ROExt, dxwrapper, Skins ohne Treffer | – | grün (`dettest clean`) |
 | Signaturpaket | nur mit gültiger Signatur + Mindestversion | manipuliert/fremd → abgelehnt | grün (Unit + E2E 25) |
 
@@ -126,9 +143,10 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
 | A2 | Warnmodus: `og_event` nach 1 Spielstunde | keine Treffer für ROExt/dxwrapper/Skins; nur erwartete Einträge |
 | A3 | `!ping`, `!vsync off/on`, `!crash` | Antworten im Chat, Crash-Ordner geschrieben |
 | A4 | Farb-Nick (GM gold), Farb-Item | wie v0.3 |
-| A5 | Aura Keeper (Prontera 160,192): Quest annehmen, abschließen | Questlog-Eintrag sichtbar (braucht Lub-Text), Aura frei, `@aura <name>` zeigt sie anderen; `@showauras` blendet aus |
+| A5 | (Aura-Feature, nicht OdinGuard) Aura Keeper (Prontera 160,192): Quest abschließen | Questlog-Eintrag sichtbar (braucht Lub-Text), Aura frei, `@aura <name>` zeigt sie anderen; `@showauras` blendet aus |
 | A6 | `@lgp`, `@square 2`, `@circle`, `@aoes` mit Storm Gust, LoV, Meteor Storm | flache blaue/orange Zellen pro Zelle, Charaktere sichtbar; Vergleich mit darkworld-Boden (Kontrast) |
-| A7 | Competitive-Pack (falls G3 frei) | Ladereihenfolge `0=odin.grf`, `1=odin-dark.grf`; Wände/Objekte sichtbar; FPS/Ladezeit notieren |
+| A7 | Competitive-Pack (Standard: Flachmaps WoE/BG/PvP, dunkle Böden, Bäume, Pneuma) | Ladereihenfolge `0=odin.grf`, `1=odin-dark.grf`; flache WoE-/BG-Maps mit dunklen Kacheln, Pneuma-Countdown; FPS/Ladezeit notieren; keine `grf:*`-Meldung |
+| A7b | GRF-Prüfung mit echtem Client | Dev-Client ohne Änderung: keine Meldung; darkworld `dark.grf` zusätzlich: keine Meldung (erlaubter Mod); geänderte data.grf: `grf:modified` |
 | A8 | Challenges einschalten (Stufe 1, je eins): nonce, code, time, file | keine Fehlschläge für ehrliche Spieler über 24 h |
 | A9 | Verhalten + Captcha auf einem Testaccount mit Makro-Muster | Captcha erscheint, nicht auf WoE/BG-Maps |
 | A10 | Input-Filter, RCX, Warsaw, VM-Block auf VMware/VirtualBox/Hyper-V | echte Rechner: Verhalten wie konfiguriert, keine Abstürze |
@@ -137,12 +155,14 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
 
 ## 7. Offene Testlücken (ehrlich)
 
-- Wiedergespielter Record als eigener E2E-Fall; Ratenlimit pro Command; Driver-Signaturen; Speedhack-/Code-Patch-
-  Positivtests (nur mit harmlosem Test-Patcher in der VM sinnvoll).
+- Wiedergespielter Record als eigener E2E-Fall; Ratenlimit pro Command.
+- Echte Cheat-Programme wurden nicht ausgeführt (nur statische Analyse und harmlose Stubs); Treffer echter Tools
+  bestätigt erst die Abnahme auf einem Testrechner.
 - Input-Filter: Parallels verwirft synthetische Eingaben schon vor dem Gast (v0.3-Befund), daher nur auf echter
   Hardware.
 - Questlog-Texte, Captcha-Fenster, LGP-Look: nur im echten Client.
-- CFG (Control Flow Guard) ist mit mingw-gcc nicht verfügbar.
+- CFG nur mit llvm-mingw (`TOOLCHAIN=llvm`); der Standard-Build (mingw-gcc) hat es nicht. Visual-Studio-Builds des
+  Server-Patches sind ungetestet.
 
 ## 8. Historie
 

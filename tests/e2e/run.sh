@@ -160,7 +160,8 @@ nettest ogtest2 OgPlayer '!ping' 45 >/dev/null
 check "optional pack missing on the client: no file challenge failure" '[ "$(sql "SELECT COUNT(*) FROM og_event WHERE type=\"challenge:file\"")" = 0 ]'
 cp "$R/client/odin-dark.grf" "$E2E/odin-dark.grf"
 printf 'X' | dd of="$E2E/odin-dark.grf" bs=1 seek=60 conv=notrunc 2>/dev/null
-check "manipulated competitive pack on the client: file challenge fails" 'file_challenge_fails'
+# detected by the GRF manifest (immediately, kick) or by the file challenge (random file, every 20 s)
+check "manipulated competitive pack on the client is detected (GRF check or file challenge)" 'event_after_session "type=\"challenge:file\" OR (type=\"grf:modified\" AND detail LIKE \"odin-dark.grf%\")" ogtest2 OgPlayer "!ping" 45'
 cp "$R/client/odin-dark.grf" "$E2E/odin-dark.grf"
 
 echo "== 6 GRF manifest (Gepard-like start-up check, patcher friendly)"
