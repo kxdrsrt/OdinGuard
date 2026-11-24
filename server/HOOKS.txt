@@ -22,6 +22,7 @@ src/login/loginclif.cpp:64:	if( int32 og_result = og_login_check( fd, sd->accoun
 src/char/char_clif.cpp:12:#include <common/odinguard.hpp>
 src/char/char_clif.cpp:861: if( og_required() && !og_session_active( fd ) ){
 src/map/clif.cpp:20:#include <common/odinguard.hpp>
+src/map/clif.cpp:2686:void clif_og_honeypot( map_session_data& sd, uint32 id ){
 src/map/clif.cpp:3788: og_map_hp_update( &sd );
 src/map/clif.cpp:5611:	if( header == 0x09ca && visible && unit_id == UNT_DUMMYSKILL && og_lgp_unit( unit->group->skill_id ) != 0 ){
 src/map/clif.cpp:5615: uint16 lite = og_map_lgp_unit( viewer, l->skill_id );
@@ -40,6 +41,7 @@ src/map/clif.cpp:13245:	og_map_skill_used( sd );
 src/map/clif.cpp:13252: og_map_skill_refused( sd );
 src/map/clif.cpp:13369: og_map_skill_refused( &sd );
 src/map/clif.cpp:26271:	og_map_packet( fd, sd, cmd );
+src/map/clif.hpp:1127:void clif_og_honeypot( map_session_data& sd, uint32 id );
 src/map/map.cpp:2240: og_map_on_quit(sd);
 src/map/map.cpp:5438:	og_map_init();
 src/map/pc.cpp:2115:	if (!changing_mapservers && !og_map_machine_limit(sd)) {

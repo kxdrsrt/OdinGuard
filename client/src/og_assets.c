@@ -15,7 +15,9 @@
 #define MAX_REPORTED 64
 
 typedef struct { char name[64]; unsigned long long size; char tail[65]; char full[65]; int required; } grf_ver;
-typedef struct { char path[MAX_PATH]; unsigned long long size; FILETIME mtime; char tail[65]; char full[65]; int full_state; } grf_cache;
+/* full_state: 0 not queued, 1 queued, 2 hashing, 3 done; full_bad: the whole-file hash differed (re-reported on every
+ * connection, the login connection may close before the map connection starts) */
+typedef struct { char path[MAX_PATH]; unsigned long long size; FILETIME mtime; char tail[65]; char full[65]; int full_state, full_bad; } grf_cache;
 
 static const char *g_builtin_overlay[] = { "data\\odinguard\\", "data\\texture\\effect\\lgp\\", "data\\texture\\effect\\aura\\" };
 static const char *g_protected_ext[] = { ".spr", ".act", ".str", ".gat", ".gnd", ".rsw", ".rsm", ".lub", ".lua",
@@ -182,14 +184,15 @@ static DWORD WINAPI full_worker(LPVOID arg)
             char got[65];
             const char *base = strrchr(path, '\\');
             snprintf(name, sizeof name, "%s", base ? base + 1 : path);
-            if (og_sha256_file(path, got) && _stricmp(got, want)) {
+            int bad = og_sha256_file(path, got) && _stricmp(got, want);
+            EnterCriticalSection(&g_lock);
+            if (!_stricmp(g_cache[job].path, path)) { g_cache[job].full_state = 3; g_cache[job].full_bad = bad; }
+            LeaveCriticalSection(&g_lock);
+            if (bad) {
                 char t[160];
                 snprintf(t, sizeof t, "%s (content)", name);
                 report_once(OG_KIND_GRF_MODIFIED, t);
             }
-            EnterCriticalSection(&g_lock);
-            if (!_stricmp(g_cache[job].path, path)) g_cache[job].full_state = 3;
-            LeaveCriticalSection(&g_lock);
         }
     }
     return 0;
@@ -231,7 +234,14 @@ static void check_manifest(void)
             if (required) report_once(OG_KIND_GRF_MISSING, val);
             continue;
         }
-        if (match >= 0) continue;
+        if (match >= 0) {
+            if (e->full_state == 3 && e->full_bad) {
+                char t[160];
+                snprintf(t, sizeof t, "%s (content)", val);
+                report_once(OG_KIND_GRF_MODIFIED, t);
+            }
+            continue;
+        }
         for (i = 0; i < g_nmods; i++) if (!_stricmp(g_mods[i], e->tail)) break;
         if (i < g_nmods) continue;
         report_once(listed ? OG_KIND_GRF_MODIFIED : OG_KIND_GRF_UNKNOWN, val);

@@ -7,6 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+static ULONGLONG wall_ms(void)
+{
+    FILETIME f;
+    GetSystemTimeAsFileTime(&f);
+    return (((ULONGLONG)f.dwHighDateTime << 32) | f.dwLowDateTime) / 10000;
+}
+
 static int recv_some(SOCKET s, unsigned char *buf, int cap, int ms)
 {
     DWORD end = GetTickCount() + ms;
@@ -225,8 +232,9 @@ int main(int argc, char **argv)
                 {
                     char hold[16];
                     /* keep reading like the game does: the guard answers challenges and pings inside recv() */
-                    DWORD end = GetTickCount() + (GetEnvironmentVariableA("OG_HOLD", hold, sizeof hold) ? atoi(hold) * 1000 : 6000);
-                    while ((LONG)(end - GetTickCount()) > 0) {
+                    /* wall clock: the speed test changes GetTickCount of this process */
+                    ULONGLONG end = wall_ms() + (GetEnvironmentVariableA("OG_HOLD", hold, sizeof hold) ? atoi(hold) * 1000 : 6000);
+                    while (wall_ms() < end) {
                         n = recv_some(m, buf, sizeof buf, 500);
                         if (n > 0) print_messages("(hold)", buf, n);
                     }

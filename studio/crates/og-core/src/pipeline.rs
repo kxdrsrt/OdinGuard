@@ -285,6 +285,8 @@ pub fn linked_objects(map: &Path) -> Result<Vec<String>> {
     let text = io(std::fs::read_to_string(map), map)?;
     let mut v: Vec<String> = text
         .split(|c: char| c.is_whitespace() || c == '(' || c == ')')
+        // GNU ld writes "obj/og_main.o", lld (llvm-mingw) "obj/og_main.o:"
+        .map(|w| w.trim_end_matches(':'))
         .filter(|w| w.ends_with(".o") && w.rsplit('/').nth(1) == Some("obj"))
         .filter_map(|w| w.rsplit('/').next().map(|f| f.trim_end_matches(".o").to_string()))
         .collect();
@@ -330,4 +332,15 @@ fn handbook(p: &Profile, reg: &Registry, rep: &BuildReport, d: &Derived) -> Stri
     }
     s.push_str("\n## 6. Commands\n\nSee `docs/commands-en.md` / `docs/commands-de.md`.\n\n## 7. Honest limits\n\nThe server cannot prove what a client runs. Encryption, challenges and server-side checks (rate limit, behaviour, honeypot, delays) are the real security; client checks (signatures, anti-debug, integrity) raise the cost of cheating and are reported, never trusted. Keep warn mode until the logs are clean.\n");
     s
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn linker_maps_of_gnu_ld_and_lld() {
+        let d = tempfile::tempdir().unwrap();
+        let m = d.path().join("odinguard.map");
+        std::fs::write(&m, " .text 0x6b001000 0x1a2 build/x/obj/og_main.o\n 6b002000 6b002000 10 16 /b/x/obj/og_net.o:(.text)\n lib/hook.o\n").unwrap();
+        assert_eq!(super::linked_objects(&m).unwrap(), ["og_main", "og_net"]);
+    }
 }

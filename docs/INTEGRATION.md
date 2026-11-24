@@ -102,6 +102,13 @@ client with llvm-mingw: `OG_TOOLCHAIN=llvm og build ...` (see `client/Makefile`,
 
 ## 6. Server (rAthena)
 
+**Quick path (upstream rAthena):** apply `server/patches/rathena-4cd08b7.patch` in your rAthena checkout
+(`git apply --check …` then `git apply …`). It contains steps 1–4 below (module files, Monocypher, all hooks, Makefile,
+CMake and Visual Studio entries, `conf/odinguard_athena.conf`). Run `./configure` again, rebuild and continue with
+step 5. Base commit, conflict resolution on newer rAthena and PACKETVER notes: [`server/patches/README.md`](../server/patches/README.md).
+
+**Manual steps** (forks, or when the patch does not apply):
+
 1. Copy `server/src/common/*`, `server/src/login/*`, `server/src/map/*` into the same folders of rAthena.
    `og_crypto.cpp` compiles Monocypher: copy `third_party/monocypher.c/.h` to `3rdparty/monocypher/`.
 2. Add the hook lines listed in [`server/HOOKS.txt`](../server/HOOKS.txt) (socket layer, login, char and map

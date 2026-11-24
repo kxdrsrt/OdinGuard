@@ -720,6 +720,7 @@ dependencies = [
 [[package]]
 name = "rgrf-core"
 version = "0.2.3"
+source = "git+https://github.com/kxdrsrt/RustyGRF?rev=efc218ca634afb7cb40eef71f6dced905e2eb30e#efc218ca634afb7cb40eef71f6dced905e2eb30e"
 dependencies = [
  "aes",
  "crc32fast",

@@ -23,7 +23,7 @@ nettest_once() { vm "cd /d $WIN_E2E & set OG_CHAT=$3 & set OG_HOLD=$4 ${5:+& set
 nettest() {
 	for try in 1 2 3; do
 		o=$(nettest_once "$@")
-		case "$o" in *"unexpected packet 0x0081"*|*"no map server answer"*|*"CHAR: unexpected answer"*) sleep 8 ;; *) break ;; esac
+		case "$o" in *"unexpected packet 0x0081"*|*"refused, code 8"*|*"no map server answer"*|*"CHAR: unexpected answer"*) sleep 8 ;; *) break ;; esac
 	done
 	printf '%s\n' "$o"
 }
@@ -55,6 +55,15 @@ stage_client() {
 # DATA.INI of the test client folder
 data_ini() { { printf '[Data]\r\n'; for l in "$@"; do printf '%s\r\n' "$l"; done; } > "$E2E/DATA.INI"; }
 events() { sql "SELECT COUNT(*) FROM og_event WHERE $1"; }
+# up to three sessions until an event matching $1 exists (session timing in the emulated VM varies)
+event_after_session() {
+	cond=$1; shift
+	for i in 1 2 3; do
+		nettest "$@" >/dev/null
+		[ "$(events "$cond")" -ge 1 ] && return 0
+	done
+	return 1
+}
 
 cat > /tmp/og_e2e.conf <<'EOF'
 og_ch_nonce: yes
@@ -178,8 +187,7 @@ check "changed file table of a listed GRF (grf:modified)" '[ "$(events "type=\"g
 cp "$R/client/odin.grf" "$E2E/odin.grf"
 sql "DELETE FROM og_event"
 printf 'X' | dd of="$E2E/odin.grf" bs=1 seek=60 conv=notrunc 2>/dev/null
-nettest ogtest2 OgPlayer '!ping' 30 >/dev/null
-check "same table, changed content: background full hash (grf:modified content)" '[ "$(events "type=\"grf:modified\" AND detail LIKE \"odin.grf (content)%\"")" -ge 1 ]'
+check "same table, changed content: background full hash (grf:modified content)" 'event_after_session "type=\"grf:modified\" AND detail LIKE \"odin.grf (content)%\"" ogtest2 OgPlayer "!ping" 30'
 cp "$R/client/odin.grf" "$E2E/odin.grf"
 sql "DELETE FROM og_event"
 data_ini "0=odin-dark.grf"

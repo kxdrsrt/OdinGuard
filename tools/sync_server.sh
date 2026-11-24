@@ -28,7 +28,7 @@ cp "$X/conf/odinguard_athena.conf" "$S/conf/"
 	echo "See server/README.md for what each hook does."
 	echo
 	cd "$X"
-	grep -rn -E "(^|[^A-Za-z_])og_[a-z_]+\(|odinguard\.(hpp|o)|og_crypto\.o|og_wire|void\* og;" \
+	grep -rn -E "(^|[^A-Za-z_])og_[a-z_]+\(|clif_og_[a-z_]+|odinguard\.(hpp|o)|og_crypto\.o|og_wire|void\* og;" \
 		src/common/socket.cpp src/common/socket.hpp src/common/Makefile.in src/common/CMakeLists.txt \
 		src/login/login.cpp src/login/loginclif.cpp src/char/char_clif.cpp \
 		src/map/clif.cpp src/map/clif.hpp src/map/map.cpp src/map/pc.cpp src/map/atcommand.cpp src/map/script.cpp \

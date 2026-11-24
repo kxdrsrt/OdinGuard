@@ -2,6 +2,12 @@
 
 #include "odinguard.hpp"
 
+#ifdef _WIN32
+#include "winapi.hpp"
+#include <bcrypt.h>
+#pragma comment(lib, "bcrypt.lib")
+#endif
+
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -146,9 +152,13 @@ static bool from_hex(const std::string& s, uint8* out, size_t n) {
 }
 
 static bool og_random(uint8* p, size_t n) {
+#ifdef _WIN32
+	return BCryptGenRandom(nullptr, p, (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG) == 0;
+#else
 	static FILE* f = nullptr;
 	if (f == nullptr && (f = fopen("/dev/urandom", "rb")) == nullptr) return false;
 	return fread(p, 1, n, f) == n;
+#endif
 }
 
 static uint32 og_random32() {

@@ -14,7 +14,7 @@ workspace = true
 [dependencies]
 hex = "0.4"
 minisign-verify = "0.2"
-rgrf-core = { path = "../../../../../Downloads/RO/1 CLIENT-SIDE/0 GRFs/RustyGRF/crates/rgrf-core" }
+rgrf-core = { git = "https://github.com/kxdrsrt/RustyGRF", rev = "efc218ca634afb7cb40eef71f6dced905e2eb30e" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
