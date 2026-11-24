@@ -1,244 +1,244 @@
-skill_id	name	unit	colour	lgp_colour	source	lgp_shape
-12	MG_SAFETYWALL	UNT_SAFETYWALL 0x7e	pink	8	class O; fallback 0xc9; Safety Wall rosa (vanilla Glas-STR) [vermutet]	square
-18	MG_FIREWALL	UNT_FIREWALL 0x7f	orange	4	class B; fallback 0xc9; Fire Wall orange (Feuer, von MS-Rot unterscheidbar) [vermutet]	triangle
-21	MG_THUNDERSTORM	UNT_DUMMYSKILL 0x86	yellow	2	class A; fallback 0xc9; Wind/Blitz wie LoV [vermutet]	triangle
-25	AL_PNEUMA	UNT_PNEUMA 0x85	green	5	class B; fallback 0xc8; Pneuma grün [vermutet]; Mitte bleibt Pneuma-STR (RangedSingleUnit)	square
-27	AL_WARP	UNT_WARP_ACTIVE 0x81	-	-	class N; fallback -; Warp Portal	-
-47	AC_SHOWER	(kein Unit)	brown	7	class P; fallback 0xc9; Arrow Shower: nur Positionseffekt [vermutet]	triangle
-69	PR_BENEDICTIO	(kein Unit)	cyan	1	class P; fallback 0xc8; Benedictio: nur Positionseffekt [vermutet]	square
-70	PR_SANCTUARY	UNT_SANCTUARY 0x83	green	5	class B; fallback 0xc8; Sanctuary: Heilfeld grün (vanilla magic_green-Zylinder) [gelesen Client: 319]	square
-79	PR_MAGNUS	UNT_MAGNUS 0x84	cyan	1	class B; fallback 0xc8; Magnus: Holy weiß/cyan [vermutet]; vanilla ring_red-Zylinder	triangle
-80	WZ_FIREPILLAR	UNT_FIREPILLAR_WAITING 0x87	red	3	class O; fallback 0xc9; Fire Pillar: Falle (unsichtbar bis Auslösung? nein, sichtbar) [vermutet]	triangle
-83	WZ_METEOR	UNT_DUMMYSKILL 0x86	red	3	class A; fallback 0xc9; WoE-RO: Meteor -> Volcano-Einheit, ring_red Bodenband rot (254,60,29) [gemessen]	triangle
-85	WZ_VERMILION	UNT_DUMMYSKILL 0x86	yellow	2	class A; fallback 0xc9; WoE-RO: LoV -> Violent-Gale-Einheit, magic_green.tga in woerol gelb (204,204,51) [gemessen]	triangle
-86	WZ_WATERBALL	UNT_DUMMYSKILL 0x86	blue	0	class A; fallback 0xc8; Water [vermutet]; Zielskill, Dummy-Zellen um das Ziel	triangle
-87	WZ_ICEWALL	UNT_ICEWALL 0x8d	cyan	1	class N; fallback -; Ice Wall (Zellsperre; Hook würde clif_changemapcell überspringen)	square
-89	WZ_STORMGUST	UNT_DUMMYSKILL 0x86	blue	0	class A; fallback 0xc8; WoE-RO: Storm Gust -> Deluge-Einheit, ring_blue Bodenband blau [gemessen woerol + og_lgp M-LR]	triangle
-91	WZ_HEAVENDRIVE	UNT_DUMMYSKILL 0x86	brown	7	class A; fallback 0xc9; Erde (Element Earth) [vermutet]; nicht LP-Optik (heute 0x9d!)	triangle
-92	WZ_QUAGMIRE	UNT_QUAGMIRE 0x8e	brown	7	class B; fallback 0xc9; Quagmire: Erde/Schlamm braun [vermutet]	triangle
-110	BS_HAMMERFALL	(kein Unit)	brown	7	class P; fallback 0xc9; Hammer Fall: nur Positionseffekt [vermutet]	triangle
-115	HT_SKIDTRAP	UNT_SKIDTRAP 0x90	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-116	HT_LANDMINE	UNT_LANDMINE 0x93	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-117	HT_ANKLESNARE	UNT_ANKLESNARE 0x91	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-118	HT_SHOCKWAVE	UNT_SHOCKWAVE 0x94	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-119	HT_SANDMAN	UNT_SANDMAN 0x95	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-120	HT_FLASHER	UNT_FLASHER 0x96	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-121	HT_FREEZINGTRAP	UNT_FREEZINGTRAP 0x97	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-122	HT_BLASTMINE	UNT_BLASTMINE 0x8f	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-123	HT_CLAYMORETRAP	UNT_CLAYMORETRAP 0x98	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-125	HT_TALKIEBOX	UNT_TALKIEBOX 0x99	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-130	HT_DETECTING	(kein Unit)	-	-	class N; fallback -; Detecting: Info-Effekt	-
-140	AS_VENOMDUST	UNT_VENOMDUST 0x92	purple	6	class B; fallback 0xc8; Venom Dust: Gift violett [vermutet]	triangle
-220	RG_GRAFFITI	UNT_GRAFFITI 0xb0	-	-	class N; fallback -; Graffiti (eigenes Paket)	-
-221	RG_FLAGGRAFFITI	(kein Unit)	-	-	class N; fallback -; Flag Graffiti	-
-222	RG_CLEANER	(kein Unit)	-	-	class N; fallback -; Cleaner	-
-229	AM_DEMONSTRATION	UNT_DEMONSTRATION 0xb1	orange	4	class O; fallback 0xc9; Demonstration (Säure/Feuer) [vermutet]	triangle
-232	AM_CANNIBALIZE	(kein Unit)	-	-	class N; fallback -; Cannibalize (Beschwörung)	-
-233	AM_SPHEREMINE	(kein Unit)	-	-	class N; fallback -; Sphere Mine (Beschwörung)	-
-254	CR_GRANDCROSS	UNT_DUMMYSKILL 0x86	cyan	1	class A; fallback 0xc8; Holy, weiß/cyan [vermutet]	triangle
-264	MO_BODYRELOCATION	(kein Unit)	-	-	class N; fallback -; Body Relocation (Sprung)	-
-285	SA_VOLCANO	UNT_VOLCANO 0x9a	red	3	class O; fallback 0xc9; Volcano rot (vanilla ring_red) [gemessen Client 239]	square
-286	SA_DELUGE	UNT_DELUGE 0x9b	blue	0	class O; fallback 0xc8; Deluge blau (vanilla ring_blue) [gemessen Client 240]	square
-287	SA_VIOLENTGALE	UNT_VIOLENTGALE 0x9c	green	5	class O; fallback 0xc8; Violent Gale: im 2018-Client magic_green (grün) [gemessen]; gelb wäre LoV-Farbe	square
-288	SA_LANDPROTECTOR	UNT_LANDPROTECTOR 0x9d	white	9	class N; fallback -; Land Protector	square
-306	BD_LULLABY	UNT_LULLABY 0x9e	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle
-307	BD_RICHMANKIM	UNT_RICHMANKIM 0x9f	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-308	BD_ETERNALCHAOS	UNT_ETERNALCHAOS 0xa0	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle
-309	BD_DRUMBATTLEFIELD	UNT_DRUMBATTLEFIELD 0xa1	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-310	BD_RINGNIBELUNGEN	UNT_RINGNIBELUNGEN 0xa2	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-311	BD_ROKISWEIL	UNT_ROKISWEIL 0xa3	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle
-312	BD_INTOABYSS	UNT_INTOABYSS 0xa4	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-313	BD_SIEGFRIED	UNT_SIEGFRIED 0xa5	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-317	BA_DISSONANCE	UNT_DISSONANCE 0xa6	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle
-319	BA_WHISTLE	UNT_WHISTLE 0xa7	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-320	BA_ASSASSINCROSS	UNT_ASSASSINCROSS 0xa8	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-321	BA_POEMBRAGI	UNT_POEMBRAGI 0xa9	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-322	BA_APPLEIDUN	UNT_APPLEIDUN 0xaa	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-325	DC_UGLYDANCE	UNT_UGLYDANCE 0xab	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle
-327	DC_HUMMING	UNT_HUMMING 0xac	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-328	DC_DONTFORGETME	UNT_DONTFORGETME 0xad	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle
-329	DC_FORTUNEKISS	UNT_FORTUNEKISS 0xae	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-330	DC_SERVICEFORYOU	UNT_SERVICEFORYOU 0xaf	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square
-336	WE_CALLPARTNER	UNT_CALLFAMILY 0xb2	-	-	class N; fallback -; Call Partner	-
-339	NPC_GRANDDARKNESS	UNT_DUMMYSKILL 0x86	purple	6	class A; fallback 0xc8; Element-Regel (Dark) [vermutet]; NPC/Monster	triangle
-362	HP_BASILICA	UNT_BASILICA 0xb4	cyan	1	class O; fallback 0xc8; Basilica: weiß [vermutet]; Zonen-Info	square
-369	PA_GOSPEL	UNT_GOSPEL 0xb3	pink	8	class O; fallback 0xc9; Gospel [vermutet]; Zonen-Info	square
-388	WS_SYSTEMCREATE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; sonstige (nicht nutzbar)	-
-395	CG_MOONLIT	UNT_MOONLIT 0xb5	pink	8	class O; fallback 0xc9; Moonlit Water Mill [vermutet]	square
-404	PF_FOGWALL	UNT_FOGWALL 0xb6	white	9	class O; fallback 0xc8; Fog Wall: weiß/grau [vermutet]	square
-405	PF_SPIDERWEB	UNT_SPIDERWEB 0xb7	grey	11	class N; fallback -; Spider Web/Fiber Lock: eigene Flachkachel (Kategorie effects hebt sie hervor)	triangle
-409	WE_CALLPARENT	UNT_CALLFAMILY 0xb2	-	-	class N; fallback -; Call Parent	-
-410	WE_CALLBABY	UNT_CALLFAMILY 0xb2	-	-	class N; fallback -; Call Baby	-
-428	SG_SUN_WARM	UNT_DUMMYSKILL 0x86	red	3	class O; fallback 0xc9; SG Sonnenwärme, Zellen um den SG [vermutet]	square
-429	SG_MOON_WARM	UNT_DUMMYSKILL 0x86	purple	6	class O; fallback 0xc8; SG Mondwärme [vermutet]	square
-430	SG_STAR_WARM	UNT_DUMMYSKILL 0x86	yellow	2	class O; fallback 0xc9; SG Sternenwärme [vermutet]	square
-478	CR_SLIMPITCHER	(kein Unit)	green	5	class P; fallback 0xc8; Slim Pitcher: nur Positionseffekt [vermutet]	square
-483	HW_GANBANTEIN	(kein Unit)	cyan	1	class P; fallback 0xc8; Ganbantein: nur Positionseffekt [vermutet]	square
-484	HW_GRAVITATION	UNT_GRAVITATION 0xb8	purple	6	class B; fallback 0xc8; Gravitation Field: dunkel/violett [vermutet]	triangle
-488	CG_HERMODE	UNT_HERMODE 0xb9	gold	10	class O; fallback -; Hermode: Ensemble-Zone, vanilla lassen	square
-491	CR_CULTIVATION	(kein Unit)	-	-	class N; fallback -; Cultivation	-
-516	GS_DESPERADO	UNT_DUMMYSKILL 0x86	brown	7	class A; fallback 0xc9; Desperado, neutral [vermutet]	triangle
-521	GS_GROUNDDRIFT	UNT_GROUNDDRIFT_WIND 0xbe	grey	11	class N; fallback -; Ground Drift (sichtbare Granaten)	triangle
-527	NJ_TATAMIGAESHI	UNT_TATAMIGAESHI 0xbc	white	9	class N; fallback -; Tatami Gaeshi	square
-529	NJ_SHADOWJUMP	(kein Unit)	-	-	class N; fallback -; Shadow Jump	-
-535	NJ_KAENSIN	UNT_KAEN 0xbd	red	3	class B; fallback 0xc9; NJ Kaensin: Feuerzellen [vermutet]	triangle
-536	NJ_BAKUENRYU	UNT_DUMMYSKILL 0x86	red	3	class A; fallback 0xc9; Fire (NJ Feuerdrache) [vermutet]	triangle
-538	NJ_SUITON	UNT_SUITON 0xbb	blue	0	class O; fallback 0xc8; NJ Suiton: Wasser (Client ring_blue PropertyGround) [gemessen]	square
-539	NJ_HYOUSYOURAKU	UNT_DUMMYSKILL 0x86	blue	0	class A; fallback 0xc8; Water/Eis (NJ) [vermutet]; heute 0xc8	triangle
-541	NJ_RAIGEKISAI	UNT_DUMMYSKILL 0x86	yellow	2	class A; fallback 0xc9; Wind/Blitz (NJ) [vermutet]; heute 0x9c	triangle
-653	NPC_EARTHQUAKE	UNT_EARTHQUAKE 0xc6	brown	7	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; NPC/Monster	triangle
-670	NPC_EVILLAND	UNT_EVILLAND 0xc7	purple	6	class B; fallback 0xc8; Element-Regel (Dark) [vermutet]; NPC/Monster	triangle
-706	NPC_VENOMFOG	UNT_VENOMFOG 0xfd	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; NPC/Monster	-
-709	NPC_ICEMINE	UNT_ICEMINE 0xfe	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-711	NPC_FLAMECROSS	UNT_FLAMECROSS 0xff	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; NPC/Monster	-
-719	NPC_HELLBURNING	UNT_HELLBURNING 0x100	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; NPC/Monster	-
-725	NPC_REVERBERATION	UNT_REVERBERATION 0xda	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; NPC/Monster	-
-739	NPC_CLOUD_KILL	UNT_CLOUD_KILL 0xe0	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; NPC/Monster	-
-744	NPC_ELECTRICWALK	UNT_ELECTRICWALK 0xdd	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; NPC/Monster	-
-745	NPC_FIREWALK	UNT_FIREWALK 0xdc	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; NPC/Monster	-
-769	NPC_RAINOFMETEOR	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; NPC/Monster	-
-770	NPC_GROUNDDRIVE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; NPC/Monster	-
-780	NPC_CANE_OF_EVIL_EYE	UNT_CANE_OF_EVIL_EYE 0x11d	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; NPC/Monster	-
-2005	RK_WINDCUTTER	(kein Unit)	yellow	-	class P; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2008	RK_DRAGONBREATH	(kein Unit)	red	-	class P; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2032	GC_POISONSMOKE	UNT_POISONSMOKE 0xe1	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2044	AB_EPICLESIS	UNT_EPICLESIS 0xca	cyan	-	class B; fallback 0xc8; Element-Regel (Holy) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2213	WL_COMET	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2216	WL_EARTHSTRAIN	UNT_EARTHSTRAIN 0xcb	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2237	RA_DETONATOR	(kein Unit)	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2238	RA_ELECTRICSHOCKER	UNT_ELECTRICSHOCKER 0xd8	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2239	RA_CLUSTERBOMB	UNT_CLUSTERBOMB 0xd9	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2249	RA_MAGENTATRAP	UNT_MAGENTATRAP 0xd2	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2250	RA_COBALTTRAP	UNT_COBALTTRAP 0xd3	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2251	RA_MAIZETRAP	UNT_MAIZETRAP 0xd4	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2252	RA_VERDURETRAP	UNT_VERDURETRAP 0xd5	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2253	RA_FIRINGTRAP	UNT_FIRINGTRAP 0xd6	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2254	RA_ICEBOUNDTRAP	UNT_ICEBOUNDTRAP 0xd7	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2260	NC_COLDSLOWER	(kein Unit)	blue	-	class P; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2273	NC_NEUTRALBARRIER	UNT_NEUTRALBARRIER 0xe2	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2274	NC_STEALTHFIELD	UNT_STEALTHFIELD 0xe3	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2281	NC_SILVERSNIPER	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2282	NC_MAGICDECOY	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2299	SC_MANHOLE	UNT_MANHOLE 0xcc	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2300	SC_DIMENSIONDOOR	UNT_DIMENSIONDOOR 0xcd	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2301	SC_CHAOSPANIC	UNT_CHAOSPANIC 0xce	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2302	SC_MAELSTROM	UNT_MAELSTROM 0xcf	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2303	SC_BLOODYLUST	UNT_BLOODYLUST 0xd0	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2304	SC_FEINTBOMB	UNT_FEINTBOMB 0xd1	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2317	LG_OVERBRAND	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2319	LG_BANDING	UNT_BANDING 0xec	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2321	LG_RAYOFGENESIS	(kein Unit)	cyan	-	class P; fallback 0xc8; Element-Regel (Holy) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2414	WM_REVERBERATION	UNT_REVERBERATION 0xda	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2417	WM_DOMINION_IMPULSE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2418	WM_SEVERE_RAINSTORM	UNT_SEVERE_RAINSTORM 0xdb	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2419	WM_POEMOFNETHERWORLD	UNT_NETHERWORLD 0xde	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2426	WM_GREAT_ECHO	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2429	WM_SOUND_OF_DESTRUCTION	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2443	SO_FIREWALK	UNT_FIREWALK 0xdc	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2444	SO_ELECTRICWALK	UNT_ELECTRICWALK 0xdd	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2446	SO_EARTHGRAVE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2447	SO_DIAMONDDUST	UNT_DUMMYSKILL 0x86	blue	-	class A; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2449	SO_PSYCHIC_WAVE	UNT_PSYCHIC_WAVE 0xdf	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2450	SO_CLOUD_KILL	UNT_CLOUD_KILL 0xe0	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2452	SO_WARMER	UNT_WARMER 0xe4	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2453	SO_VACUUM_EXTREME	UNT_VACUUM_EXTREME 0xeb	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2455	SO_ARRULLO	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2465	SO_FIRE_INSIGNIA	UNT_FIRE_INSIGNIA 0xf1	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2466	SO_WATER_INSIGNIA	UNT_WATER_INSIGNIA 0xf2	blue	-	class B; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2467	SO_WIND_INSIGNIA	UNT_WIND_INSIGNIA 0xf3	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2468	SO_EARTH_INSIGNIA	UNT_EARTH_INSIGNIA 0xf4	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2479	GN_THORNS_TRAP	UNT_THORNS_TRAP 0xe5	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2482	GN_WALLOFTHORN	UNT_WALLOFTHORN 0xe6	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2483	GN_CRAZYWEED	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2484	GN_CRAZYWEED_ATK	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2485	GN_DEMONIC_FIRE	UNT_DEMONIC_FIRE 0xe7	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2486	GN_FIRE_EXPANSION	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2487	GN_FIRE_EXPANSION_SMOKE_POWDER	UNT_FIRE_EXPANSION_SMOKE_POWDER 0xe8	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2488	GN_FIRE_EXPANSION_TEAR_GAS	UNT_FIRE_EXPANSION_TEAR_GAS 0xe9	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2490	GN_HELLS_PLANT	UNT_HELLS_PLANT 0xea	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2518	SR_RIDEINLIGHTNING	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2555	RL_B_TRAP	UNT_B_TRAP 0x104	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-2564	RL_FALLEN_ANGEL	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-2567	RL_FIRE_RAIN	UNT_FIRE_RAIN 0x105	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-3006	KO_BAKURETSU	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-3008	KO_MUCHANAGE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-3009	KO_HUUMARANKA	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-3010	KO_MAKIBISHI	UNT_MAKIBISHI 0xfc	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-3020	KO_ZENKAI	UNT_ZENKAI_WATER 0xf8	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5004	RK_DRAGONBREATH_WATER	(kein Unit)	blue	-	class P; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5006	NC_MAGMA_ERUPTION	UNT_MAGMA_ERUPTION 0x101	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5010	SC_ESCAPE	UNT_ANKLESNARE 0x91	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5013	LG_KINGS_GRACE	UNT_KINGS_GRACE 0x102	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5216	AG_RAIN_OF_CRYSTAL	UNT_RAIN_OF_CRYSTAL 0x10a	blue	-	class B; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5217	AG_MYSTERY_ILLUSION	UNT_MYSTERY_ILLUSION 0x10b	purple	-	class B; fallback 0xc8; Element-Regel (Dark) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5218	AG_VIOLENT_QUAKE	UNT_VIOLENT_QUAKE 0x10e	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5219	AG_VIOLENT_QUAKE_ATK	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5221	AG_STRANTUM_TREMOR	UNT_STRANTUM_TREMOR 0x10d	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5222	AG_ALL_BLOOM	UNT_ALL_BLOOM 0x10f	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5223	AG_ALL_BLOOM_ATK	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5224	AG_ALL_BLOOM_ATK2	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5226	AG_CRYSTAL_IMPACT_ATK	(kein Unit)	blue	-	class P; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5227	AG_TORNADO_STORM	UNT_TORNADO_STORM 0x110	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5229	AG_FLORAL_FLARE_ROAD	UNT_FLORAL_FLARE_ROAD 0x111	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5230	AG_ASTRAL_STRIKE	UNT_ASTRAL_STRIKE 0x112	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5231	AG_ASTRAL_STRIKE_ATK	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5267	IG_CROSS_RAIN	UNT_CROSS_RAIN 0x113	cyan	-	class B; fallback 0xc8; Element-Regel (Holy) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5279	CD_PNEUMATICUS_PROCELLA	UNT_PNEUMATICUS_PROCELLA 0x114	brown	-	class B; fallback 0xc9; Element-Regel (Neutral) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5319	ABC_ABYSS_STRIKE	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5321	ABC_ABYSS_SQUARE	UNT_ABYSS_SQUARE 0x115	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5331	WH_DEEPBLINDTRAP	UNT_DEEPBLINDTRAP 0x5174	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-5332	WH_SOLIDTRAP	UNT_SOLIDTRAP 0x5175	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-5333	WH_SWIFTTRAP	UNT_SWIFTTRAP 0x5176	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-5335	WH_FLAMETRAP	UNT_FLAMETRAP 0x5177	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-
-5340	BO_ACIDIFIED_ZONE_WATER	UNT_ACIDIFIED_ZONE_WATER 0x116	blue	-	class B; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5341	BO_ACIDIFIED_ZONE_GROUND	UNT_ACIDIFIED_ZONE_GROUND 0x117	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5342	BO_ACIDIFIED_ZONE_WIND	UNT_ACIDIFIED_ZONE_WIND 0x118	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5343	BO_ACIDIFIED_ZONE_FIRE	UNT_ACIDIFIED_ZONE_FIRE 0x119	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5369	EM_DIAMOND_STORM	UNT_DUMMYSKILL 0x86	blue	-	class A; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5370	EM_LIGHTNING_LAND	UNT_LIGHTNING_LAND 0x11a	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5371	EM_VENOM_SWAMP	UNT_VENOM_SWAMP 0x11b	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5372	EM_CONFLAGRATION	UNT_CONFLAGRATION 0x11c	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5373	EM_TERRA_DRIVE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5409	NW_WILD_FIRE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5410	NW_BASIC_GRENADE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5411	NW_HASTY_FIRE_IN_THE_HOLE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5412	NW_GRENADES_DROPPING	UNT_GRENADES_DROPPING 0x120	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5415	NW_MISSION_BOMBARD	UNT_MISSION_BOMBARD 0x123	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5422	SOA_TOTEM_OF_TUTELARY	UNT_TOTEM_OF_TUTELARY 0x124	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5429	SOA_TALISMAN_OF_BLACK_TORTOISE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Endowed) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5445	SH_HYUN_ROKS_BREEZE	UNT_HYUN_ROKS_BREEZE 0x125	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5455	HN_METEOR_STORM_BUSTER	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5457	HN_JACK_FROST_NOVA	UNT_JACK_FROST_NOVA 0x127	blue	-	class B; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5459	HN_GROUND_GRAVITATION	UNT_GROUND_GRAVITATION 0x128	brown	-	class B; fallback 0xc9; Element-Regel (Neutral) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5471	SKE_TWINKLING_GALAXY	UNT_TWINKLING_GALAXY 0x11e	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5472	SKE_STAR_BURST	UNT_STAR_BURST 0x969	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5473	SKE_STAR_CANNON	UNT_STAR_CANNON 0x11f	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5476	SS_TOKEDASU	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Dark) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5479	SS_SHINKIROU	UNT_SHINKIROU 0x126	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5480	SS_KAGEGARI	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5483	SS_FUUMASHOUAKU	UNT_FUUMASHOUAKU 0x122	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5484	SS_FUUMAKOUCHIKU	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5485	SS_KUNAIWAIKYOKU	UNT_KUNAIWAIKYOKU 0x12a	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5486	SS_KUNAIKAITEN	UNT_KUNAIKAITEN 0x129	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5487	SS_KUNAIKUSSETSU	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5489	SS_REIKETSUHOU	(kein Unit)	blue	-	class P; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-5501	NW_MIDNIGHT_FALLEN	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-
-8020	MH_POISON_MIST	UNT_POISON_MIST 0xf5	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8025	MH_XENO_SLASHER	UNT_DUMMYSKILL 0x86	yellow	-	class A; fallback 0xc9; Element-Regel (Wind) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8033	MH_STEINWAND	UNT_SAFETYWALL 0x7e	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8041	MH_LAVA_SLIDE	UNT_LAVA_SLIDE 0xf6	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8043	MH_VOLCANIC_ASH	UNT_VOLCANIC_ASH 0xf7	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8044	MH_BLAST_FORGE	UNT_LAVA_SLIDE 0xf6	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8208	MA_SHOWER	(kein Unit)	brown	7	class P; fallback 0xc9; Merc Arrow Shower [vermutet]	triangle
-8209	MA_SKIDTRAP	UNT_SKIDTRAP 0x90	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-8210	MA_LANDMINE	UNT_LANDMINE 0x93	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-8211	MA_SANDMAN	UNT_SANDMAN 0x95	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-8212	MA_FREEZINGTRAP	UNT_FREEZINGTRAP 0x97	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle
-8403	EL_FIRE_MANTLE	UNT_FIRE_MANTLE 0xed	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8406	EL_WATER_BARRIER	UNT_WATER_BARRIER 0xee	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8409	EL_ZEPHYR	UNT_ZEPHYR 0xef	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-8412	EL_POWER_OF_GAIA	UNT_POWER_OF_GAIA 0xf0	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-
-10006	GD_LEADERSHIP	UNT_GD_LEADERSHIP 0xc1	-	-	class N; fallback -; Gildenaura (clif sendet keine Unit)	-
-10007	GD_GLORYWOUNDS	UNT_GD_GLORYWOUNDS 0xc2	-	-	class N; fallback -; Gildenaura (clif sendet keine Unit)	-
-10008	GD_SOULCOLD	UNT_GD_SOULCOLD 0xc3	-	-	class N; fallback -; Gildenaura (clif sendet keine Unit)	-
-10009	GD_HAWKEYES	UNT_GD_HAWKEYES 0xc4	-	-	class N; fallback -; Gildenaura (clif sendet keine Unit)	-
+skill_id	name	unit	colour	lgp_colour	source	lgp_shape	lgp_symbol
+12	MG_SAFETYWALL	UNT_SAFETYWALL 0x7e	pink	8	class O; fallback 0xc9; Safety Wall rosa (vanilla Glas-STR) [vermutet]	square	shield
+18	MG_FIREWALL	UNT_FIREWALL 0x7f	orange	4	class B; fallback 0xc9; Fire Wall orange (Feuer, von MS-Rot unterscheidbar) [vermutet]	triangle	flame
+21	MG_THUNDERSTORM	UNT_DUMMYSKILL 0x86	yellow	2	class A; fallback 0xc9; Wind/Blitz wie LoV [vermutet]	triangle	-
+25	AL_PNEUMA	UNT_PNEUMA 0x85	green	5	class B; fallback 0xc8; Pneuma grün [vermutet]; Mitte bleibt Pneuma-STR (RangedSingleUnit)	square	shield
+27	AL_WARP	UNT_WARP_ACTIVE 0x81	-	-	class N; fallback -; Warp Portal	-	-
+47	AC_SHOWER	(kein Unit)	brown	7	class P; fallback 0xc9; Arrow Shower: nur Positionseffekt [vermutet]	triangle	-
+69	PR_BENEDICTIO	(kein Unit)	cyan	1	class P; fallback 0xc8; Benedictio: nur Positionseffekt [vermutet]	square	plus
+70	PR_SANCTUARY	UNT_SANCTUARY 0x83	green	5	class B; fallback 0xc8; Sanctuary: Heilfeld grün (vanilla magic_green-Zylinder) [gelesen Client: 319]	square	plus
+79	PR_MAGNUS	UNT_MAGNUS 0x84	cyan	1	class B; fallback 0xc8; Magnus: Holy weiß/cyan [vermutet]; vanilla ring_red-Zylinder	triangle	-
+80	WZ_FIREPILLAR	UNT_FIREPILLAR_WAITING 0x87	red	3	class O; fallback 0xc9; Fire Pillar: Falle (unsichtbar bis Auslösung? nein, sichtbar) [vermutet]	triangle	-
+83	WZ_METEOR	UNT_DUMMYSKILL 0x86	red	3	class A; fallback 0xc9; WoE-RO: Meteor -> Volcano-Einheit, ring_red Bodenband rot (254,60,29) [gemessen]	triangle	-
+85	WZ_VERMILION	UNT_DUMMYSKILL 0x86	yellow	2	class A; fallback 0xc9; WoE-RO: LoV -> Violent-Gale-Einheit, magic_green.tga in woerol gelb (204,204,51) [gemessen]	triangle	-
+86	WZ_WATERBALL	UNT_DUMMYSKILL 0x86	blue	0	class A; fallback 0xc8; Water [vermutet]; Zielskill, Dummy-Zellen um das Ziel	triangle	-
+87	WZ_ICEWALL	UNT_ICEWALL 0x8d	cyan	1	class N; fallback -; Ice Wall (Zellsperre; Hook würde clif_changemapcell überspringen)	square	-
+89	WZ_STORMGUST	UNT_DUMMYSKILL 0x86	blue	0	class A; fallback 0xc8; WoE-RO: Storm Gust -> Deluge-Einheit, ring_blue Bodenband blau [gemessen woerol + og_lgp M-LR]	triangle	-
+91	WZ_HEAVENDRIVE	UNT_DUMMYSKILL 0x86	brown	7	class A; fallback 0xc9; Erde (Element Earth) [vermutet]; nicht LP-Optik (heute 0x9d!)	triangle	-
+92	WZ_QUAGMIRE	UNT_QUAGMIRE 0x8e	brown	7	class B; fallback 0xc9; Quagmire: Erde/Schlamm braun [vermutet]	triangle	minus
+110	BS_HAMMERFALL	(kein Unit)	brown	7	class P; fallback 0xc9; Hammer Fall: nur Positionseffekt [vermutet]	triangle	-
+115	HT_SKIDTRAP	UNT_SKIDTRAP 0x90	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+116	HT_LANDMINE	UNT_LANDMINE 0x93	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+117	HT_ANKLESNARE	UNT_ANKLESNARE 0x91	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+118	HT_SHOCKWAVE	UNT_SHOCKWAVE 0x94	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+119	HT_SANDMAN	UNT_SANDMAN 0x95	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+120	HT_FLASHER	UNT_FLASHER 0x96	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+121	HT_FREEZINGTRAP	UNT_FREEZINGTRAP 0x97	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+122	HT_BLASTMINE	UNT_BLASTMINE 0x8f	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+123	HT_CLAYMORETRAP	UNT_CLAYMORETRAP 0x98	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+125	HT_TALKIEBOX	UNT_TALKIEBOX 0x99	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+130	HT_DETECTING	(kein Unit)	-	-	class N; fallback -; Detecting: Info-Effekt	-	-
+140	AS_VENOMDUST	UNT_VENOMDUST 0x92	purple	6	class B; fallback 0xc8; Venom Dust: Gift violett [vermutet]	triangle	minus
+220	RG_GRAFFITI	UNT_GRAFFITI 0xb0	-	-	class N; fallback -; Graffiti (eigenes Paket)	-	-
+221	RG_FLAGGRAFFITI	(kein Unit)	-	-	class N; fallback -; Flag Graffiti	-	-
+222	RG_CLEANER	(kein Unit)	-	-	class N; fallback -; Cleaner	-	-
+229	AM_DEMONSTRATION	UNT_DEMONSTRATION 0xb1	orange	4	class O; fallback 0xc9; Demonstration (Säure/Feuer) [vermutet]	triangle	-
+232	AM_CANNIBALIZE	(kein Unit)	-	-	class N; fallback -; Cannibalize (Beschwörung)	-	-
+233	AM_SPHEREMINE	(kein Unit)	-	-	class N; fallback -; Sphere Mine (Beschwörung)	-	-
+254	CR_GRANDCROSS	UNT_DUMMYSKILL 0x86	cyan	1	class A; fallback 0xc8; Holy, weiß/cyan [vermutet]	triangle	-
+264	MO_BODYRELOCATION	(kein Unit)	-	-	class N; fallback -; Body Relocation (Sprung)	-	-
+285	SA_VOLCANO	UNT_VOLCANO 0x9a	red	3	class O; fallback 0xc9; Volcano rot (vanilla ring_red) [gemessen Client 239]	square	plus
+286	SA_DELUGE	UNT_DELUGE 0x9b	blue	0	class O; fallback 0xc8; Deluge blau (vanilla ring_blue) [gemessen Client 240]	square	plus
+287	SA_VIOLENTGALE	UNT_VIOLENTGALE 0x9c	lime	13	class O; fallback 0xc8; Violent Gale: im 2018-Client magic_green (grün) [gemessen]; gelb wäre LoV-Farbe	square	plus
+288	SA_LANDPROTECTOR	UNT_LANDPROTECTOR 0x9d	white	9	class N; fallback -; Land Protector	square	-
+306	BD_LULLABY	UNT_LULLABY 0x9e	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle	zzz
+307	BD_RICHMANKIM	UNT_RICHMANKIM 0x9f	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	coin
+308	BD_ETERNALCHAOS	UNT_ETERNALCHAOS 0xa0	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle	swirl
+309	BD_DRUMBATTLEFIELD	UNT_DRUMBATTLEFIELD 0xa1	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	drum
+310	BD_RINGNIBELUNGEN	UNT_RINGNIBELUNGEN 0xa2	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	ring
+311	BD_ROKISWEIL	UNT_ROKISWEIL 0xa3	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle	noentry
+312	BD_INTOABYSS	UNT_INTOABYSS 0xa4	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	diamond
+313	BD_SIEGFRIED	UNT_SIEGFRIED 0xa5	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	shield
+317	BA_DISSONANCE	UNT_DISSONANCE 0xa6	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle	bolt
+319	BA_WHISTLE	UNT_WHISTLE 0xa7	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	note
+320	BA_ASSASSINCROSS	UNT_ASSASSINCROSS 0xa8	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	cross
+321	BA_POEMBRAGI	UNT_POEMBRAGI 0xa9	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	dnote
+322	BA_APPLEIDUN	UNT_APPLEIDUN 0xaa	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	apple
+325	DC_UGLYDANCE	UNT_UGLYDANCE 0xab	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle	minus
+327	DC_HUMMING	UNT_HUMMING 0xac	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	note
+328	DC_DONTFORGETME	UNT_DONTFORGETME 0xad	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	triangle	arrowdown
+329	DC_FORTUNEKISS	UNT_FORTUNEKISS 0xae	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	star
+330	DC_SERVICEFORYOU	UNT_SERVICEFORYOU 0xaf	gold	10	class O; fallback -; Lied/Tanz: vanilla Farbzelle + Symbole; optional	square	heart
+336	WE_CALLPARTNER	UNT_CALLFAMILY 0xb2	-	-	class N; fallback -; Call Partner	-	-
+339	NPC_GRANDDARKNESS	UNT_DUMMYSKILL 0x86	purple	6	class A; fallback 0xc8; Element-Regel (Dark) [vermutet]; NPC/Monster	triangle	-
+362	HP_BASILICA	UNT_BASILICA 0xb4	cyan	1	class O; fallback 0xc8; Basilica: weiß [vermutet]; Zonen-Info	square	shield
+369	PA_GOSPEL	UNT_GOSPEL 0xb3	pink	8	class O; fallback 0xc9; Gospel [vermutet]; Zonen-Info	square	plus
+388	WS_SYSTEMCREATE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; sonstige (nicht nutzbar)	-	-
+395	CG_MOONLIT	UNT_MOONLIT 0xb5	pink	8	class O; fallback 0xc9; Moonlit Water Mill [vermutet]	square	moon
+404	PF_FOGWALL	UNT_FOGWALL 0xb6	lightgrey	12	class O; fallback 0xc8; Fog Wall: weiß/grau [vermutet]	square	minus
+405	PF_SPIDERWEB	UNT_SPIDERWEB 0xb7	grey	11	class N; fallback -; Spider Web/Fiber Lock: eigene Flachkachel (Kategorie effects hebt sie hervor)	triangle	minus
+409	WE_CALLPARENT	UNT_CALLFAMILY 0xb2	-	-	class N; fallback -; Call Parent	-	-
+410	WE_CALLBABY	UNT_CALLFAMILY 0xb2	-	-	class N; fallback -; Call Baby	-	-
+428	SG_SUN_WARM	UNT_DUMMYSKILL 0x86	red	3	class O; fallback 0xc9; SG Sonnenwärme, Zellen um den SG [vermutet]	square	sun
+429	SG_MOON_WARM	UNT_DUMMYSKILL 0x86	purple	6	class O; fallback 0xc8; SG Mondwärme [vermutet]	square	moon
+430	SG_STAR_WARM	UNT_DUMMYSKILL 0x86	yellow	2	class O; fallback 0xc9; SG Sternenwärme [vermutet]	square	star
+478	CR_SLIMPITCHER	(kein Unit)	green	5	class P; fallback 0xc8; Slim Pitcher: nur Positionseffekt [vermutet]	square	plus
+483	HW_GANBANTEIN	(kein Unit)	cyan	1	class P; fallback 0xc8; Ganbantein: nur Positionseffekt [vermutet]	square	noentry
+484	HW_GRAVITATION	UNT_GRAVITATION 0xb8	purple	6	class B; fallback 0xc8; Gravitation Field: dunkel/violett [vermutet]	triangle	-
+488	CG_HERMODE	UNT_HERMODE 0xb9	gold	10	class O; fallback -; Hermode: Ensemble-Zone, vanilla lassen	square	shield
+491	CR_CULTIVATION	(kein Unit)	-	-	class N; fallback -; Cultivation	-	-
+516	GS_DESPERADO	UNT_DUMMYSKILL 0x86	brown	7	class A; fallback 0xc9; Desperado, neutral [vermutet]	triangle	-
+521	GS_GROUNDDRIFT	UNT_GROUNDDRIFT_WIND 0xbe	grey	11	class N; fallback -; Ground Drift (sichtbare Granaten)	triangle	-
+527	NJ_TATAMIGAESHI	UNT_TATAMIGAESHI 0xbc	white	9	class N; fallback -; Tatami Gaeshi	square	shield
+529	NJ_SHADOWJUMP	(kein Unit)	-	-	class N; fallback -; Shadow Jump	-	-
+535	NJ_KAENSIN	UNT_KAEN 0xbd	red	3	class B; fallback 0xc9; NJ Kaensin: Feuerzellen [vermutet]	triangle	flame
+536	NJ_BAKUENRYU	UNT_DUMMYSKILL 0x86	red	3	class A; fallback 0xc9; Fire (NJ Feuerdrache) [vermutet]	triangle	flame
+538	NJ_SUITON	UNT_SUITON 0xbb	blue	0	class O; fallback 0xc8; NJ Suiton: Wasser (Client ring_blue PropertyGround) [gemessen]	square	-
+539	NJ_HYOUSYOURAKU	UNT_DUMMYSKILL 0x86	blue	0	class A; fallback 0xc8; Water/Eis (NJ) [vermutet]; heute 0xc8	triangle	-
+541	NJ_RAIGEKISAI	UNT_DUMMYSKILL 0x86	yellow	2	class A; fallback 0xc9; Wind/Blitz (NJ) [vermutet]; heute 0x9c	triangle	-
+653	NPC_EARTHQUAKE	UNT_EARTHQUAKE 0xc6	brown	7	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; NPC/Monster	triangle	-
+670	NPC_EVILLAND	UNT_EVILLAND 0xc7	purple	6	class B; fallback 0xc8; Element-Regel (Dark) [vermutet]; NPC/Monster	triangle	minus
+706	NPC_VENOMFOG	UNT_VENOMFOG 0xfd	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; NPC/Monster	-	-
+709	NPC_ICEMINE	UNT_ICEMINE 0xfe	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+711	NPC_FLAMECROSS	UNT_FLAMECROSS 0xff	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; NPC/Monster	-	-
+719	NPC_HELLBURNING	UNT_HELLBURNING 0x100	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; NPC/Monster	-	-
+725	NPC_REVERBERATION	UNT_REVERBERATION 0xda	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; NPC/Monster	-	-
+739	NPC_CLOUD_KILL	UNT_CLOUD_KILL 0xe0	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; NPC/Monster	-	-
+744	NPC_ELECTRICWALK	UNT_ELECTRICWALK 0xdd	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; NPC/Monster	-	-
+745	NPC_FIREWALK	UNT_FIREWALK 0xdc	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; NPC/Monster	-	-
+769	NPC_RAINOFMETEOR	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; NPC/Monster	-	-
+770	NPC_GROUNDDRIVE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; NPC/Monster	-	-
+780	NPC_CANE_OF_EVIL_EYE	UNT_CANE_OF_EVIL_EYE 0x11d	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; NPC/Monster	-	-
+2005	RK_WINDCUTTER	(kein Unit)	yellow	-	class P; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2008	RK_DRAGONBREATH	(kein Unit)	red	-	class P; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2032	GC_POISONSMOKE	UNT_POISONSMOKE 0xe1	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2044	AB_EPICLESIS	UNT_EPICLESIS 0xca	cyan	-	class B; fallback 0xc8; Element-Regel (Holy) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2213	WL_COMET	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2216	WL_EARTHSTRAIN	UNT_EARTHSTRAIN 0xcb	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2237	RA_DETONATOR	(kein Unit)	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2238	RA_ELECTRICSHOCKER	UNT_ELECTRICSHOCKER 0xd8	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2239	RA_CLUSTERBOMB	UNT_CLUSTERBOMB 0xd9	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2249	RA_MAGENTATRAP	UNT_MAGENTATRAP 0xd2	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2250	RA_COBALTTRAP	UNT_COBALTTRAP 0xd3	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2251	RA_MAIZETRAP	UNT_MAIZETRAP 0xd4	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2252	RA_VERDURETRAP	UNT_VERDURETRAP 0xd5	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2253	RA_FIRINGTRAP	UNT_FIRINGTRAP 0xd6	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2254	RA_ICEBOUNDTRAP	UNT_ICEBOUNDTRAP 0xd7	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2260	NC_COLDSLOWER	(kein Unit)	blue	-	class P; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2273	NC_NEUTRALBARRIER	UNT_NEUTRALBARRIER 0xe2	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2274	NC_STEALTHFIELD	UNT_STEALTHFIELD 0xe3	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2281	NC_SILVERSNIPER	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2282	NC_MAGICDECOY	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2299	SC_MANHOLE	UNT_MANHOLE 0xcc	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2300	SC_DIMENSIONDOOR	UNT_DIMENSIONDOOR 0xcd	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2301	SC_CHAOSPANIC	UNT_CHAOSPANIC 0xce	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2302	SC_MAELSTROM	UNT_MAELSTROM 0xcf	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2303	SC_BLOODYLUST	UNT_BLOODYLUST 0xd0	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2304	SC_FEINTBOMB	UNT_FEINTBOMB 0xd1	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2317	LG_OVERBRAND	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2319	LG_BANDING	UNT_BANDING 0xec	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2321	LG_RAYOFGENESIS	(kein Unit)	cyan	-	class P; fallback 0xc8; Element-Regel (Holy) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2414	WM_REVERBERATION	UNT_REVERBERATION 0xda	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2417	WM_DOMINION_IMPULSE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2418	WM_SEVERE_RAINSTORM	UNT_SEVERE_RAINSTORM 0xdb	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2419	WM_POEMOFNETHERWORLD	UNT_NETHERWORLD 0xde	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2426	WM_GREAT_ECHO	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2429	WM_SOUND_OF_DESTRUCTION	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2443	SO_FIREWALK	UNT_FIREWALK 0xdc	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2444	SO_ELECTRICWALK	UNT_ELECTRICWALK 0xdd	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2446	SO_EARTHGRAVE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2447	SO_DIAMONDDUST	UNT_DUMMYSKILL 0x86	blue	-	class A; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2449	SO_PSYCHIC_WAVE	UNT_PSYCHIC_WAVE 0xdf	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2450	SO_CLOUD_KILL	UNT_CLOUD_KILL 0xe0	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2452	SO_WARMER	UNT_WARMER 0xe4	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2453	SO_VACUUM_EXTREME	UNT_VACUUM_EXTREME 0xeb	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2455	SO_ARRULLO	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2465	SO_FIRE_INSIGNIA	UNT_FIRE_INSIGNIA 0xf1	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2466	SO_WATER_INSIGNIA	UNT_WATER_INSIGNIA 0xf2	blue	-	class B; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2467	SO_WIND_INSIGNIA	UNT_WIND_INSIGNIA 0xf3	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2468	SO_EARTH_INSIGNIA	UNT_EARTH_INSIGNIA 0xf4	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2479	GN_THORNS_TRAP	UNT_THORNS_TRAP 0xe5	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2482	GN_WALLOFTHORN	UNT_WALLOFTHORN 0xe6	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2483	GN_CRAZYWEED	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2484	GN_CRAZYWEED_ATK	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2485	GN_DEMONIC_FIRE	UNT_DEMONIC_FIRE 0xe7	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2486	GN_FIRE_EXPANSION	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2487	GN_FIRE_EXPANSION_SMOKE_POWDER	UNT_FIRE_EXPANSION_SMOKE_POWDER 0xe8	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2488	GN_FIRE_EXPANSION_TEAR_GAS	UNT_FIRE_EXPANSION_TEAR_GAS 0xe9	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2490	GN_HELLS_PLANT	UNT_HELLS_PLANT 0xea	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2518	SR_RIDEINLIGHTNING	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2555	RL_B_TRAP	UNT_B_TRAP 0x104	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+2564	RL_FALLEN_ANGEL	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+2567	RL_FIRE_RAIN	UNT_FIRE_RAIN 0x105	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+3006	KO_BAKURETSU	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+3008	KO_MUCHANAGE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+3009	KO_HUUMARANKA	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+3010	KO_MAKIBISHI	UNT_MAKIBISHI 0xfc	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+3020	KO_ZENKAI	UNT_ZENKAI_WATER 0xf8	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5004	RK_DRAGONBREATH_WATER	(kein Unit)	blue	-	class P; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5006	NC_MAGMA_ERUPTION	UNT_MAGMA_ERUPTION 0x101	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5010	SC_ESCAPE	UNT_ANKLESNARE 0x91	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5013	LG_KINGS_GRACE	UNT_KINGS_GRACE 0x102	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5216	AG_RAIN_OF_CRYSTAL	UNT_RAIN_OF_CRYSTAL 0x10a	blue	-	class B; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5217	AG_MYSTERY_ILLUSION	UNT_MYSTERY_ILLUSION 0x10b	purple	-	class B; fallback 0xc8; Element-Regel (Dark) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5218	AG_VIOLENT_QUAKE	UNT_VIOLENT_QUAKE 0x10e	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5219	AG_VIOLENT_QUAKE_ATK	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5221	AG_STRANTUM_TREMOR	UNT_STRANTUM_TREMOR 0x10d	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5222	AG_ALL_BLOOM	UNT_ALL_BLOOM 0x10f	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5223	AG_ALL_BLOOM_ATK	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5224	AG_ALL_BLOOM_ATK2	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5226	AG_CRYSTAL_IMPACT_ATK	(kein Unit)	blue	-	class P; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5227	AG_TORNADO_STORM	UNT_TORNADO_STORM 0x110	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5229	AG_FLORAL_FLARE_ROAD	UNT_FLORAL_FLARE_ROAD 0x111	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5230	AG_ASTRAL_STRIKE	UNT_ASTRAL_STRIKE 0x112	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5231	AG_ASTRAL_STRIKE_ATK	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5267	IG_CROSS_RAIN	UNT_CROSS_RAIN 0x113	cyan	-	class B; fallback 0xc8; Element-Regel (Holy) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5279	CD_PNEUMATICUS_PROCELLA	UNT_PNEUMATICUS_PROCELLA 0x114	brown	-	class B; fallback 0xc9; Element-Regel (Neutral) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5319	ABC_ABYSS_STRIKE	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5321	ABC_ABYSS_SQUARE	UNT_ABYSS_SQUARE 0x115	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5331	WH_DEEPBLINDTRAP	UNT_DEEPBLINDTRAP 0x5174	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+5332	WH_SOLIDTRAP	UNT_SOLIDTRAP 0x5175	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+5333	WH_SWIFTTRAP	UNT_SWIFTTRAP 0x5176	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+5335	WH_FLAMETRAP	UNT_FLAMETRAP 0x5177	-	-	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	-	-
+5340	BO_ACIDIFIED_ZONE_WATER	UNT_ACIDIFIED_ZONE_WATER 0x116	blue	-	class B; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5341	BO_ACIDIFIED_ZONE_GROUND	UNT_ACIDIFIED_ZONE_GROUND 0x117	brown	-	class B; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5342	BO_ACIDIFIED_ZONE_WIND	UNT_ACIDIFIED_ZONE_WIND 0x118	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5343	BO_ACIDIFIED_ZONE_FIRE	UNT_ACIDIFIED_ZONE_FIRE 0x119	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5369	EM_DIAMOND_STORM	UNT_DUMMYSKILL 0x86	blue	-	class A; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5370	EM_LIGHTNING_LAND	UNT_LIGHTNING_LAND 0x11a	yellow	-	class B; fallback 0xc9; Element-Regel (Wind) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5371	EM_VENOM_SWAMP	UNT_VENOM_SWAMP 0x11b	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5372	EM_CONFLAGRATION	UNT_CONFLAGRATION 0x11c	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5373	EM_TERRA_DRIVE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Earth) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5409	NW_WILD_FIRE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5410	NW_BASIC_GRENADE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5411	NW_HASTY_FIRE_IN_THE_HOLE	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5412	NW_GRENADES_DROPPING	UNT_GRENADES_DROPPING 0x120	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5415	NW_MISSION_BOMBARD	UNT_MISSION_BOMBARD 0x123	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5422	SOA_TOTEM_OF_TUTELARY	UNT_TOTEM_OF_TUTELARY 0x124	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5429	SOA_TALISMAN_OF_BLACK_TORTOISE	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Endowed) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5445	SH_HYUN_ROKS_BREEZE	UNT_HYUN_ROKS_BREEZE 0x125	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5455	HN_METEOR_STORM_BUSTER	UNT_DUMMYSKILL 0x86	red	-	class A; fallback 0xc9; Element-Regel (Fire) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5457	HN_JACK_FROST_NOVA	UNT_JACK_FROST_NOVA 0x127	blue	-	class B; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5459	HN_GROUND_GRAVITATION	UNT_GROUND_GRAVITATION 0x128	brown	-	class B; fallback 0xc9; Element-Regel (Neutral) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5471	SKE_TWINKLING_GALAXY	UNT_TWINKLING_GALAXY 0x11e	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5472	SKE_STAR_BURST	UNT_STAR_BURST 0x969	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5473	SKE_STAR_CANNON	UNT_STAR_CANNON 0x11f	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5476	SS_TOKEDASU	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Dark) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5479	SS_SHINKIROU	UNT_SHINKIROU 0x126	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5480	SS_KAGEGARI	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5483	SS_FUUMASHOUAKU	UNT_FUUMASHOUAKU 0x122	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5484	SS_FUUMAKOUCHIKU	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5485	SS_KUNAIWAIKYOKU	UNT_KUNAIWAIKYOKU 0x12a	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5486	SS_KUNAIKAITEN	UNT_KUNAIKAITEN 0x129	purple	-	class B; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5487	SS_KUNAIKUSSETSU	UNT_DUMMYSKILL 0x86	brown	-	class A; fallback 0xc9; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5489	SS_REIKETSUHOU	(kein Unit)	blue	-	class P; fallback 0xc8; Element-Regel (Water) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+5501	NW_MIDNIGHT_FALLEN	(kein Unit)	purple	-	class P; fallback 0xc8; Element-Regel (Weapon) [vermutet]; 3rd/4th/Renewal-Job (nicht nutzbar)	-	-
+8020	MH_POISON_MIST	UNT_POISON_MIST 0xf5	purple	-	class B; fallback 0xc8; Element-Regel (Poison) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8025	MH_XENO_SLASHER	UNT_DUMMYSKILL 0x86	yellow	-	class A; fallback 0xc9; Element-Regel (Wind) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8033	MH_STEINWAND	UNT_SAFETYWALL 0x7e	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8041	MH_LAVA_SLIDE	UNT_LAVA_SLIDE 0xf6	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8043	MH_VOLCANIC_ASH	UNT_VOLCANIC_ASH 0xf7	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8044	MH_BLAST_FORGE	UNT_LAVA_SLIDE 0xf6	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8208	MA_SHOWER	(kein Unit)	brown	7	class P; fallback 0xc9; Merc Arrow Shower [vermutet]	triangle	-
+8209	MA_SKIDTRAP	UNT_SKIDTRAP 0x90	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+8210	MA_LANDMINE	UNT_LANDMINE 0x93	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+8211	MA_SANDMAN	UNT_SANDMAN 0x95	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+8212	MA_FREEZINGTRAP	UNT_FREEZINGTRAP 0x97	grey	11	class N; fallback -; Falle (RSM-Modell, teils unsichtbar)	triangle	exclaim
+8403	EL_FIRE_MANTLE	UNT_FIRE_MANTLE 0xed	red	-	class B; fallback 0xc9; Element-Regel (Fire) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8406	EL_WATER_BARRIER	UNT_WATER_BARRIER 0xee	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8409	EL_ZEPHYR	UNT_ZEPHYR 0xef	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+8412	EL_POWER_OF_GAIA	UNT_POWER_OF_GAIA 0xf0	purple	-	class B; fallback 0xc8; Element-Regel (ohne Element) [vermutet]; Homunculus S/Elementar (nicht nutzbar)	-	-
+10006	GD_LEADERSHIP	UNT_GD_LEADERSHIP 0xc1	-	-	class N; fallback -; Gildenaura (clif sendet keine Unit)	-	-
+10007	GD_GLORYWOUNDS	UNT_GD_GLORYWOUNDS 0xc2	-	-	class N; fallback -; Gildenaura (clif sendet keine Unit)	-	-
+10008	GD_SOULCOLD	UNT_GD_SOULCOLD 0xc3	-	-	class N; fallback -; Gildenaura (clif sendet keine Unit)	-	-
+10009	GD_HAWKEYES	UNT_GD_HAWKEYES 0xc4	-	-	class N; fallback -; Gildenaura (clif sendet keine Unit)	-	-

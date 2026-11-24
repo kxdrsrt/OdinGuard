@@ -60,6 +60,7 @@ struct s_og_file {
 };
 
 struct s_og_lgp_color { std::string name; int32 index; }; // index: colour number in the client patch (og_lgp.c)
+struct s_og_lgp_symbol { std::string name; int32 index; }; // index: symbol number in the client patch (og_lgp.c)
 struct s_og_lgp { std::string style; uint16 skill, unit; int32 color; }; // color: position in lgp_colors, -1 = fixed unit
 
 static struct {
@@ -90,6 +91,8 @@ static struct {
 	std::vector<std::pair<int32, uint32>> item_colors, group_colors;
 	std::vector<s_og_lgp_color> lgp_colors;
 	std::vector<s_og_lgp> lgp;
+	std::vector<s_og_lgp_symbol> lgp_symbols;
+	std::vector<std::pair<uint16, int32>> lgp_symbol; // skill id -> symbol number
 	std::vector<uint16> lgp_attack; // hostile skills: triangles instead of squares
 	std::vector<std::pair<std::string, std::string>> switches; // module switches and other plain values
 	s_og_challenge_cfg ch[5]; // index = OG_CH_*
@@ -359,6 +362,32 @@ static bool og_config_read(const char* file) {
 				else og_cfg.lgp_colors.push_back({ name, index });
 			}
 		}
+		else if (!strcmpi(w1, "og_lgp_symbol_def")) {
+			// name,symbol number (the number is the symbol in the client patch, see og_lgp.c)
+			char name[16];
+			int32 index;
+			if (sscanf(w2, "%15[a-z] , %i", name, &index) == 2) {
+				auto it = std::find_if(og_cfg.lgp_symbols.begin(), og_cfg.lgp_symbols.end(), [&](const auto& c) { return !strcmpi(c.name.c_str(), name); });
+				if (it != og_cfg.lgp_symbols.end()) it->index = index;
+				else og_cfg.lgp_symbols.push_back({ name, index });
+			}
+		}
+		else if (!strcmpi(w1, "og_lgp_symbol")) {
+			// <symbol name | none>,<skill id>[,<skill id> ...]: the small symbol in the middle of the skill's tiles
+			char* name = strtok(w2, ", \t\r\n");
+			if (name == nullptr) continue;
+			int32 index = 0;
+			if (strcmpi(name, "none")) {
+				auto it = std::find_if(og_cfg.lgp_symbols.begin(), og_cfg.lgp_symbols.end(), [&](const auto& c) { return !strcmpi(c.name.c_str(), name); });
+				if (it == og_cfg.lgp_symbols.end()) { ShowWarning("OdinGuard: og_lgp_symbol: unknown symbol '%s' (og_lgp_symbol_def first)\n", name); continue; }
+				index = it->index;
+			}
+			for (char* t = strtok(nullptr, ", \t\r\n"); t != nullptr; t = strtok(nullptr, ", \t\r\n"))
+				if (uint16 id = (uint16)strtoul(t, nullptr, 0); id != 0) {
+					og_cfg.lgp_symbol.erase(std::remove_if(og_cfg.lgp_symbol.begin(), og_cfg.lgp_symbol.end(), [&](const auto& x) { return x.first == id; }), og_cfg.lgp_symbol.end());
+					if (index > 0) og_cfg.lgp_symbol.emplace_back(id, index);
+				}
+		}
 		else if (!strcmpi(w1, "og_lgp_attack")) {
 			// skill ids shown as triangles (damage or harm to enemies); every other LGP skill is a square (protective)
 			for (char* t = strtok(w2, ", \t\r\n"); t != nullptr; t = strtok(nullptr, ", \t\r\n"))
@@ -622,6 +651,12 @@ bool og_lgp_entry(const char* style, uint16 skill_id, uint16* unit, int32* color
 
 bool og_lgp_attacks(uint16 skill_id) {
 	return std::find(og_cfg.lgp_attack.begin(), og_cfg.lgp_attack.end(), skill_id) != og_cfg.lgp_attack.end();
+}
+
+int32 og_lgp_symbol(uint16 skill_id) {
+	for (const auto& e : og_cfg.lgp_symbol)
+		if (e.first == skill_id) return e.second;
+	return 0;
 }
 
 int32 og_lgp_color_count() { return (int32)og_cfg.lgp_colors.size(); }

@@ -248,7 +248,9 @@ static bool og_lgp_pick(const map_session_data* viewer, uint16 skill_id, uint16*
 	}
 	if (palette) {
 		*unit = 0xc8;
-		*marker = 0x7C000000u | (attack ? 0x100u : 0u) | (uint32)color;
+		// the symbol only belongs to the skill's own colour (set 1); a single colour for everything stays plain
+		uint32 symbol = style > 1 ? 0 : (uint32)og_lgp_symbol(skill_id);
+		*marker = 0x7C000000u | (symbol << 16) | (attack ? 0x100u : 0u) | (uint32)color;
 	} else
 		*unit = attack ? 0xc9 : 0xc8;
 	return true;

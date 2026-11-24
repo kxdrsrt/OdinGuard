@@ -2,11 +2,11 @@
  * two flat ground units of the 2018-06-20 client (0xc8/0xc9, effects 671/672), which the client tints blue.
  * This patch lets the server choose the colour and the shape per skill:
  *
- *   - the server puts a marker into the "creator id" field of the unit packet (0x7C000000 | shape << 8 | colour);
+ *   - the server puts a marker into the "creator id" field of the unit packet (0x7C000000 | symbol << 16 | shape << 8 | colour);
  *     the client keeps that id in the unit object at +0x3d0 (measured in game)
  *   - the effect cases 671/672 call the flat quad helper 0x949b00(texture, 3); that call goes to lgp_tile, which
  *     reads the marker of the effect's owner (checked: owner is unit 0xc8/0xc9 by the job getter 0x9c6a30),
- *     loads effect\odinlgp_<colour>[_t].tga (odin.grf; _t = triangle for hostile skills) and sets the primitive's
+ *     loads effect\odinlgp_<colour>[_t][_<symbol>].tga (odin.grf; _t = triangle for hostile skills) and sets the primitive's
  *     tint (+0x304) to 110.0: white with normal alpha blending, so the texture keeps its colour (mode 3 sets
  *     111.0, the fixed blue)
  *
@@ -35,7 +35,11 @@ static const uint8_t sig_flatquad[] = { 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x0C, 0x53
 static const uint8_t sig_getjob[] = { 0x56, 0x8B, 0xF1, 0xFF, 0xB6, 0xB8, 0x02, 0x00, 0x00 };
 
 /* colour index of the marker (low byte); the same list is in the server conf (og_lgp_color) */
-static const char *const g_colors[] = { "blue", "cyan", "yellow", "red", "orange", "green", "purple", "brown", "pink", "white", "gold", "grey" };
+static const char *const g_colors[] = { "blue", "cyan", "yellow", "red", "orange", "green", "purple", "brown", "pink", "white", "gold", "grey", "lightgrey", "lime" };
+
+/* symbol number (marker bits 16..23, 0 = none) -> tile name suffix; same list as SYMBOLS in make_lgp_tiles.py */
+static const char *const g_symbols[] = { "plus", "minus", "shield", "note", "dnote", "apple", "heart", "star", "cross", "zzz", "coin", "swirl", "drum",
+                                         "ring", "noentry", "diamond", "bolt", "exclaim", "arrowdown", "moon", "sun", "flame", "wand" };
 
 typedef void (__fastcall *flatquad_t)(void *self, void *edx, const char *tex, int mode);
 typedef int (__fastcall *getjob_t)(void *self, void *edx);
@@ -48,7 +52,7 @@ static uint8_t *va(uint32_t v) { return (uint8_t *)GetModuleHandleA(NULL) + (v -
 /* replaces "call 0x949b00" in the effect cases 671/672 (thiscall, ret 8) */
 static void __fastcall lgp_tile(void *self, void *edx, const char *tex, int mode)
 {
-    static char name[64];
+    static char name[80];
     void *owner = *(void **)((uint8_t *)self + OWNER_OFF);
     const char *use = tex;
     int tinted = 0;
@@ -57,7 +61,9 @@ static void __fastcall lgp_tile(void *self, void *edx, const char *tex, int mode
         int job = o_getjob(owner, NULL);
         uint32_t marker = *(uint32_t *)((uint8_t *)owner + CREATOR_OFF);
         if ((job == 0xc8 || job == 0xc9) && (marker & MARKER_MASK) == MARKER_TAG && (marker & 0xFF) < sizeof g_colors / sizeof *g_colors) {
-            snprintf(name, sizeof name, "effect\\odinlgp_%s%s.tga", g_colors[marker & 0xFF], (marker & 0x100) ? "_t" : "");
+            uint32_t sym = (marker >> 16) & 0xFF;
+            const char *symname = sym >= 1 && sym <= sizeof g_symbols / sizeof *g_symbols ? g_symbols[sym - 1] : NULL;
+            snprintf(name, sizeof name, "effect\\odinlgp_%s%s%s%s.tga", g_colors[marker & 0xFF], (marker & 0x100) ? "_t" : "", symname ? "_" : "", symname ? symname : "");
             use = name;
             tinted = 1;
         }

@@ -84,10 +84,10 @@ leaves out the heavy `ZC_NOTIFY_GROUNDSKILL` animation; skills without a unit ge
 
 The 2018-06-20 client draws only two unused flat units (0xc8/0xc9, effects 671/672, flat quad helper
 `0x949b00(texture, 3)`) and tints both blue (primitive `+0x304 = 111.0`). To get colours and shapes the server
-puts a marker (`0x7C000000 | shape << 8 | colour`) into the creator-id field of the unit packet; the client keeps it
+puts a marker (`0x7C000000 | symbol << 16 | shape << 8 | colour`) into the creator-id field of the unit packet; the client keeps it
 in the unit object at `+0x3d0` (measured in game). `client/src/og_lgp.c` (module `lgp`) patches, after checking the
 bytes of every site, the two `call 0x949b00` in the effect cases 671/672 → `lgp_tile`: if the owner is unit
-0xc8/0xc9 (job getter `0x9c6a30`) and carries a marker, it loads `effect\odinlgp_<colour>[_t].tga` (`_t` =
+0xc8/0xc9 (job getter `0x9c6a30`) and carries a marker, it loads `effect\odinlgp_<colour>[_t][_<symbol>].tga` (`_t` =
 triangle, hostile skills) and sets the tint to 110.0 (white, normal alpha blending). The capability is announced in
 the hello flags and the heartbeat. An earlier approach (redirecting unused unit ids in the unit switch) failed in
 game: ids without a case in the switch are used by other handlers (graffiti text, plants, glow).

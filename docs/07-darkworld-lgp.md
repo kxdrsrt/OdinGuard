@@ -41,12 +41,29 @@ Abschnitte 1.1–1.6 unten sind der frühere Stand und bleiben als Herleitung st
 | braun | Heaven's Drive, Quagmire, Desperado, Arrow Shower (auch Söldner), Hammer Fall, Earthquake (MVP) | – |
 | cyan | Grand Cross, Magnus Exorcismus | B.S. Sacramenti, Ganbantein, Basilica, Ice Wall |
 | orange | Fire Wall, Bomb | – |
-| grün | – | Pneuma, Sanctuary, Slim Pitcher, Violent Gale |
+| grün | – | Pneuma, Sanctuary, Slim Pitcher |
+| limette | – | Violent Gale |
 | violett | Venom Dust, Gravitation Field, Grand Cross of Darkness, Evil Land (MVPs) | Warmth of the Moon |
 | rosa | – | Safety Wall, Gospel, Sheltering Bliss |
-| weiß | – | Land Protector, Blinding Mist, Tatami |
+| weiß | – | Land Protector, Tatami |
+| hellgrau | – | Blinding Mist (Wall of Fog) |
 | gold (Lieder) | Lullaby, Down Tempo, Classical Pluck, Unchained Serenade, Hip Shaker, Slow Grace | übrige Lieder und Tänze, Wand of Hermode |
 | grau | alle Fallen (Skid Trap … Claymore, auch Söldner), Fiber Lock, Ground Drift | – |
+
+**Symbole in der Kachelmitte** (nur bei `@square 1`, also in der eigenen Skillfarbe; die einfarbigen Sets bleiben schlicht):
+
+| Symbol | Skills |
+|---|---|
+| **+** | Feldbuffs: Volcano, Deluge, Violent Gale, Sanctuary, B.S. Sacramenti, Battle Chant (Gospel), Slim Pitcher |
+| **−** | Schwächungszonen: Quagmire, Blinding Mist, Fiber Lock, Venom Dust, Evil Land, Ugly Dance |
+| Schild | Schutz: Pneuma, Safety Wall, Basilica, Improvised Defense, Siegfried, Wand of Hermode |
+| ! | alle Fallen |
+| Flamme | Fire Wall, Crimson Fire Formation, Raging Fire Dragon |
+| Mond / Sonne / Stern | Sheltering Bliss und Warmth of the Moon / Warmth of the Sun / Warmth of the Stars und Fortune's Kiss |
+| Lieder | Note (Whistle, Humming), Doppelnote (Bragi), Apfel (Apple of Idun), Herz (Service for You), Kreuz (Assassin Cross), Z (Lullaby), Münze (Mental Sensing), Wirbel (Eternal Chaos), Trommel (Drum), Ring (Nibelungen), Verbot (Loki's Veil, Ganbantein), Raute (Into the Abyss), Blitz (Dissonance), Pfeil nach unten (Don't Forget Me) |
+
+Land Protector, Eiswand, Storm Gust, Meteor Storm usw. haben bewusst kein Symbol (Land Protector schützt nur).
+Die Zuordnung steht in `og_lgp_symbol` (Serverkonfig) und in `lgp-skills.tsv` (Spalte `lgp_symbol`).
 
 79 Skills. Nicht erfasst (mit Absicht): Warp Portal (das Portal selbst), Scribble, Beschwörungen (Flora, Marine
 Sphere), Gildenauren. Skills, deren Effekt am Ziel hängt (Magnum Break, Bowling Bash, Napalm Vulcan …), haben keine
@@ -55,32 +72,40 @@ Bodenzellen und damit auch keine LGP.
 **Technik:**
 
 1. **Client-Patch (`client/src/og_lgp.c`, Modul `lgp`):** Der 2018er Client hat nur zwei freie flache Units
-   (0xc8/0xc9) und tönt beide blau. Der Server schreibt Farbe und Form als Marker (`0x7C000000 | Form<<8 | Farbe`)
+   (0xc8/0xc9) und tönt beide blau. Der Server schreibt Farbe und Form als Marker (`0x7C000000 | Symbol<<16 | Form<<8 | Farbe`)
    in die „Creator-ID“ des Unit-Pakets; der Client hält sie im Unit-Objekt bei `+0x3d0` (im Spiel gemessen). Der
    Patch ersetzt in den Effekt-Fällen 671/672 den Aufruf des Quad-Helfers: Er liest den Marker, lädt
-   `effect\odinlgp_<farbe>[_t].tga` aus `odin.grf` (`_t` = Dreieck) und setzt die Tönung auf Weiß mit normaler
+   `effect\odinlgp_<farbe>[_t][_<symbol>].tga` aus `odin.grf` (`_t` = Dreieck) und setzt die Tönung auf Weiß mit normaler
    Alpha-Mischung. Jede Stelle wird vorher an ihren Bytes erkannt; ein anderer Client-Build bleibt unverändert
    (dann blaue Quadrate/Dreiecke). Der Client meldet die Fähigkeit schon im Handshake (`OG_FLAG_LGP_PALETTE`) und
    im Heartbeat, damit der Server sie ab dem ersten Zauber nutzt. Es werden keine Unit-IDs mehr umgeleitet; die
    Farbe hängt nicht an freien IDs.
 2. **Ausweichkacheln** (Client ohne Patch): 0xc8 = Quadrat, 0xc9 = Dreieck, beide blau.
 3. **Server (xAthena, `og_map.cpp`, Hooks in `clif.cpp`):**
-   - `og_lgp_color: <name>,<Farbnummer>`, `og_lgp_attack: <Skill-IDs>` (Dreiecke) und
-     `og_lgp: [style,]<skill>,<farbe|unit>`.
+   - `og_lgp_color: <name>,<Farbnummer>`, `og_lgp_attack: <Skill-IDs>` (Dreiecke),
+     `og_lgp: [style,]<skill>,<farbe|unit>` und `og_lgp_symbol_def` / `og_lgp_symbol: <symbol>,<Skill-IDs>`.
    - Unsichtbare Zellen (Storm Gust …) **und** sichtbare Units (Fire Wall, Pneuma, Sanctuary, Ice Wall …) werden
      pro Betrachter ersetzt; bei der Eiswand bleibt die Zellsperre. Lite-Units gehen immer mit Stufe 1 raus.
    - **Flash-Zellen:** Skills ohne Unit (Arrow Shower, Hammer Fall, Ganbantein …), kurzlebige Units (Heaven's
      Drive, 100 ms) und Einzelzellen-Units mit Fläche (Meteor-Einschläge) bekommen für `og_lgp_flash_ms`
-     (Standard 1000) eine Kachel pro Zelle; IDs 100.000.000+ (der Client ignoriert IDs ab 0x7E000000).
-   - `@square 1` = jeder Skill in seiner Farbe, `@square 2..13` = alle Skills in einer Farbe (Reihenfolge der
+     (Konfig 1500, Code-Standard 1000) eine Kachel pro Zelle; IDs 100.000.000+ (der Client ignoriert IDs ab 0x7E000000).
+   - `@square 1` = jeder Skill in seiner Farbe, `@square 2..15` = alle Skills in einer Farbe (Reihenfolge der
      `og_lgp_color`-Zeilen, die Form bleibt), `@circle` = Sage-Bänder für SG/LoV/MS, `@aoes` = nur SG/LoV/MS
      (**Achtung:** wer `@aoes` an hat, sieht für alle anderen Skills die normalen Effekte; `@lgp` schaltet es zurück).
 4. **Texturen:** `assets/odin-grf/lgp/data/texture/effect/odinlgp_<farbe>.tga` und `_t.tga` (12 Farben × 2 Formen)
    und `hanmoon1/2.tga` (Fallback), 128×128 TGA32, erzeugt mit `analysis/lgp/tools/make_lgp_tiles.py`.
-5. **Test-NPC:** „LGP Test“ in Prontera (156,186) bzw. `@lgptest [skill]` (Admins) wirkt alle Skills nacheinander.
+5. **Test-NPC:** „LGP Test“ in Prontera (156,186) bzw. `@lgptest [skill]` (Admins) wirkt alle Skills nacheinander,
+   jeweils auf leerem Feld (Skript-Befehl `og_clearskillunits`: sonst verdecken Lieder und Felder des Vorgängers die
+   nächsten Skills), nie auf der eigenen Zelle (kleine Skills lägen unter dem Charakter) und mit den nötigen
+   Verbrauchsgütern (Gems per `bNoGemStone`, Fallen, Flaschen, Steine). Beim Ansprechen während des Laufs lässt sich
+   abbrechen (auch `@lgptest stop`). Die Liste erzeugt `analysis/lgp/tools/gen_lgp_test_npc.py` aus der Serverkonfig.
 
-**Getestet (gemessen, VM, echter Client):** der komplette Durchlauf des Test-NPCs (76 Skills), Farben und Formen,
-Flash-Zellen verschwinden nach Ablauf, `@lgp off` zeigt die normalen Effekte.
+**Wall of Fog / Heaven's Drive (gemessen):** Beide funktionieren. Die Fog-Kacheln waren schon vorher da, aber
+weiß auf hellem Pflaster kaum zu erkennen; jetzt hellgrau mit „−“. Heaven's Drive besteht nur aus einer
+100-ms-Unit und lebt von den Flash-Zellen (5×5 ohne Ecken, braune Dreiecke); die Anzeigedauer ist jetzt 1,5 s.
+
+**Getestet (gemessen, VM, echter Client):** der komplette Durchlauf des Test-NPCs (76 Skills), Farben, Formen und
+Symbole, Flash-Zellen verschwinden nach Ablauf, `@lgp off` zeigt die normalen Effekte.
 **Nicht geprüft:** Fallback-Optik ohne Patch, zwei Betrachter gleichzeitig.
 
 ### 1.1 So arbeitet die aktuelle OdinGuard-LGP **[gelesen]**

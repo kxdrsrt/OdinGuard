@@ -99,7 +99,7 @@ V = Verbindungsabbruch (Command ohne Wirkung, kein Absturz).
 | `!vsync [on\|off]` | Bildratenlimit aus/an | – | v0.3 | Konfig | Unit | v0.3 + Abnahme A3 |
 | `!crash` | Crash-Bericht ohne Absturz | – | – | Konfig | Unit | v0.3 + Abnahme A3 |
 | `@lgp [on\|off]` | LGP an/aus, gespeichert | – | E2E | Konfig | Unit | grün (E2E 1) + Abnahme A6 |
-| `@square [on\|off\|1-13]` | Farbset (2-13 einfarbig) | – | E2E | Konfig | Unit | grün (E2E 4) + Abnahme A6 |
+| `@square [on\|off\|1-15]` | Farbset (2-15 einfarbig) | – | E2E | Konfig | Unit | grün (E2E 4) + Abnahme A6 |
 | `@circle [on\|off]` | runde Kacheln | – | – | Konfig | Unit | Abnahme A6 |
 | `@aoes [on\|off]` | nur SG/LoV/MS | – | E2E | Konfig | Unit | grün (E2E 5) |
 | `@showauras` | Auren anderer aus/an | – | – | Konfig | Unit | v0.3 (E2E 1 ruft ihn auf, ohne eigene Prüfung) |

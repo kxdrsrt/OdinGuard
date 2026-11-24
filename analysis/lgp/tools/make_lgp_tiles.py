@@ -12,7 +12,7 @@ Every tile is an upright square of 45 px (0.8..1.0 cell while the quad pulses) i
 Files: 128x128 TGA type 2, 32 bit, origin bottom-left, descriptor 0x08, TGA 2.0 footer (65,580 bytes) like
 the client's hanmoon1.tga.
 
-Usage: make_lgp_tiles.py <out data root (…/lgp)> <sheet.png>
+Usage: make_lgp_tiles.py <out data root (…/lgp)> <sheet.png> [symbols-sheet.png]
 """
 import math
 import struct
@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 SIZE = 128
 CELL = 5.0
@@ -38,8 +38,14 @@ PALETTE = [
     ("pink", (255, 80, 190)),
     ("white", (245, 245, 245)),
     ("gold", (255, 190, 60)),
-    ("grey", (150, 150, 160)),
+    ("grey", (125, 125, 135)),
+    ("lightgrey", (200, 206, 218)),
+    ("lime", (170, 235, 40)),
 ]
+
+# symbols inside the tile (marker bits 16..23); the number is the index here + 1, same list in client/src/og_lgp.c
+SYMBOLS = ["plus", "minus", "shield", "note", "dnote", "apple", "heart", "star", "cross", "zzz", "coin", "swirl", "drum",
+           "ring", "noentry", "diamond", "bolt", "exclaim", "arrowdown", "moon", "sun", "flame", "wand"]
 BLUE = (110, 165, 255)
 
 
@@ -81,6 +87,119 @@ def tri_tile(rgb, half, border, fill_alpha=170, border_scale=0.45, hollow=False)
     return supersample(draw)
 
 
+def _glyph(name, ss):
+    """Mask (L, SIZE*ss) of one symbol in a unit box [-1, 1]^2 scaled by the caller (see place())."""
+    S = 100 * ss
+    m = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(m)
+    X = lambda v: (v + 1) * S / 2
+    P = lambda pts: [(X(x), X(y)) for x, y in pts]
+
+    def rect(x0, y0, x1, y1, v=255):
+        d.rectangle((X(x0), X(y0), X(x1), X(y1)), fill=v)
+
+    def ell(cx, cy, rx, ry, v=255):
+        d.ellipse((X(cx - rx), X(cy - ry), X(cx + rx), X(cy + ry)), fill=v)
+
+    def line(pts, w):
+        d.line(P(pts), fill=255, width=int(w * S / 2), joint="curve")
+        for x, y in pts:
+            ell(x, y, w / 2, w / 2)
+
+    if name == "plus":
+        rect(-0.2, -0.9, 0.2, 0.9); rect(-0.9, -0.2, 0.9, 0.2)
+    elif name == "minus":
+        rect(-0.9, -0.2, 0.9, 0.2)
+    elif name == "shield":
+        d.polygon(P([(-0.8, -0.9), (0.8, -0.9), (0.8, 0.0), (0.45, 0.6), (0, 0.95), (-0.45, 0.6), (-0.8, 0.0)]), fill=255)
+        d.polygon(P([(-0.4, -0.55), (0.4, -0.55), (0.4, -0.05), (0, 0.5), (-0.4, -0.05)]), fill=0)
+    elif name == "note":
+        ell(-0.3, 0.6, 0.5, 0.34); rect(0.07, -0.9, 0.3, 0.6)
+        d.polygon(P([(0.3, -0.9), (0.9, -0.35), (0.85, 0.15), (0.3, -0.3)]), fill=255)
+    elif name == "dnote":
+        ell(-0.55, 0.62, 0.38, 0.28); ell(0.5, 0.42, 0.38, 0.28)
+        rect(-0.24, -0.7, -0.02, 0.62); rect(0.81, -0.9, 0.99, 0.42)
+        d.polygon(P([(-0.24, -0.7), (0.99, -0.92), (0.99, -0.5), (-0.24, -0.28)]), fill=255)
+    elif name == "apple":
+        ell(-0.3, 0.2, 0.55, 0.7); ell(0.3, 0.2, 0.55, 0.7)
+        ell(0, -0.5, 0.14, 0.2, 0)
+        rect(-0.07, -0.85, 0.07, -0.35)
+        d.polygon(P([(0.07, -0.55), (0.35, -1.0), (0.95, -0.85), (0.6, -0.4)]), fill=255)
+    elif name == "heart":
+        ell(-0.42, -0.3, 0.5, 0.5); ell(0.42, -0.3, 0.5, 0.5)
+        d.polygon(P([(-0.88, -0.05), (0.88, -0.05), (0, 0.95)]), fill=255)
+    elif name == "star":
+        pts = []
+        for i in range(10):
+            r = 1.0 if i % 2 == 0 else 0.42
+            a = -math.pi / 2 + i * math.pi / 5
+            pts.append((r * math.cos(a), r * math.sin(a) + 0.05))
+        d.polygon(P(pts), fill=255)
+    elif name == "cross":
+        line([(-0.75, -0.75), (0.75, 0.75)], 0.42); line([(0.75, -0.75), (-0.75, 0.75)], 0.42)
+    elif name == "zzz":
+        d.polygon(P([(-0.8, -0.85), (0.8, -0.85), (0.8, -0.55), (-0.25, 0.55), (0.8, 0.55), (0.8, 0.85), (-0.8, 0.85), (-0.8, 0.55), (0.25, -0.55), (-0.8, -0.55)]), fill=255)
+    elif name == "coin":
+        ell(0, 0, 0.9, 0.9)
+    elif name == "swirl":
+        pts = [(0.12 * t * math.cos(t * 0.9), 0.12 * t * math.sin(t * 0.9)) for t in [i * 0.25 for i in range(0, 31)]]
+        line(pts, 0.3)
+    elif name == "drum":
+        rect(-0.8, -0.25, 0.8, 0.75); ell(0, 0.75, 0.8, 0.22); ell(0, -0.25, 0.8, 0.3)
+        ell(0, -0.25, 0.55, 0.15, 0)
+    elif name == "ring":
+        ell(0, 0, 0.9, 0.9); ell(0, 0, 0.5, 0.5, 0)
+    elif name == "noentry":
+        ell(0, 0, 0.9, 0.9); ell(0, 0, 0.56, 0.56, 0)
+        d.line(P([(-0.5, 0.5), (0.5, -0.5)]), fill=255, width=int(0.34 * S / 2))
+    elif name == "diamond":
+        d.polygon(P([(0, -0.95), (0.8, 0), (0, 0.95), (-0.8, 0)]), fill=255)
+    elif name == "bolt":
+        d.polygon(P([(0.2, -0.95), (-0.65, 0.12), (-0.05, 0.12), (-0.3, 0.95), (0.7, -0.18), (0.1, -0.18), (0.5, -0.95)]), fill=255)
+    elif name == "exclaim":
+        d.polygon(P([(-0.28, -0.95), (0.28, -0.95), (0.18, 0.3), (-0.18, 0.3)]), fill=255)
+        ell(0, 0.72, 0.24, 0.24)
+    elif name == "arrowdown":
+        rect(-0.25, -0.9, 0.25, 0.1)
+        d.polygon(P([(-0.85, 0.05), (0.85, 0.05), (0, 0.95)]), fill=255)
+    elif name == "moon":
+        ell(0, 0, 0.9, 0.9); ell(0.42, -0.2, 0.74, 0.74, 0)
+    elif name == "sun":
+        ell(0, 0, 0.48, 0.48)
+        for i in range(8):
+            a = i * math.pi / 4
+            d.line(P([(0.66 * math.cos(a), 0.66 * math.sin(a)), (0.97 * math.cos(a), 0.97 * math.sin(a))]), fill=255, width=int(0.2 * S / 2))
+    elif name == "flame":
+        d.polygon(P([(0.05, -0.98), (0.55, -0.3), (0.75, 0.3), (0.45, 0.85), (0, 0.98), (-0.45, 0.85), (-0.75, 0.3), (-0.5, -0.2), (-0.25, 0.05), (-0.2, -0.45)]), fill=255)
+    elif name == "wand":
+        line([(-0.8, 0.8), (0.35, -0.35)], 0.26)
+        pts = []
+        for i in range(10):
+            r = 0.55 if i % 2 == 0 else 0.24
+            a = -math.pi / 2 + i * math.pi / 5
+            pts.append((0.5 + r * math.cos(a), -0.5 + r * math.sin(a)))
+        d.polygon(P(pts), fill=255)
+    return m
+
+
+def place(im, name, cx, cy, half, ss=4):
+    """White symbol with a dark outline, centred at (cx, cy) texture pixels, half = half size in pixels."""
+    g = _glyph(name, ss)
+    px = int(2 * half * ss)
+    g = g.resize((px, px), Image.LANCZOS)
+    pad = 3 * ss
+    mask = Image.new("L", (SIZE * ss, SIZE * ss), 0)
+    mask.paste(g, (int(cx * ss - px / 2), int(cy * ss - px / 2)))
+    outline = mask.filter(ImageFilter.MaxFilter(2 * pad + 1))
+    big = Image.new("RGBA", (SIZE * ss, SIZE * ss), (0, 0, 0, 0))
+    big.paste(Image.new("RGBA", big.size, (18, 18, 18, 255)), (0, 0), outline)
+    big.paste(Image.new("RGBA", big.size, (255, 255, 255, 255)), (0, 0), mask)
+    big = big.resize((SIZE, SIZE), Image.LANCZOS)
+    out = im.copy()
+    out.alpha_composite(big)
+    return out
+
+
 def tile(rgb, diamond, half, border, fill_alpha=170, border_scale=0.45, hollow=False):
     """Cell tile: fill + thin darker border (in additive blending a darker border is a dimmer line)."""
     dark = tuple(int(v * border_scale) for v in rgb)
@@ -118,6 +237,9 @@ def build(root):
     for name, rgb in PALETTE:
         out[f"odinlgp_{name}.tga"] = (tile(rgb, False, H3, 3, fill_alpha=140, border_scale=0.40), "patch")
         out[f"odinlgp_{name}_t.tga"] = (tri_tile(rgb, H3 * 1.12, 3, fill_alpha=150, border_scale=0.40), "patch")
+        for sym in SYMBOLS:
+            out[f"odinlgp_{name}_{sym}.tga"] = (place(out[f"odinlgp_{name}.tga"][0], sym, SIZE / 2, SIZE / 2, 11.5), "patch")
+            out[f"odinlgp_{name}_t_{sym}.tga"] = (place(out[f"odinlgp_{name}_t.tga"][0], sym, SIZE / 2, SIZE / 2 + 7, 9.5), "patch")
     for name, (im, _) in out.items():
         (eff / name).write_bytes(tga_bytes(im))
     return out
@@ -188,7 +310,26 @@ def sheet(tiles, path):
     S.save(path)
 
 
+def symbol_grid(tiles, path, scale=2):
+    """All symbols on a mid-tone floor, simulated 'patch' blending at 3 cells, square above triangle."""
+    cols = ["blue", "gold", "red", "lightgrey"]
+    cw = 96
+    S = Image.new("RGB", (cw * len(SYMBOLS), cw * 2 * len(cols) + 20), (92, 86, 70))
+    d = ImageDraw.Draw(S)
+    for ci, col in enumerate(cols):
+        for si, sym in enumerate(SYMBOLS):
+            for ti, suffix in enumerate(("", "_t")):
+                im = tiles[f"odinlgp_{col}{suffix}_{sym}.tga"][0]
+                small = im.resize((cw, cw), Image.LANCZOS)
+                S.paste(small, (si * cw, 20 + (ci * 2 + ti) * cw), small)
+            if ci == 0:
+                d.text((si * cw + 4, 4), sym, fill=(255, 230, 150))
+    S.save(path)
+
+
 if __name__ == "__main__":
     t = build(sys.argv[1])
-    sheet(t, sys.argv[2])
+    plain = {n: v for n, v in t.items() if n.count("_") <= 2 and not any(n.endswith(f"_{x}.tga") for x in SYMBOLS)}
+    sheet(plain, sys.argv[2])
+    symbol_grid(t, sys.argv[3] if len(sys.argv) > 3 else str(Path(sys.argv[2]).with_name("lgp-symbols-sheet.png")))
     print(len(t), "tiles written")
