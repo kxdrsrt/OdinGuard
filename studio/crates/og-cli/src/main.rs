@@ -32,7 +32,9 @@ enum Cmd {
     /// Allow an extra GRF (skin, darkworld variant, ...) by its tail hash, under any name
     GrfAllow { profile: PathBuf, grf: PathBuf, #[arg(long, default_value = "")] note: String },
     /// Tool groups of the profile's signature sources (switch off or change the action with signatures.groups)
-    SigGroups { profile: PathBuf },
+    SigGroups { profile: PathBuf, #[arg(long)] json: bool },
+    /// Selectable competitive-pack folders of assets/competitive/recipe.toml (JSON)
+    PackOptions,
     /// Migrate an older profile to the current schema (keeps a .bak copy)
     Migrate { profile: PathBuf },
     /// What a build would contain
@@ -129,12 +131,18 @@ fn run(cli: Cli) -> Result<()> {
             p.save(&profile)?;
             println!("allowed: {note}");
         }
-        Cmd::SigGroups { profile } => {
+        Cmd::PackOptions => print(&og_core::pack::options(&og_core::repo_root().join("assets/competitive/recipe.toml"))?),
+        Cmd::SigGroups { profile, json } => {
             let p = Profile::load(&profile)?;
             let b = base(&profile);
             let src: Vec<PathBuf> = p.signatures.sources.iter().map(|s| p.resolve(&b, s)).collect();
             let al: Vec<PathBuf> = p.signatures.allowlist.iter().map(|s| p.resolve(&b, s)).collect();
-            for g in sigpack::catalog(&src.iter().map(PathBuf::as_path).collect::<Vec<_>>(), &al.iter().map(PathBuf::as_path).collect::<Vec<_>>())? {
+            let groups = sigpack::catalog(&src.iter().map(PathBuf::as_path).collect::<Vec<_>>(), &al.iter().map(PathBuf::as_path).collect::<Vec<_>>())?;
+            if json {
+                print(&groups);
+                return Ok(());
+            }
+            for g in groups {
                 let set = p.signatures.groups.get(&g.group).cloned().unwrap_or_else(|| "default".into());
                 println!("{:<10} {:<5} {:>4} entries ({:>3} client) kinds {:<40} actions {:<20} profile: {set}", g.group, if g.allow { "allow" } else { "sig" }, g.count, g.active, g.kinds.join(","), g.actions.join(","));
             }
