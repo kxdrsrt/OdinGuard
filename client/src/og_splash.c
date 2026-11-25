@@ -151,13 +151,31 @@ static volatile LONG g_title_state;   /* 0 = waiting for the server, 1 = protect
 static char g_title_note[100];
 
 #define TITLE_MARK " | OdinGuard Anti Cheat "
+#define TITLE_DARK " | Darkworld / Competitive Mode ON"
+
+/* The game reads DATA.INI once at start, so the competitive pack is what DATA.INI said at that moment (!dark changes it for
+   the next start only). Read here before the game window exists; the pack file must be there too. */
+static int dark_loaded(void)
+{
+    char ini[MAX_PATH], key[8], val[MAX_PATH], pack[MAX_PATH];
+    int i;
+    snprintf(ini, sizeof ini, "%s\\DATA.INI", og_client_dir);
+    snprintf(pack, sizeof pack, "%s\\odin-dark.grf", og_client_dir);
+    if (GetFileAttributesA(pack) == INVALID_FILE_ATTRIBUTES) return 0;
+    for (i = 0; i < 48; i++) {
+        snprintf(key, sizeof key, "%d", i);
+        GetPrivateProfileStringA("Data", key, "", val, sizeof val, ini);
+        if (!_stricmp(val, "odin-dark.grf")) return 1;
+    }
+    return 0;
+}
 
 static DWORD WINAPI title_thread(LPVOID unused)
 {
-    static const char tag[] = TITLE_MARK OG_VERSION_STR;
-    char orig[160];
+    char tag[128], orig[160];
     (void)unused;
     orig[0] = 0;
+    snprintf(tag, sizeof tag, "%s%s%s", TITLE_MARK, OG_VERSION_STR, dark_loaded() ? TITLE_DARK : "");
     /* For the life of the process: the client sets its own title again at times (window mode switch, map change), and the
        first window can appear long after the guard started. One enumeration every 1.5 s costs nothing.
        The title always says what the guard is doing, so a player (or you) can see at a glance whether it is active. */

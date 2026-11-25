@@ -100,7 +100,7 @@ These are answered by the OdinGuard client itself, not by the server. They need 
 |---|---|
 | `!ping` | Latency to the server. |
 | `!vsync [on\|off]` | Removes or restores the frame limit. |
-| `!dark [on\|off]` | Switches the [competitive pack](09-competitive-pack.md) (`odin-dark.grf`) on or off in `DATA.INI`. **Restart the game** to apply it. Without argument it shows the current state. Servers can still require the pack on some maps. |
+| `!dark [on\|off]` | Switches the [competitive pack](09-competitive-pack.md) (`odin-dark.grf`) on or off in `DATA.INI`. **Restart the game** to apply it. Without argument it shows the current state. The choice is stored **on the player's PC** (in the client's `DATA.INI`), so it stays after a restart and for every account on that PC; a patch keeps it. While the pack is loaded the window title ends with `\| Darkworld / Competitive Mode ON`. Servers can still require the pack on some maps. |
 | `!crash` | Writes a crash report (folder `odinguard-crash`) for bug reports. |
 
 The `@`-commands of this guide are server commands; operators can switch off, rename or limit every command in the
