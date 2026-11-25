@@ -147,6 +147,34 @@ step 5. Base commit, conflict resolution on newer rAthena and PACKETVER notes: [
 4. Add every file of `client/` plus `ijl15r.dll` and `DATA.INI` to your patcher's required list.
 5. Players never install or uninstall anything themselves; there is no player uninstaller.
 
+### Install into / remove from a client folder (operator tool)
+
+For your own master and test clients, `tools/client/og_client.py` does steps 1-3 and the way back, with no dependencies
+besides Python 3:
+
+```sh
+python3 tools/client/og_client.py status    ~/clients/full
+python3 tools/client/og_client.py install   ~/clients/full --release myserver/dist/client [--pack] [--dry-run]
+python3 tools/client/og_client.py uninstall ~/clients/full [--keep-settings] [--dry-run]
+```
+
+* **Install** keeps the client's own `ijl15.dll` as `ijl15r.dll` (Intel's or ROExt's), copies the loader, `odinguard.dll`,
+  `odin.grf` (and `odin-dark.grf` with `--pack`), puts them first in `DATA.INI` (numbered from 0, like the client's own
+  `!dark`) and saves the original `DATA.INI` as `DATA.INI.pre-odinguard`. Running it again only updates the files.
+  Files are written through a temporary file, so hard-linked client copies are never changed in place.
+* **Uninstall** puts `ijl15r.dll` back as `ijl15.dll`, removes the guard files, `odinguard.ini` (unless
+  `--keep-settings`), `odinguard.log` and `odinguard-crash\`, and restores `DATA.INI`: the saved original when the other
+  entries are unchanged, otherwise the same list without the OdinGuard entries. It also works on a client that was set up
+  by hand (no manifest needed). If `ijl15r.dll` is missing it stops and says what to do; it deletes nothing then.
+* It refuses an unclear state (an `ijl15r.dll` next to an `ijl15.dll` that is not the OdinGuard loader).
+* Tested: `python3 tests/client/test_og_client.py` (13 cases, uninstall gives back the exact original folder), and on a
+  copy of a real 5,545-file client (every non-GRF file identical after install + uninstall) with the game started
+  through the loader chain (plain Intel `ijl15.dll`, and the ROExt/dxwrapper client).
+
+On players' machines the patcher does this (the OpenThor patch list's `remove` and `files`); there is still no player
+uninstaller. If you let OpenThor Patcher manage `DATA.INI` (`data_ini` in
+its patch list), do not run this tool on the same client.
+
 ## 8. Roll out in stages
 
 | Stage | Server | Effect | Move on when |
