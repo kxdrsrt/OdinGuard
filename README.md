@@ -69,6 +69,7 @@ tie every server to one vendor. OdinGuard is:
 | Server rules | packet rate limit (WPE/RPE loops), no-delay detection, autopot/macro timing, honeypot unit, captcha, multi-client limit, hardware bans (exact and fuzzy), flags and ban waves |
 | Challenges | nonce (build secret), random code ranges, clock rate, random file ranges, captcha, honeypot |
 | Features | `!ping`, `!vsync`, `!crash` (crash reports with the last packets), colour names and items, **lite ground skills** (`@lgp`, `@square`, `@circle`, `@lgpsound`: every ground skill as a flat tile in its colour, shape and symbol, [guide](docs/08-lgp-guide.md)), **competitive pack** per mode (flat WoE / battleground / PvP maps, optionally required on those maps, [guide](docs/09-competitive-pack.md)) |
+| AI assistants | `og-mcp`, an [MCP server](docs/10-mcp.md) with 17 tools: ask your assistant to create a profile, enable modules, validate, scan a GRF and build the signed release |
 | Tooling | Studio GUI (Tauri 2) and `og` CLI: profiles, validation, reproducible signed releases, signature packages, GRF scan, rollout gate, signed self-update |
 
 ## LGP at a glance
@@ -98,6 +99,8 @@ studio/target/release/og new myserver.profile.toml --id myserver --operator "My 
 studio/target/release/og build myserver.profile.toml
 ```
 
+Prefer to talk to it? `studio/target/release/og-mcp` is an MCP server for AI assistants, see [docs/10-mcp.md](docs/10-mcp.md).
+
 Then follow **[docs/INTEGRATION.md](docs/INTEGRATION.md)** (server hooks, client loader, GRF check with your patcher,
 staged rollout).
 
@@ -108,7 +111,7 @@ staged rollout).
 | `client/` | guard DLL and loader (C11, 32-bit, mingw-w64 or llvm-mingw with CFG), tests (`selftest`, `nettest`, `dettest`, fuzzer) |
 | `server/` | rAthena module and hook list |
 | `proto/` | wire protocol shared by client and server |
-| `studio/` | Rust workspace: `og-core`, `og` CLI, Tauri app |
+| `studio/` | Rust workspace: `og-core`, `og` CLI, `og-mcp` (MCP server), Tauri app |
 | `modules/` | module and command registry (single source for Studio, builds and docs) |
 | `signatures/` | cheat signatures and allowlist (static analysis results only, no cheat binaries) |
 | `assets/` | own assets for `odin.grf` (LGP tiles) and the competitive-pack recipe |

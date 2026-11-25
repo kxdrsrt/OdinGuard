@@ -34,7 +34,7 @@ ein signiertes Release für Client und Server. Version 1.0.0, **nur lokales Repo
 
 - Client: 32-Bit-Windows-DLL `odinguard.dll` + Loader `ijl15.dll` (Proxy, kein Exe-Patch), C11.
 - Server: Modul für rAthena/xAthena (`src/common/odinguard.*`, `src/login/og_login.*`, `src/map/og_map*.cpp`), C++.
-- Studio: Rust-Workspace (`studio/`) mit `og-core`, `og-cli` und Tauri-2-GUI.
+- Studio: Rust-Workspace (`studio/`) mit `og-core`, `og-cli`, `og-mcp` (MCP-Server mit 17 Tools: Profil, Module, Validierung, GRF-Scan und Release-Build per KI-Assistent) und Tauri-2-GUI.
 
 ## Schnellstart (Betreiber)
 
@@ -79,7 +79,7 @@ Vorerst nur Pre-Renewal; der Rest von OdinGuard läuft auch mit Renewal-Clients.
 | `proto/` | Protokoll v2 (`og_proto.h`) und gemeinsame Parser (`og_wire.c`, byte-identisch im Server) |
 | `client/` | Guard (`src/`), Loader, Ressourcen, Spieler-README (`package/`), Tests (`tests/`) |
 | `server/` | Release-Kopie des xAthena-Moduls (`tools/sync_server.sh`), `HOOKS.txt`, SQL |
-| `studio/` | `og-core`, `og-cli`, `apps/studio` (Tauri 2) |
+| `studio/` | `og-core`, `og-cli`, `og-mcp` (MCP-Server), `apps/studio` (Tauri 2) |
 | `tests/e2e/` | End-to-End-Suite (Docker-Server + Windows-VM) |
 | `analysis/` | Cheat-Analyse (nur Signaturdaten, keine Binaries), Ghidra-Ergebnisse |
 | `tools/` | `release_studio.sh`, `sync_server.sh`, `og_keygen.c`, `make_branding.py`, `pack/`, `ghidra/`, `dev/` |
