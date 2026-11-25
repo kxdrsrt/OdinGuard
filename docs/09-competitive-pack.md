@@ -68,12 +68,23 @@ python3 tools/pack/verify_mapcache.py  db/map_cache.dat db/import/map_cache.dat 
 ```
 
 It lists every map the pack carries, compares size and cell types with the cache and exits with the number of maps
-whose walkability differs. Measured on BurningRO: 73 maps compared; 3 groups (`pvp_y_*-2`, `te_prt_gld`,
-`te_alde_gld`) differ by a few cells, but they differ the same way between the *original* client `.gat` and the
-server cache, so that is not caused by the pack. Maps that are copies of others (`bat_a02..a04`, `bat_b02..b04`,
-`rush_cas*`, `schg_cas06-08`, `arug_cas06-08`, `region_8`) use the original map's files through the client's
-`resnametable.txt`; the server's map cache must contain the same cells for them (the verifier checks every map that is
-both in the pack and in the cache).
+whose walkability differs. Measured on BurningRO (2026-11-25): before, 3 groups (`pvp_y_*-2`, `te_prt_gld`,
+`te_alde_gld`) and `aldeg_cas01` differed, the same way between the *original* client `.gat` and the server cache (not
+caused by the pack). The server takes the client's cells since then (49 maps of the whole server, xAthena
+`tools/mapcache_sync.py <client folder>`: writes `db/import/map_cache.dat`, only cells whose walkability differs, and
+skips maps whose scripts use cells the client blocks); now 73 of 73 pack maps agree. Maps that are copies of others
+(`bat_a02..a04`, `bat_b02..b04`, `rush_cas*`, `schg_cas06-08`, `arug_cas06-08`, `region_8`) use the original map's files
+through the client's `resnametable.txt`; the server's map cache must contain the same cells for them (the verifier
+checks every map that is both in the pack and in the cache).
+
+### The RSW quad tree must follow the flat ground
+
+The client finds the cell under the mouse through the bounding boxes at the end of the `.rsw` (versions from 2.1).
+Flat maps made with `rgrf` before 2026-11-25 (RustyGRF `02080f5`) kept the boxes of the original heights: wherever the
+ground was raised, the boxes missed the new ground at height 0, so walkable cells showed the red no-walk cursor and
+could not be clicked (measured: all 79 WoE/BG/PvP maps had such boxes, e.g. `prtg_cas01` around 84,11). Since then
+`map flat --flatten` computes the heights of every box from the new ground like BrowEdit. Rebuild older
+`flat-maps-*` folders (`tools/pack/build_categories.sh flat-maps-woe-bg-pvp flat-maps-all`).
 
 ## 4. Aliased maps need their minimaps
 

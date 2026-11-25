@@ -196,10 +196,14 @@ int main(int argc, char **argv)
                         n = recv_some(m, buf, sizeof buf, 2500);
                         print_messages(cmds[c], buf, n);
                     }
-                    /* OG_SKILLSPAM=n: n First Aid requests on yourself without waiting (no-delay pattern) */
+                    /* OG_SKILLSPAM=n: n First Aid requests on yourself without waiting (no-delay pattern);
+                       OG_SKILLID / OG_SKILLLV: another self skill (e.g. 369 Gospel) */
                     if (GetEnvironmentVariableA("OG_SKILLSPAM", envbuf, sizeof envbuf)) {
-                        int i, cnt = atoi(envbuf);
+                        int i, cnt = atoi(envbuf), id = 142, lv = 1;
                         unsigned char sk[10] = { 0x38, 0x04, 1, 0, 142, 0 };
+                        if (GetEnvironmentVariableA("OG_SKILLID", envbuf, sizeof envbuf)) id = atoi(envbuf);
+                        if (GetEnvironmentVariableA("OG_SKILLLV", envbuf, sizeof envbuf)) lv = atoi(envbuf);
+                        sk[2] = (unsigned char)lv; sk[4] = (unsigned char)id; sk[5] = (unsigned char)(id >> 8);
                         memcpy(sk + 6, &account, 4);
                         for (i = 0; i < cnt; i++) { send(m, (const char *)sk, 10, 0); Sleep(20); }
                         n = recv_some(m, buf, sizeof buf, 1500);
@@ -234,10 +238,37 @@ int main(int argc, char **argv)
                     /* keep reading like the game does: the guard answers challenges and pings inside recv() */
                     /* wall clock: the speed test changes GetTickCount of this process */
                     ULONGLONG end = wall_ms() + (GetEnvironmentVariableA("OG_HOLD", hold, sizeof hold) ? atoi(hold) * 1000 : 6000);
+                    /* OG_WATCH="09cb:7101,01d3": count received byte patterns (packet id, optionally followed by more
+                       bytes, all hex, little endian as on the wire); printed as WATCH <pattern> <count> */
+                    char watch[256] = "", *w, *wctx = NULL;
+                    int wcount[8] = { 0 }, nw = 0, wlen[8], c;
+                    unsigned char wpat[8][16];
+                    if (GetEnvironmentVariableA("OG_WATCH", watch, sizeof watch)) {
+                        char copy[256];
+                        snprintf(copy, sizeof copy, "%s", watch);
+                        for (w = strtok_r(copy, ",", &wctx); w && nw < 8; w = strtok_r(NULL, ",", &wctx)) {
+                            int k = 0;
+                            char *q = w;
+                            while (q[0] && q[1] && k < 16) {
+                                unsigned v;
+                                if (*q == ':') { q++; continue; }
+                                sscanf(q, "%2x", &v);
+                                wpat[nw][k++] = (unsigned char)v;
+                                q += 2;
+                            }
+                            /* the packet id is written big endian in the pattern: swap its two bytes */
+                            if (k >= 2) { unsigned char t = wpat[nw][0]; wpat[nw][0] = wpat[nw][1]; wpat[nw][1] = t; }
+                            wlen[nw++] = k;
+                        }
+                    }
                     while (wall_ms() < end) {
                         n = recv_some(m, buf, sizeof buf, 500);
                         if (n > 0) print_messages("(hold)", buf, n);
+                        for (c = 0; c < nw; c++)
+                            for (int i = 0; i + wlen[c] <= n; i++)
+                                if (!memcmp(buf + i, wpat[c], wlen[c])) wcount[c]++;
                     }
+                    for (c = 0; c < nw; c++) printf("WATCH %d %d\n", c, wcount[c]);
                 }
                 closesocket(m);
                 {   /* OG_CANON=<file>: write the guard's canonical image after the session (self-integrity diagnostics) */

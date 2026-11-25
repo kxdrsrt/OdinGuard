@@ -79,8 +79,18 @@ class T(unittest.TestCase):
     def test_data_ini_after_install(self):
         self.plain()
         run("install", self.c, "--release", self.rel, "--pack")
+        # the pack is copied but stays off until the player types !dark on
+        self.assertTrue(os.path.exists(os.path.join(self.c, "odin-dark.grf")))
         self.assertEqual(read(self.c, "DATA.INI").decode(),
-                         "[Data]\r\n0=odin.grf\r\n1=odin-dark.grf\r\n2=cdata.grf\r\n3=core.grf\r\n4=data.grf\r\n")
+                         "[Data]\r\n0=odin.grf\r\n1=cdata.grf\r\n2=core.grf\r\n3=data.grf\r\n")
+
+    def test_pack_on_and_the_players_choice_survives_an_update(self):
+        self.plain()
+        run("install", self.c, "--release", self.rel, "--pack", "--pack-on")
+        on = "[Data]\r\n0=odin.grf\r\n1=odin-dark.grf\r\n2=cdata.grf\r\n3=core.grf\r\n4=data.grf\r\n"
+        self.assertEqual(read(self.c, "DATA.INI").decode(), on)
+        run("install", self.c, "--release", self.rel, "--pack")     # update without --pack-on keeps it on
+        self.assertEqual(read(self.c, "DATA.INI").decode(), on)
 
     def test_roext_chain_with_pack(self):
         write(self.c, "alpha.exe", b"EXE")

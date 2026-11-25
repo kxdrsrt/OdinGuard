@@ -31,6 +31,8 @@ uint32 og_map_lgp_marker(const map_session_data* viewer, uint16 skill_id);
 void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
 /// lite cells for a ground skill without a unit (position effect only), sent to this viewer and removed again
 void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id);
+/// true when the skill-use packet of a song or Gospel is not sent to this viewer (LGP: the short sound comes with the unit)
+bool og_map_lgp_mute_use(map_session_data* viewer, uint16 skill_id);
 /// the sound of a unit skill (songs, Gospel) when its unit appears, once per group
 void og_map_lgp_sound_unit(map_session_data* viewer, uint32 source_id, uint16 skill_id, uint32 group_id);
 /// the sound of a trap when it goes off

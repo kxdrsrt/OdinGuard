@@ -154,14 +154,16 @@ besides Python 3:
 
 ```sh
 python3 tools/client/og_client.py status    ~/clients/full
-python3 tools/client/og_client.py install   ~/clients/full --release myserver/dist/client [--pack] [--dry-run]
+python3 tools/client/og_client.py install   ~/clients/full --release myserver/dist/client [--pack [--pack-on]] [--dry-run]
 python3 tools/client/og_client.py uninstall ~/clients/full [--keep-settings] [--dry-run]
 ```
 
 * **Install** keeps the client's own `ijl15.dll` as `ijl15r.dll` (Intel's or ROExt's), copies the loader, `odinguard.dll`,
-  `odin.grf` (and `odin-dark.grf` with `--pack`), puts them first in `DATA.INI` (numbered from 0, like the client's own
-  `!dark`) and saves the original `DATA.INI` as `DATA.INI.pre-odinguard`. Running it again only updates the files.
+  `odin.grf` (and `odin-dark.grf` with `--pack`), puts `odin.grf` first in `DATA.INI` (numbered from 0, like the client's
+  own `!dark`) and saves the original `DATA.INI` as `DATA.INI.pre-odinguard`. Running it again only updates the files.
   Files are written through a temporary file, so hard-linked client copies are never changed in place.
+  The competitive pack is copied **switched off**: players turn it on with `!dark on` (and off with `!dark off`), each
+  followed by a restart. `--pack-on` lists it in `DATA.INI` right away; a player's earlier choice survives an update.
 * **Uninstall** puts `ijl15r.dll` back as `ijl15.dll`, removes the guard files, `odinguard.ini` (unless
   `--keep-settings`), `odinguard.log` and `odinguard-crash\`, and restores `DATA.INI`: the saved original when the other
   entries are unchanged, otherwise the same list without the OdinGuard entries. It also works on a client that was set up

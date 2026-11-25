@@ -2,7 +2,7 @@
 """Install, update and remove OdinGuard in a Ragnarok Online client folder (operator tool, Python 3, no dependencies).
 
     og_client.py status    CLIENT
-    og_client.py install   CLIENT --release RELEASE/client [--pack] [--dry-run]
+    og_client.py install   CLIENT --release RELEASE/client [--pack [--pack-on]] [--dry-run]
     og_client.py uninstall CLIENT [--keep-settings] [--dry-run]
 
 What it touches (and nothing else):
@@ -10,9 +10,10 @@ What it touches (and nothing else):
                    ijl15r.dll and the OdinGuard loader takes its name: exe -> ijl15.dll (loader) -> ijl15r.dll [-> ijl15x.dll]
   odinguard.dll    the guard
   odin.grf         assets of the guard (tiles, sounds, fallback icons); listed first in DATA.INI
-  odin-dark.grf    competitive pack, only with --pack (players switch it with !dark, which edits DATA.INI itself)
+  odin-dark.grf    competitive pack, only with --pack. It is copied switched OFF: players turn it on with !dark on (which
+                   edits DATA.INI itself); --pack-on lists it in DATA.INI right away. An earlier choice of the player stays
   odinguard.ini    settings, copied only when missing
-  DATA.INI         odin.grf (and odin-dark.grf) are put in front, numbering from 0 like the client's own !dark
+  DATA.INI         odin.grf is put in front (odin-dark.grf behind it only when switched on), numbering from 0 like !dark
   odinguard.install  what this tool did (renamed files, the DATA.INI it found), used by uninstall
 
 Uninstall removes exactly that plus the files the guard writes while running (odinguard.log, odinguard-crash\\), puts
@@ -114,7 +115,7 @@ def say(dry, msg):
     print(("[dry run] " if dry else "") + msg)
 
 
-def install(d, rel, pack, dry):
+def install(d, rel, pack, dry, pack_on=False):
     check_client(d)
     for need in (LOADER, GUARD, ASSETS):
         if not os.path.exists(p(rel, need)):
@@ -154,7 +155,7 @@ def install(d, rel, pack, dry):
         nl, entries, name = data
     rest = [e for e in entries if e.lower() not in ODIN_ENTRIES]
     keep_pack = any(e.lower() == PACK for e in entries)
-    new = [ASSETS] + ([PACK] if (pack or keep_pack) else []) + rest
+    new = [ASSETS] + ([PACK] if ((pack and pack_on) or keep_pack) else []) + rest
     if new != entries:
         say(dry, f"{DATA}: {', '.join(new[:3])} ... ({len(new)} entries, numbered from 0)")
         if not dry:
@@ -219,7 +220,8 @@ def main(argv=None):
     i = sub.add_parser("install")
     i.add_argument("client")
     i.add_argument("--release", required=True, help="the client/ folder of an OdinGuard release")
-    i.add_argument("--pack", action="store_true", help="also install odin-dark.grf (competitive pack)")
+    i.add_argument("--pack", action="store_true", help="also install odin-dark.grf (competitive pack), switched off (!dark on)")
+    i.add_argument("--pack-on", action="store_true", help="with --pack: switch the pack on in DATA.INI right away")
     i.add_argument("--dry-run", action="store_true")
     u = sub.add_parser("uninstall")
     u.add_argument("client")
@@ -230,7 +232,7 @@ def main(argv=None):
         if a.cmd == "status":
             print(json.dumps(state(a.client), indent=1))
         elif a.cmd == "install":
-            install(a.client, a.release, a.pack, a.dry_run)
+            install(a.client, a.release, a.pack, a.dry_run, a.pack_on)
         else:
             uninstall(a.client, a.keep_settings, a.dry_run)
     except Fail as e:

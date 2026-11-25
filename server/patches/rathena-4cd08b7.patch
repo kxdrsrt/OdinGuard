@@ -6554,7 +6554,7 @@ index f367e9b..437d9c1 100644
  		ACMD_DEF(mapflag),
  		ACMD_DEF(me),
 diff --git a/src/map/clif.cpp b/src/map/clif.cpp
-index fdca8ba..7f07136 100644
+index fdca8ba..2f0daf2 100644
 --- a/src/map/clif.cpp
 +++ b/src/map/clif.cpp
 @@ -17,6 +17,7 @@
@@ -6672,7 +6672,20 @@ index fdca8ba..7f07136 100644
  	clif_send(buf, len, bl, target);
  
  	if (unit->group->skill_id == WZ_ICEWALL)
-@@ -6188,6 +6261,17 @@ bool clif_skill_nodamage( const block_list* src, const block_list& dst, uint16 s
+@@ -6176,6 +6249,12 @@ bool clif_skill_nodamage( const block_list* src, const block_list& dst, uint16 s
+ 		clif_send(&p, sizeof(p), &dst, AREA_WOS);
+ 		p.targetAID = disguised_bl_id(dst.id);
+ 		clif_send(&p, sizeof(p), &dst, SELF);
++	} else if( og_lgp_unit( skill_id ) != 0 ){
++		// OdinGuard @lgp: songs and Gospel play their long sound from this packet; LGP players get the short one with the unit
++		struct s_lgp_use { uint16 skill_id; } ctx = { skill_id };
++		og_map_send_area( dst, &p, sizeof( p ), []( map_session_data* viewer, const block_list&, void* ctx ){
++			return !og_map_lgp_mute_use( viewer, static_cast<s_lgp_use*>( ctx )->skill_id );
++		}, &ctx );
+ 	} else
+ 		clif_send(&p, sizeof(p), &dst, AREA);
+ 
+@@ -6188,6 +6267,17 @@ bool clif_skill_nodamage( const block_list* src, const block_list& dst, uint16 s
  		clif_send(&p, sizeof(p), src, SELF);
  	}
  
@@ -6690,7 +6703,7 @@ index fdca8ba..7f07136 100644
  	return success;
  }
  
-@@ -6209,6 +6293,19 @@ void clif_skill_poseffect( block_list& bl, uint16 skill_id, uint16 skill_lv, uin
+@@ -6209,6 +6299,19 @@ void clif_skill_poseffect( block_list& bl, uint16 skill_id, uint16 skill_lv, uin
  		
  		packet.AID = disguised_bl_id( bl.id );
  		clif_send( &packet, sizeof( packet ), &bl, SELF );
@@ -6710,7 +6723,7 @@ index fdca8ba..7f07136 100644
  	} else {
  		clif_send( &packet, sizeof( packet ), &bl, AREA );
  	}
-@@ -10697,6 +10794,12 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
+@@ -10697,6 +10800,12 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
  		return;
  	}
  
@@ -6723,7 +6736,7 @@ index fdca8ba..7f07136 100644
  	//Check for double login.
  	bl = map_id2bl(account_id);
  	if(bl && bl->type != BL_PC) {
-@@ -10811,6 +10914,9 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
+@@ -10811,6 +10920,9 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
  	// reset the callshop flag if the player changes map
  	sd->state.callshop = 0;
  
@@ -6733,7 +6746,7 @@ index fdca8ba..7f07136 100644
  	if(map_addblock(sd))
  		return;
  	clif_spawn(sd);
-@@ -11516,6 +11622,9 @@ void clif_parse_GlobalMessage(int32 fd, map_session_data* sd)
+@@ -11516,6 +11628,9 @@ void clif_parse_GlobalMessage(int32 fd, map_session_data* sd)
  	if( !clif_process_message(sd, false, name, message, output ) )
  		return;
  
@@ -6743,7 +6756,7 @@ index fdca8ba..7f07136 100644
  	if( sd->gcbind && ((sd->gcbind->opt&CHAN_OPT_CAN_CHAT) || pc_has_permission(sd, PC_PERM_CHANNEL_ADMIN)) ) {
  		channel_send(sd->gcbind,sd,message);
  		return;
-@@ -11711,6 +11820,8 @@ void clif_parse_ActionRequest_sub( map_session_data& sd, uint8 action_type, int3
+@@ -11711,6 +11826,8 @@ void clif_parse_ActionRequest_sub( map_session_data& sd, uint8 action_type, int3
  
  	if(target_id<0 && -target_id == sd.id) // for disguises [Valaris]
  		target_id = sd.id;
@@ -6752,7 +6765,7 @@ index fdca8ba..7f07136 100644
  
  	switch(action_type)
  	{
-@@ -12101,6 +12212,7 @@ void clif_parse_UseItem(int32 fd, map_session_data *sd)
+@@ -12101,6 +12218,7 @@ void clif_parse_UseItem(int32 fd, map_session_data *sd)
  
  	if(n <0 || n >= MAX_INVENTORY)
  		return;
@@ -6760,7 +6773,7 @@ index fdca8ba..7f07136 100644
  	if (!pc_useitem(sd,n))
  		clif_useitemack(sd,n,0,false); //Send an empty ack packet or the client gets stuck.
  }
-@@ -12929,12 +13041,16 @@ void clif_parse_skill_toid( map_session_data* sd, uint16 skill_id, uint16 skill_
+@@ -12929,12 +13047,16 @@ void clif_parse_skill_toid( map_session_data* sd, uint16 skill_id, uint16 skill_
  
  	if( target_id < 0 && -target_id == sd->id ) // for disguises [Valaris]
  		target_id = sd->id;
@@ -6777,7 +6790,7 @@ index fdca8ba..7f07136 100644
  			clif_skill_fail( *sd, skill_id, USESKILL_FAIL_SKILLINTERVAL );
  			return;
  		}
-@@ -13051,6 +13167,7 @@ static void clif_parse_UseSkillToPosSub( int32 fd, map_session_data& sd, uint16
+@@ -13051,6 +13173,7 @@ static void clif_parse_UseSkillToPosSub( int32 fd, map_session_data& sd, uint16
  
  	if( DIFF_TICK(tick, sd.ud.canact_tick) < 0 ) {
  		if( sd.skillitem != skill_id ) {
@@ -6785,7 +6798,7 @@ index fdca8ba..7f07136 100644
  			clif_skill_fail( sd, skill_id, USESKILL_FAIL_SKILLINTERVAL );
  			return;
  		}
-@@ -25783,6 +25900,8 @@ static int32 clif_parse(int32 fd)
+@@ -25783,6 +25906,8 @@ static int32 clif_parse(int32 fd)
  		sd->cryptKey = ((sd->cryptKey * clif_cryptKey[1]) + clif_cryptKey[2]) & 0xFFFFFFFF; // Update key for the next packet
  #endif
  
@@ -6934,10 +6947,10 @@ index 4130361..ae2e677 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 0000000..5f72752
+index 0000000..26bbd7e
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,773 @@
+@@ -0,0 +1,779 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
@@ -7267,6 +7280,12 @@ index 0000000..5f72752
 +
 +static bool og_lgp_sound_wanted(map_session_data* viewer, uint16 skill_id, int32 kind) {
 +	return viewer != nullptr && og_lgp_has_sound(skill_id, kind) && og_module_on("og_lgp_sound", true) && !(og_flags(viewer) & OG_FLAG_LGP_NOSOUND);
++}
++
++// Songs, Gospel ...: the client plays their sound (up to 30 s) from the skill-use packet of the caster. A player who gets the
++// lite unit hears the short og_<id>.wav when the unit appears instead, so the skill-use packet is not sent to them.
++bool og_map_lgp_mute_use(map_session_data* viewer, uint16 skill_id) {
++	return og_map_lgp_unit(viewer, skill_id) != 0 && og_lgp_sound_wanted(viewer, skill_id, OG_LGP_SOUND_UNIT);
 +}
 +
 +// A cast can reach the viewer through the ground packet and through the self-skill packet; every skill is sent once.
@@ -7713,10 +7732,10 @@ index 0000000..5f72752
 +}
 diff --git a/src/map/og_map.hpp b/src/map/og_map.hpp
 new file mode 100644
-index 0000000..8081f23
+index 0000000..0d4b9d9
 --- /dev/null
 +++ b/src/map/og_map.hpp
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,69 @@
 +// OdinGuard on the map-server: events, kicks and bans, chat commands (!ping, !vsync, !crash), machine limit.
 +#ifndef OG_MAP_HPP
 +#define OG_MAP_HPP
@@ -7750,6 +7769,8 @@ index 0000000..8081f23
 +void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
 +/// lite cells for a ground skill without a unit (position effect only), sent to this viewer and removed again
 +void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id);
++/// true when the skill-use packet of a song or Gospel is not sent to this viewer (LGP: the short sound comes with the unit)
++bool og_map_lgp_mute_use(map_session_data* viewer, uint16 skill_id);
 +/// the sound of a unit skill (songs, Gospel) when its unit appears, once per group
 +void og_map_lgp_sound_unit(map_session_data* viewer, uint32 source_id, uint16 skill_id, uint32 group_id);
 +/// the sound of a trap when it goes off

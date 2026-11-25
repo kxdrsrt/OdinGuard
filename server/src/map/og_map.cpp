@@ -329,6 +329,12 @@ static bool og_lgp_sound_wanted(map_session_data* viewer, uint16 skill_id, int32
 	return viewer != nullptr && og_lgp_has_sound(skill_id, kind) && og_module_on("og_lgp_sound", true) && !(og_flags(viewer) & OG_FLAG_LGP_NOSOUND);
 }
 
+// Songs, Gospel ...: the client plays their sound (up to 30 s) from the skill-use packet of the caster. A player who gets the
+// lite unit hears the short og_<id>.wav when the unit appears instead, so the skill-use packet is not sent to them.
+bool og_map_lgp_mute_use(map_session_data* viewer, uint16 skill_id) {
+	return og_map_lgp_unit(viewer, skill_id) != 0 && og_lgp_sound_wanted(viewer, skill_id, OG_LGP_SOUND_UNIT);
+}
+
 // A cast can reach the viewer through the ground packet and through the self-skill packet; every skill is sent once.
 void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id) {
 	if (!og_lgp_sound_wanted(viewer, skill_id, OG_LGP_SOUND_CAST))
