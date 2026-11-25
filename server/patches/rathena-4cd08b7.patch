@@ -3561,10 +3561,10 @@ index ce4d0b1..f1a6908 100644
        can_trade: true
 diff --git a/conf/odinguard_athena.conf b/conf/odinguard_athena.conf
 new file mode 100644
-index 0000000..df17dd4
+index 0000000..6ddb8a0
 --- /dev/null
 +++ b/conf/odinguard_athena.conf
-@@ -0,0 +1,345 @@
+@@ -0,0 +1,349 @@
 +// OdinGuard Anti Cheat settings. Local overrides: conf/import/odinguard_conf.txt (created at the first start).
 +// The OdinGuard Studio generates the profile values (key, proto salt, build secret, signature package, module
 +// switches, commands, auras) into conf/import/odinguard_conf.txt; the environment variables ODINGUARD_KEY,
@@ -3695,7 +3695,11 @@ index 0000000..df17dd4
 +// The ground skill's sound for LGP players (they get no animation): og_<id>.wav from odin.grf's group lgp-sound, see
 +// OdinGuard assets/lgp-sound/sounds.tsv and tools/pack/build_lgp_sounds.sh. Switch: og_lgp_sound: yes/no.
 +og_lgp_sound: yes
-+og_lgp_sound_skills: 89,83,21,80,18,87,12,92,70,79,69,254,110,140,115,116,117,118,119,120,121,122,123
++og_lgp_sound_skills: 89,83,21,80,18,87,12,92,70,79,69,254,110,140,85,91,362,229,130,516,527,535,536,538,539,541
++// the sound belongs to the unit (songs, Gospel): sent when the unit appears, once per cast. Songs use the short version (3 s)
++og_lgp_sound_unit_skills: 306,307,308,309,310,311,312,313,319,320,321,322,327,328,329,330,395,488,369
++// traps are silent when set and make their sound when they go off
++og_lgp_sound_trap_skills: 115,116,117,118,119,120,121,122,123
 +og_lgp_symbol_def: plus,1
 +og_lgp_symbol_def: minus,2
 +og_lgp_symbol_def: shield,3
@@ -4041,10 +4045,10 @@ index 62b4259..d6b0cf7 100644
      </ClCompile>
 diff --git a/src/common/odinguard.cpp b/src/common/odinguard.cpp
 new file mode 100644
-index 0000000..4200e18
+index 0000000..8bdf090
 --- /dev/null
 +++ b/src/common/odinguard.cpp
-@@ -0,0 +1,1279 @@
+@@ -0,0 +1,1282 @@
 +// OdinGuard Anti Cheat – server side. See odinguard.hpp, og_proto.h and og_wire.h.
 +
 +#include "odinguard.hpp"
@@ -4140,7 +4144,8 @@ index 0000000..4200e18
 +	std::vector<s_og_lgp> lgp;
 +	std::vector<s_og_lgp_symbol> lgp_symbols;
 +	std::vector<std::pair<uint16, int32>> lgp_symbol; // skill id -> symbol number
-+	std::vector<uint16> lgp_sound; // skills whose sound (data\\wav\\og_<id>.wav) is sent to LGP players
++	std::vector<uint16> lgp_sound; // skills whose sound (data\\wav\\og_<id>.wav) is sent to LGP players when they are cast
++	std::vector<uint16> lgp_sound_unit, lgp_sound_trap; // ... when their unit appears (songs, Gospel) / when the trap goes off
 +	std::vector<uint16> lgp_attack; // hostile skills: triangles instead of squares
 +	std::vector<std::pair<std::string, std::string>> switches; // module switches and other plain values
 +	s_og_challenge_cfg ch[5]; // index = OG_CH_*
@@ -4436,10 +4441,11 @@ index 0000000..4200e18
 +					if (index > 0) og_cfg.lgp_symbol.emplace_back(id, index);
 +				}
 +		}
-+		else if (!strcmpi(w1, "og_lgp_sound_skills")) {
++		else if (!strcmpi(w1, "og_lgp_sound_skills") || !strcmpi(w1, "og_lgp_sound_unit_skills") || !strcmpi(w1, "og_lgp_sound_trap_skills")) {
++			std::vector<uint16>& list = !strcmpi(w1, "og_lgp_sound_unit_skills") ? og_cfg.lgp_sound_unit : !strcmpi(w1, "og_lgp_sound_trap_skills") ? og_cfg.lgp_sound_trap : og_cfg.lgp_sound;
 +			for (char* t = strtok(w2, ", \t\r\n"); t != nullptr; t = strtok(nullptr, ", \t\r\n"))
-+				if (uint16 id = (uint16)strtoul(t, nullptr, 0); id != 0 && std::find(og_cfg.lgp_sound.begin(), og_cfg.lgp_sound.end(), id) == og_cfg.lgp_sound.end())
-+					og_cfg.lgp_sound.push_back(id);
++				if (uint16 id = (uint16)strtoul(t, nullptr, 0); id != 0 && std::find(list.begin(), list.end(), id) == list.end())
++					list.push_back(id);
 +		}
 +		else if (!strcmpi(w1, "og_lgp_attack")) {
 +			// skill ids shown as triangles (damage or harm to enemies); every other LGP skill is a square (protective)
@@ -4706,8 +4712,9 @@ index 0000000..4200e18
 +	return std::find(og_cfg.lgp_attack.begin(), og_cfg.lgp_attack.end(), skill_id) != og_cfg.lgp_attack.end();
 +}
 +
-+bool og_lgp_has_sound(uint16 skill_id) {
-+	return std::find(og_cfg.lgp_sound.begin(), og_cfg.lgp_sound.end(), skill_id) != og_cfg.lgp_sound.end();
++bool og_lgp_has_sound(uint16 skill_id, int32 kind) {
++	const std::vector<uint16>& list = kind == OG_LGP_SOUND_UNIT ? og_cfg.lgp_sound_unit : kind == OG_LGP_SOUND_TRAP ? og_cfg.lgp_sound_trap : og_cfg.lgp_sound;
++	return std::find(list.begin(), list.end(), skill_id) != list.end();
 +}
 +
 +int32 og_lgp_symbol(uint16 skill_id) {
@@ -5326,10 +5333,10 @@ index 0000000..4200e18
 +}
 diff --git a/src/common/odinguard.hpp b/src/common/odinguard.hpp
 new file mode 100644
-index 0000000..20022c7
+index 0000000..8ccb3d1
 --- /dev/null
 +++ b/src/common/odinguard.hpp
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,93 @@
 +// OdinGuard server side: handshake, encrypted record layer and policy for client connections.
 +// Wire format: og_proto.h (shared with the OdinGuard client DLL).
 +
@@ -5413,7 +5420,8 @@ index 0000000..20022c7
 +// entry of a style (square | circle | setN): the ground unit and the colour number (-1 = fixed unit, no colour)
 +bool og_lgp_entry(const char* style, uint16 skill_id, uint16* unit, int32* color_index);
 +bool og_lgp_attacks(uint16 skill_id);                                 // hostile skill: triangle
-+bool og_lgp_has_sound(uint16 skill_id);                               // sound og_<id>.wav is sent to LGP players
++enum { OG_LGP_SOUND_CAST = 0, OG_LGP_SOUND_UNIT = 1, OG_LGP_SOUND_TRAP = 2 };
++bool og_lgp_has_sound(uint16 skill_id, int32 kind = OG_LGP_SOUND_CAST); // sound og_<id>.wav is sent to LGP players: when cast, when the unit appears, when the trap goes off
 +int32 og_lgp_symbol(uint16 skill_id);                                 // symbol number inside the tiles (0 = none)
 +int32 og_lgp_color_count();                                           // og_lgp_color lines
 +int32 og_lgp_color_value(int32 pos);                                  // colour number of the pos-th og_lgp_color line
@@ -6546,7 +6554,7 @@ index f367e9b..437d9c1 100644
  		ACMD_DEF(mapflag),
  		ACMD_DEF(me),
 diff --git a/src/map/clif.cpp b/src/map/clif.cpp
-index fdca8ba..fd36d18 100644
+index fdca8ba..7f07136 100644
 --- a/src/map/clif.cpp
 +++ b/src/map/clif.cpp
 @@ -17,6 +17,7 @@
@@ -6608,7 +6616,20 @@ index fdca8ba..fd36d18 100644
  			// On officials the HP never go below 1, even if you die [Lemongrass]
  			// On officials the HP Novice class never go below 50%, even if you die [Napster]
  			if (sd.battle_status.hp == 0) {
-@@ -5500,6 +5531,40 @@ void clif_getareachar_skillunit(block_list *bl, skill_unit *unit, enum send_targ
+@@ -4112,6 +4143,12 @@ void clif_changelook(block_list *bl,int32 type,int32 val) {
+ //Sends a change-base-look packet required for traps as they are triggered.
+ void clif_changetraplook( const block_list* bl, int32 val ) {
+ 	clif_sprite_change(bl, bl->id, LOOK_BASE, val, 0, AREA);
++	// OdinGuard @lgp: a trap that goes off is heard by LGP players (setting it is silent)
++	if( bl->type == BL_SKILL ){
++		const skill_unit* unit = reinterpret_cast<const skill_unit*>( bl );
++		if( unit->group != nullptr )
++			og_map_lgp_sound_trap( *bl, unit->group->skill_id );
++	}
+ }
+ 
+ /// Character status (ZC_STATUS).
+@@ -5500,6 +5537,42 @@ void clif_getareachar_skillunit(block_list *bl, skill_unit *unit, enum send_targ
  			WBUFB(buf,pos+20) = (unsigned char)unit->group->skill_lv;
  			break;
  	}
@@ -6621,7 +6642,7 @@ index fdca8ba..fd36d18 100644
 +		int32 area = skill_get_unit_layout_type( unit->group->skill_id, unit->group->skill_lv ) == 0 ? unit->range : 0;
 +		if( area == 0 && unit->group->limit < og_setting_int( "og_lgp_flash_ms", 1000 ) )
 +			area = -1;
-+		struct s_lgp { unsigned char* buf; int32 pos; uint16 skill_id, skill_lv; int32 unit_id, area; skill_unit* unit; uint32 creator; } lgp = { buf, pos, unit->group->skill_id, (uint16)unit->group->skill_lv, unit_id, area, unit, unit->group->src_id };
++		struct s_lgp { unsigned char* buf; int32 pos; uint16 skill_id, skill_lv; int32 unit_id, area; skill_unit* unit; uint32 creator; bool created; uint32 group_id; } lgp = { buf, pos, unit->group->skill_id, (uint16)unit->group->skill_lv, unit_id, area, unit, unit->group->src_id, target != SELF, unit->group->group_id };
 +		auto set = []( map_session_data* viewer, const block_list&, void* ctx ){
 +			s_lgp* l = static_cast<s_lgp*>( ctx );
 +			uint16 lite = og_map_lgp_unit( viewer, l->skill_id );
@@ -6631,6 +6652,8 @@ index fdca8ba..fd36d18 100644
 +			WBUFL( l->buf, l->pos + 6 ) = marker != 0 ? marker : l->creator;
 +			// level 1 for lite units: the client changes some unit ids by level (0xba at 2-5 becomes 0xbb-0xbe)
 +			WBUFB( l->buf, l->pos + 20 ) = lite != 0 ? 1 : (unsigned char)l->skill_lv;
++			if( lite != 0 && l->created )
++				og_map_lgp_sound_unit( viewer, l->creator, l->skill_id, l->group_id );
 +			if( lite != 0 && l->area != 0 )
 +				og_map_lgp_flash_area( viewer, *l->unit, l->skill_id, l->skill_lv, l->unit->x, l->unit->y, std::max( l->area, 0 ), l->area > 0 );
 +			return true;
@@ -6649,7 +6672,25 @@ index fdca8ba..fd36d18 100644
  	clif_send(buf, len, bl, target);
  
  	if (unit->group->skill_id == WZ_ICEWALL)
-@@ -6209,6 +6274,19 @@ void clif_skill_poseffect( block_list& bl, uint16 skill_id, uint16 skill_lv, uin
+@@ -6188,6 +6261,17 @@ bool clif_skill_nodamage( const block_list* src, const block_list& dst, uint16 s
+ 		clif_send(&p, sizeof(p), src, SELF);
+ 	}
+ 
++	// OdinGuard @lgp: the sound of a self-cast skill whose animation LGP players do not get
++	if( src != nullptr && success && og_lgp_unit( skill_id ) != 0 ){
++		struct s_lgp_snd { uint16 skill_id; } ctx = { skill_id };
++		og_map_send_area( *src, &p, sizeof( p ), []( map_session_data* viewer, const block_list& src, void* ctx ){
++			uint16 skill = static_cast<s_lgp_snd*>( ctx )->skill_id;
++			if( og_map_lgp_unit( viewer, skill ) != 0 ) // only players who do not get the animation; everyone else hears the original
++				og_map_lgp_sound( viewer, src, skill );
++			return false;
++		}, &ctx );
++	}
++
+ 	return success;
+ }
+ 
+@@ -6209,6 +6293,19 @@ void clif_skill_poseffect( block_list& bl, uint16 skill_id, uint16 skill_lv, uin
  		
  		packet.AID = disguised_bl_id( bl.id );
  		clif_send( &packet, sizeof( packet ), &bl, SELF );
@@ -6669,7 +6710,7 @@ index fdca8ba..fd36d18 100644
  	} else {
  		clif_send( &packet, sizeof( packet ), &bl, AREA );
  	}
-@@ -10697,6 +10775,12 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
+@@ -10697,6 +10794,12 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
  		return;
  	}
  
@@ -6682,7 +6723,7 @@ index fdca8ba..fd36d18 100644
  	//Check for double login.
  	bl = map_id2bl(account_id);
  	if(bl && bl->type != BL_PC) {
-@@ -10811,6 +10895,9 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
+@@ -10811,6 +10914,9 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
  	// reset the callshop flag if the player changes map
  	sd->state.callshop = 0;
  
@@ -6692,7 +6733,7 @@ index fdca8ba..fd36d18 100644
  	if(map_addblock(sd))
  		return;
  	clif_spawn(sd);
-@@ -11516,6 +11603,9 @@ void clif_parse_GlobalMessage(int32 fd, map_session_data* sd)
+@@ -11516,6 +11622,9 @@ void clif_parse_GlobalMessage(int32 fd, map_session_data* sd)
  	if( !clif_process_message(sd, false, name, message, output ) )
  		return;
  
@@ -6702,7 +6743,7 @@ index fdca8ba..fd36d18 100644
  	if( sd->gcbind && ((sd->gcbind->opt&CHAN_OPT_CAN_CHAT) || pc_has_permission(sd, PC_PERM_CHANNEL_ADMIN)) ) {
  		channel_send(sd->gcbind,sd,message);
  		return;
-@@ -11711,6 +11801,8 @@ void clif_parse_ActionRequest_sub( map_session_data& sd, uint8 action_type, int3
+@@ -11711,6 +11820,8 @@ void clif_parse_ActionRequest_sub( map_session_data& sd, uint8 action_type, int3
  
  	if(target_id<0 && -target_id == sd.id) // for disguises [Valaris]
  		target_id = sd.id;
@@ -6711,7 +6752,7 @@ index fdca8ba..fd36d18 100644
  
  	switch(action_type)
  	{
-@@ -12101,6 +12193,7 @@ void clif_parse_UseItem(int32 fd, map_session_data *sd)
+@@ -12101,6 +12212,7 @@ void clif_parse_UseItem(int32 fd, map_session_data *sd)
  
  	if(n <0 || n >= MAX_INVENTORY)
  		return;
@@ -6719,7 +6760,7 @@ index fdca8ba..fd36d18 100644
  	if (!pc_useitem(sd,n))
  		clif_useitemack(sd,n,0,false); //Send an empty ack packet or the client gets stuck.
  }
-@@ -12929,12 +13022,16 @@ void clif_parse_skill_toid( map_session_data* sd, uint16 skill_id, uint16 skill_
+@@ -12929,12 +13041,16 @@ void clif_parse_skill_toid( map_session_data* sd, uint16 skill_id, uint16 skill_
  
  	if( target_id < 0 && -target_id == sd->id ) // for disguises [Valaris]
  		target_id = sd->id;
@@ -6736,7 +6777,7 @@ index fdca8ba..fd36d18 100644
  			clif_skill_fail( *sd, skill_id, USESKILL_FAIL_SKILLINTERVAL );
  			return;
  		}
-@@ -13051,6 +13148,7 @@ static void clif_parse_UseSkillToPosSub( int32 fd, map_session_data& sd, uint16
+@@ -13051,6 +13167,7 @@ static void clif_parse_UseSkillToPosSub( int32 fd, map_session_data& sd, uint16
  
  	if( DIFF_TICK(tick, sd.ud.canact_tick) < 0 ) {
  		if( sd.skillitem != skill_id ) {
@@ -6744,7 +6785,7 @@ index fdca8ba..fd36d18 100644
  			clif_skill_fail( sd, skill_id, USESKILL_FAIL_SKILLINTERVAL );
  			return;
  		}
-@@ -25783,6 +25881,8 @@ static int32 clif_parse(int32 fd)
+@@ -25783,6 +25900,8 @@ static int32 clif_parse(int32 fd)
  		sd->cryptKey = ((sd->cryptKey * clif_cryptKey[1]) + clif_cryptKey[2]) & 0xFFFFFFFF; // Update key for the next packet
  #endif
  
@@ -6893,10 +6934,10 @@ index 4130361..ae2e677 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 0000000..3eec691
+index 0000000..5f72752
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,724 @@
+@@ -0,0 +1,773 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
@@ -7212,16 +7253,65 @@ index 0000000..3eec691
 +// The heavy animation of a ground skill carries its sound; an LGP player does not get it, so the sound is sent alone
 +// (ZC_SOUND from the caster). The file is data\wav\og_<skill id>.wav of odin.grf (the packet only has 23 characters
 +// for the name, the original files are named longer); a client without the file stays silent.
-+void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id) {
-+	if (viewer == nullptr || !og_lgp_has_sound(skill_id) || !og_module_on("og_lgp_sound", true) || (og_flags(viewer) & OG_FLAG_LGP_NOSOUND))
-+		return;
++static void og_lgp_sound_send(map_session_data* viewer, uint32 source_id, uint16 skill_id) {
++	if (og_setting_int("og_lgp_sound_log", 0) != 0)
++		ShowInfo("OdinGuard: LGP sound og_%d.wav to %s\n", (int32)skill_id, viewer->status.name);
 +	unsigned char buf[35] = {};
 +	WBUFW(buf, 0) = 0x01d3; // ZC_SOUND
 +	safesnprintf((char*)buf + 2, 24, "og_%d.wav", (int32)skill_id);
 +	WBUFB(buf, 26) = 0;
 +	WBUFL(buf, 27) = 0;
-+	WBUFL(buf, 31) = src.id;
++	WBUFL(buf, 31) = source_id;
 +	clif_send(buf, sizeof(buf), viewer, SELF);
++}
++
++static bool og_lgp_sound_wanted(map_session_data* viewer, uint16 skill_id, int32 kind) {
++	return viewer != nullptr && og_lgp_has_sound(skill_id, kind) && og_module_on("og_lgp_sound", true) && !(og_flags(viewer) & OG_FLAG_LGP_NOSOUND);
++}
++
++// A cast can reach the viewer through the ground packet and through the self-skill packet; every skill is sent once.
++void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id) {
++	if (!og_lgp_sound_wanted(viewer, skill_id, OG_LGP_SOUND_CAST))
++		return;
++	struct s_seen { uint32 viewer, src; uint16 skill; t_tick tick; };
++	static s_seen seen[16];
++	static size_t next = 0;
++	t_tick now = gettick();
++	for (const s_seen& e : seen)
++		if (e.viewer == viewer->id && e.src == src.id && e.skill == skill_id && DIFF_TICK(now, e.tick) < 250)
++			return;
++	seen[next++ % 16] = { (uint32)viewer->id, (uint32)src.id, skill_id, now };
++	og_lgp_sound_send(viewer, src.id, skill_id);
++}
++
++// Songs, Gospel ...: the sound belongs to the unit and not to the cast, so it is sent when the unit appears, once per
++// group and viewer (a song is a group of many cells).
++void og_map_lgp_sound_unit(map_session_data* viewer, uint32 source_id, uint16 skill_id, uint32 group_id) {
++	if (!og_lgp_sound_wanted(viewer, skill_id, OG_LGP_SOUND_UNIT))
++		return;
++	struct s_seen { uint32 viewer, group; };
++	static s_seen seen[64];
++	static size_t next = 0;
++	for (const s_seen& e : seen)
++		if (e.viewer == viewer->id && e.group == group_id)
++			return;
++	seen[next++ % 64] = { (uint32)viewer->id, group_id };
++	og_lgp_sound_send(viewer, source_id, skill_id); // the caster: the unit itself may not have reached the viewer yet
++}
++
++// Traps are silent when they are set and loud when they go off (the unit changes into the used trap).
++void og_map_lgp_sound_trap(const block_list& unit, uint16 skill_id) {
++	if (!og_lgp_has_sound(skill_id, OG_LGP_SOUND_TRAP))
++		return;
++	map_foreachinallrange([](block_list* bl, va_list ap) -> int32 {
++		const block_list* unit = va_arg(ap, const block_list*);
++		uint16 skill = (uint16)va_arg(ap, int32);
++		map_session_data* sd = reinterpret_cast<map_session_data*>(bl);
++		if (sd->fd <= 0 || !session_isActive(sd->fd) || og_map_lgp_unit(sd, skill) == 0 || !og_lgp_sound_wanted(sd, skill, OG_LGP_SOUND_TRAP))
++			return 0;
++		og_lgp_sound_send(sd, unit->id, skill);
++		return 1;
++	}, const_cast<block_list*>(&unit), AREA_SIZE, BL_PC, &unit, (int32)skill_id);
 +}
 +
 +void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y) {
@@ -7623,10 +7713,10 @@ index 0000000..3eec691
 +}
 diff --git a/src/map/og_map.hpp b/src/map/og_map.hpp
 new file mode 100644
-index 0000000..2f2211b
+index 0000000..8081f23
 --- /dev/null
 +++ b/src/map/og_map.hpp
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,67 @@
 +// OdinGuard on the map-server: events, kicks and bans, chat commands (!ping, !vsync, !crash), machine limit.
 +#ifndef OG_MAP_HPP
 +#define OG_MAP_HPP
@@ -7660,6 +7750,10 @@ index 0000000..2f2211b
 +void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx);
 +/// lite cells for a ground skill without a unit (position effect only), sent to this viewer and removed again
 +void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id);
++/// the sound of a unit skill (songs, Gospel) when its unit appears, once per group
++void og_map_lgp_sound_unit(map_session_data* viewer, uint32 source_id, uint16 skill_id, uint32 group_id);
++/// the sound of a trap when it goes off
++void og_map_lgp_sound_trap(const block_list& unit, uint16 skill_id);
 +void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y);
 +/// the same for a square of the given range around x,y (single-cell units with an area: Meteor Storm impacts ...)
 +void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y, int32 range, bool skip_center);

@@ -1,24 +1,55 @@
-skill_id	source (data\wav\effect\...)	note
-89	wizard_stormgust.wav	Storm Gust [vermutet]
-83	wizard_meteor.wav	Meteor Storm [vermutet]
-21	ef_thunderstorm.wav	Thunderstorm
-80	wizard_fire_pillar_a.wav	Fire Pillar
-18	ef_firewall.wav	Fire Wall
-87	wizard_icewall.wav	Ice Wall
-12	ef_glasswall.wav	Safety Wall [vermutet]
-92	wizard_quagmire.wav	Quagmire
-70	priest_sanctuary.wav	Sanctuary
-79	priest_magnus.wav	Magnus Exorcismus
-69	priest_benedictio.wav	B.S. Sacramenti
-254	cru_grand cross.wav	Grand Cross
-110	black_hammerfall.wav	Hammer Fall
-140	assasin_venomdust.wav	Venom Dust
-115	hunter_skidtrap.wav	Skid Trap
-116	hunter_landmine.wav	Land Mine
-117	hunter_anklesnare.wav	Ankle Snare
-118	hunter_shockwavetrap.wav	Shockwave Trap
-119	hunter_sandman.wav	Sandman
-120	hunter_flasher.wav	Flasher
-121	hunter_freezingtrap.wav	Freezing Trap
-122	hunter_blastmine.wav	Blast Mine
-123	hunter_claymoretrap.wav	Claymore Trap
+skill_id	source (data\wav\effect\...)	note	trim_ms (end, or start-end; empty = whole file)
+89	wizard_stormgust.wav	Storm Gust [vermutet]	
+83	wizard_meteor.wav	Meteor Storm	
+21	magician_thunderstorm.wav	Thunderstorm (roBrowser effect 30)	
+80	wizard_fire_pillar_a.wav	Fire Pillar	
+18	ef_firewall.wav	Fire Wall	
+87	wizard_icewall.wav	Ice Wall	
+12	ef_glasswall.wav	Safety Wall [vermutet]	
+92	wizard_quagmire.wav	Quagmire	
+70	priest_sanctuary.wav	Sanctuary	
+79	priest_magnus.wav	Magnus Exorcismus	
+69	priest_benedictio.wav	B.S. Sacramenti	
+254	cru_grand cross.wav	Grand Cross	
+110	black_hammerfall.wav	Hammer Fall	
+140	assasin_venomdust.wav	Venom Dust	
+115	hunter_skidtrap.wav	Skid Trap	
+116	hunter_landmine.wav	Land Mine	
+117	hunter_anklesnare.wav	Ankle Snare	
+118	hunter_shockwavetrap.wav	Shockwave Trap	
+119	hunter_sandman.wav	Sandman	
+120	hunter_flasher.wav	Flasher	
+121	hunter_freezingtrap.wav	Freezing Trap	
+122	hunter_blastmine.wav	Blast Mine	
+123	hunter_claymoretrap.wav	Claymore Trap	
+85	wizard_fire_ivy.wav	Lord of Vermilion (roBrowser effect 90)	
+91	wizard_earthspike.wav	Heaven's Drive (roBrowser effect 142)	
+362	바실리카.wav	Basilica [vermutet: file name]	
+229	ef_firehit.wav	Demonstration [vermutet, the original has no sound table entry]	
+130	hunter_detecting.wav	Detecting (roBrowser effect 119)	
+516	데스페라도.wav	Desperado (roBrowser effect 637)	
+527	다다미뒤집기.wav	Tatami (roBrowser effect 631)	
+535	화염진.wav	Kaensin (roBrowser effect 634)	
+536	폭염룡.wav	Bakuenryu (roBrowser effect 635)	
+538	수둔.wav	Suiton [vermutet: file name; no effect sound entry]	
+539	빙정락.wav	Hyousyouraku (roBrowser effect 636)	
+541	ef_thunderstorm.wav	Raigekisai (roBrowser effect 622)	
+369	가스펠.wav	Gospel (short, the original runs 40 s)	0-3000
+306	자장가.wav	Lullaby (short)	0-3000
+307	김서방돈.wav	Rich Mankim (short)	0-3000
+308	영원의 혼돈.wav	Eternal Chaos (short)	0-3000
+309	전장의.wav	Drum on the Battlefield (short)	0-3000
+310	니벨룽겐의 반지.wav	Ring of Nibelungen (short)	0-3000
+311	로키.wav	Rokisweil (short, same cut as the BG pack woebg.grf)	2345-6471
+312	심연속으로.wav	Into the Abyss (short)	0-3000
+313	불사신.wav	Siegfried (short)	0-3000
+319	달빛.wav	Whistle (short, same cut as the BG pack woebg.grf)	443-3301
+320	석양의 어쌔신.wav	Assassin Cross of Sunset (short, same cut as the BG pack woebg.grf)	0-2619
+321	브라기의 시.wav	Poem of Bragi (short, same cut as the BG pack woebg.grf)	0-2656
+322	이둔의 사과.wav	Apple of Idun (short, same cut as the BG pack woebg.grf)	0-3079
+327	흥얼거림.wav	Humming (short, same cut as the BG pack woebg.grf)	5937-8725
+328	나를잊지말아요.wav	Don't Forget Me (short, same cut as the BG pack woebg.grf)	473-3590
+329	행운의.wav	Fortune's Kiss (short, same cut as the BG pack woebg.grf)	7990-10941
+330	당신을 위한 서비스.wav	Service for You (short, same cut as the BG pack woebg.grf)	0-3141
+395	달빛세레나데.wav	Moonlit Serenade (short) [vermutet]	0-3000
+488	헤르모드의 지팡이.wav	Hermode's Rod (short)	0-3000

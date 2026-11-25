@@ -182,7 +182,7 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     }
     let grf = client.join("odin.grf");
     let ctl = rgrf_core::progress::Control::default();
-    let br = rgrf_core::build::build(&stage, &grf, &rgrf_core::build::BuildOptions::default(), &ctl).map_err(|e| Error::Build(format!("odin.grf: {e}")))?;
+    let br = rgrf_core::build::build(&stage, &grf, &rgrf_core::build::BuildOptions { names: rgrf_core::NameMode::Cp949, ..Default::default() }, &ctl).map_err(|e| Error::Build(format!("odin.grf: {e}")))?;
     let archive = rgrf_core::Archive::open(&grf).map_err(|e| Error::Build(format!("odin.grf: {e}")))?;
     let vr = rgrf_core::verify::verify(&archive, rgrf_core::verify::VerifyOptions::default(), &ctl).map_err(|e| Error::Build(format!("odin.grf verify: {e}")))?;
     if vr.issues.iter().any(|i| matches!(i.severity, rgrf_core::verify::Severity::Error)) {

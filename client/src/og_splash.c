@@ -129,7 +129,8 @@ void og_splash_show(HINSTANCE inst, DWORD hold_ms)
 }
 
 /* After a successful handshake the game window shows that the server is protected, like Gepard's title:
-   "<operator> | OdinGuard Anti Cheat <version>". The window is found by its process and kept up to date, because the
+   "<title the client set> | OdinGuard Anti Cheat <version>" (the client's own title, e.g. the one set with a diff patch,
+   stays and only gets the addition). The window is found by its process and kept up to date, because the
    handshake can finish before the game window is visible and the client may set its own title again. */
 static BOOL CALLBACK title_enum(HWND w, LPARAM lp)
 {
@@ -149,25 +150,35 @@ static BOOL CALLBACK title_enum(HWND w, LPARAM lp)
 static volatile LONG g_title_state;   /* 0 = waiting for the server, 1 = protected, 2 = handshake failed */
 static char g_title_note[100];
 
+#define TITLE_MARK " | OdinGuard Anti Cheat "
+
 static DWORD WINAPI title_thread(LPVOID unused)
 {
-    static const char base[] = OG_PROFILE_OPERATOR " | OdinGuard Anti Cheat " OG_VERSION_STR;
+    static const char tag[] = TITLE_MARK OG_VERSION_STR;
+    char orig[160];
     (void)unused;
+    orig[0] = 0;
     /* For the life of the process: the client sets its own title again at times (window mode switch, map change), and the
        first window can appear long after the guard started. One enumeration every 1.5 s costs nothing.
        The title always says what the guard is doing, so a player (or you) can see at a glance whether it is active. */
     for (;;) {
         HWND w = NULL;
-        char want[256];
-        LONG st = g_title_state;
-        if (st == 1) snprintf(want, sizeof want, "%s", base);
-        else if (st == 2) snprintf(want, sizeof want, "%s - NOT CONNECTED (%s)", base, g_title_note);
-        else snprintf(want, sizeof want, "%s - waiting for the server", base);
         EnumWindows(title_enum, (LPARAM)&w);
         if (w) {
-            char cur[256];
+            char cur[256], want[400];
+            LONG st = g_title_state;
             cur[0] = 0;
             GetWindowTextA(w, cur, sizeof cur);
+            /* whatever is not our own text is the client's title: keep it as the base */
+            if (cur[0] && !strstr(cur, TITLE_MARK)) snprintf(orig, sizeof orig, "%s", cur);
+            else if (!orig[0] && cur[0]) {
+                char *m = strstr(cur, TITLE_MARK);
+                if (m && m > cur) { size_t n = (size_t)(m - cur); if (n >= sizeof orig) n = sizeof orig - 1; memcpy(orig, cur, n); orig[n] = 0; }
+            }
+            if (!orig[0]) snprintf(orig, sizeof orig, "%s", OG_PROFILE_OPERATOR);
+            if (st == 1) snprintf(want, sizeof want, "%s%s", orig, tag);
+            else if (st == 2) snprintf(want, sizeof want, "%s%s - NOT CONNECTED (%s)", orig, tag, g_title_note);
+            else snprintf(want, sizeof want, "%s%s - waiting for the server", orig, tag);
             if (strcmp(cur, want)) SetWindowTextA(w, want);
         }
         Sleep(1500);

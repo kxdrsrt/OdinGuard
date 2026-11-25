@@ -81,7 +81,8 @@ uint16 og_lgp_unit(uint16 skill_id);                                  // square 
 // entry of a style (square | circle | setN): the ground unit and the colour number (-1 = fixed unit, no colour)
 bool og_lgp_entry(const char* style, uint16 skill_id, uint16* unit, int32* color_index);
 bool og_lgp_attacks(uint16 skill_id);                                 // hostile skill: triangle
-bool og_lgp_has_sound(uint16 skill_id);                               // sound og_<id>.wav is sent to LGP players
+enum { OG_LGP_SOUND_CAST = 0, OG_LGP_SOUND_UNIT = 1, OG_LGP_SOUND_TRAP = 2 };
+bool og_lgp_has_sound(uint16 skill_id, int32 kind = OG_LGP_SOUND_CAST); // sound og_<id>.wav is sent to LGP players: when cast, when the unit appears, when the trap goes off
 int32 og_lgp_symbol(uint16 skill_id);                                 // symbol number inside the tiles (0 = none)
 int32 og_lgp_color_count();                                           // og_lgp_color lines
 int32 og_lgp_color_value(int32 pos);                                  // colour number of the pos-th og_lgp_color line

@@ -313,16 +313,65 @@ TIMER_FUNC(og_lgp_flash_end) {
 // The heavy animation of a ground skill carries its sound; an LGP player does not get it, so the sound is sent alone
 // (ZC_SOUND from the caster). The file is data\wav\og_<skill id>.wav of odin.grf (the packet only has 23 characters
 // for the name, the original files are named longer); a client without the file stays silent.
-void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id) {
-	if (viewer == nullptr || !og_lgp_has_sound(skill_id) || !og_module_on("og_lgp_sound", true) || (og_flags(viewer) & OG_FLAG_LGP_NOSOUND))
-		return;
+static void og_lgp_sound_send(map_session_data* viewer, uint32 source_id, uint16 skill_id) {
+	if (og_setting_int("og_lgp_sound_log", 0) != 0)
+		ShowInfo("OdinGuard: LGP sound og_%d.wav to %s\n", (int32)skill_id, viewer->status.name);
 	unsigned char buf[35] = {};
 	WBUFW(buf, 0) = 0x01d3; // ZC_SOUND
 	safesnprintf((char*)buf + 2, 24, "og_%d.wav", (int32)skill_id);
 	WBUFB(buf, 26) = 0;
 	WBUFL(buf, 27) = 0;
-	WBUFL(buf, 31) = src.id;
+	WBUFL(buf, 31) = source_id;
 	clif_send(buf, sizeof(buf), viewer, SELF);
+}
+
+static bool og_lgp_sound_wanted(map_session_data* viewer, uint16 skill_id, int32 kind) {
+	return viewer != nullptr && og_lgp_has_sound(skill_id, kind) && og_module_on("og_lgp_sound", true) && !(og_flags(viewer) & OG_FLAG_LGP_NOSOUND);
+}
+
+// A cast can reach the viewer through the ground packet and through the self-skill packet; every skill is sent once.
+void og_map_lgp_sound(map_session_data* viewer, const block_list& src, uint16 skill_id) {
+	if (!og_lgp_sound_wanted(viewer, skill_id, OG_LGP_SOUND_CAST))
+		return;
+	struct s_seen { uint32 viewer, src; uint16 skill; t_tick tick; };
+	static s_seen seen[16];
+	static size_t next = 0;
+	t_tick now = gettick();
+	for (const s_seen& e : seen)
+		if (e.viewer == viewer->id && e.src == src.id && e.skill == skill_id && DIFF_TICK(now, e.tick) < 250)
+			return;
+	seen[next++ % 16] = { (uint32)viewer->id, (uint32)src.id, skill_id, now };
+	og_lgp_sound_send(viewer, src.id, skill_id);
+}
+
+// Songs, Gospel ...: the sound belongs to the unit and not to the cast, so it is sent when the unit appears, once per
+// group and viewer (a song is a group of many cells).
+void og_map_lgp_sound_unit(map_session_data* viewer, uint32 source_id, uint16 skill_id, uint32 group_id) {
+	if (!og_lgp_sound_wanted(viewer, skill_id, OG_LGP_SOUND_UNIT))
+		return;
+	struct s_seen { uint32 viewer, group; };
+	static s_seen seen[64];
+	static size_t next = 0;
+	for (const s_seen& e : seen)
+		if (e.viewer == viewer->id && e.group == group_id)
+			return;
+	seen[next++ % 64] = { (uint32)viewer->id, group_id };
+	og_lgp_sound_send(viewer, source_id, skill_id); // the caster: the unit itself may not have reached the viewer yet
+}
+
+// Traps are silent when they are set and loud when they go off (the unit changes into the used trap).
+void og_map_lgp_sound_trap(const block_list& unit, uint16 skill_id) {
+	if (!og_lgp_has_sound(skill_id, OG_LGP_SOUND_TRAP))
+		return;
+	map_foreachinallrange([](block_list* bl, va_list ap) -> int32 {
+		const block_list* unit = va_arg(ap, const block_list*);
+		uint16 skill = (uint16)va_arg(ap, int32);
+		map_session_data* sd = reinterpret_cast<map_session_data*>(bl);
+		if (sd->fd <= 0 || !session_isActive(sd->fd) || og_map_lgp_unit(sd, skill) == 0 || !og_lgp_sound_wanted(sd, skill, OG_LGP_SOUND_TRAP))
+			return 0;
+		og_lgp_sound_send(sd, unit->id, skill);
+		return 1;
+	}, const_cast<block_list*>(&unit), AREA_SIZE, BL_PC, &unit, (int32)skill_id);
 }
 
 void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y) {

@@ -22,6 +22,7 @@ requires = []
 client_src = ["og_main.c", "og_log.c", "og_net.c", "og_sha256.c", "og_challenge.c", "../../proto/og_wire.c"]
 define = "OG_MOD_CORE"
 server_key = "og_enable"
+assets = ["item-fallback"]
 summary = "Handshake (X25519, pinned server key), XChaCha20-Poly1305 records with key rotation, profile tag, nonce challenge."
   [[module.param]]
   name = "required"
