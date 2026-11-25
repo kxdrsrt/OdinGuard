@@ -2,6 +2,7 @@
  * Layered, topmost, no taskbar entry, never takes the focus. The operator name of the profile is drawn onto the
  * card at run time, so one splash bitmap serves every operator. */
 #include "og.h"
+#include "og_version.h"
 
 #define SPLASH_BITMAP 100
 #define SPLASH_ICON 1
@@ -127,8 +128,8 @@ void og_splash_show(HINSTANCE inst, DWORD hold_ms)
 }
 
 /* After a successful handshake the game window shows that the server is protected, like Gepard's title:
-   "<operator> | OdinGuard Anti Cheat". The window is found by its process; it is retried for a while because the
-   handshake can finish before the game window is visible. */
+   "<operator> | OdinGuard Anti Cheat <version>". The window is found by its process and kept up to date, because the
+   handshake can finish before the game window is visible and the client may set its own title again. */
 static BOOL CALLBACK title_enum(HWND w, LPARAM lp)
 {
     DWORD pid = 0;
@@ -146,19 +147,20 @@ static BOOL CALLBACK title_enum(HWND w, LPARAM lp)
 
 static DWORD WINAPI title_thread(LPVOID unused)
 {
-    static const char want[] = OG_PROFILE_OPERATOR " | OdinGuard Anti Cheat";
-    int i;
+    static const char want[] = OG_PROFILE_OPERATOR " | OdinGuard Anti Cheat " OG_VERSION_STR;
     (void)unused;
-    for (i = 0; i < 120; i++) {
+    /* For the life of the process: the client sets its own title again at times (window mode switch, map change), and the
+       first window can appear long after the handshake. One enumeration every 1.5 s costs nothing. */
+    for (;;) {
         HWND w = NULL;
         EnumWindows(title_enum, (LPARAM)&w);
         if (w) {
             char cur[256];
+            cur[0] = 0;
             GetWindowTextA(w, cur, sizeof cur);
             if (strcmp(cur, want)) SetWindowTextA(w, want);
-            if (i > 20) return 0;   /* a few more rounds in case the client sets its own title again */
         }
-        Sleep(500);
+        Sleep(1500);
     }
     return 0;
 }
