@@ -3,6 +3,13 @@
 Grundsatz: Es gibt kein Spieler-Setup und kein Spieler-`uninstall`. OdinGuard kommt nur über das Release des
 Betreibers (Studio/`og build`) und dessen Patcher zum Spieler.
 
+Für **eigene Master- und Test-Clients** gibt es `tools/client/og_client.py` (`status`, `install`, `uninstall`, jeweils mit
+`--dry-run`): baut den Loader ein (`ijl15.dll` des Clients bleibt als `ijl15r.dll` in der Kette), kopiert
+`odinguard.dll`/`odin.grf` (`--pack`: auch `odin-dark.grf`), setzt sie in `DATA.INI` nach vorn und sichert das Original.
+`uninstall` gibt den Ordner zurück: Original-`ijl15.dll` zurück, Guard-Dateien, `odinguard.ini`, `odinguard.log`,
+`odinguard-crash\` weg, `DATA.INI` aus der Sicherung. Getestet mit `tests/client/test_og_client.py` und an einer Kopie
+eines echten Clients (alle 5545 Nicht-GRF-Dateien nach Ein- und Ausbau identisch). Details: `docs/INTEGRATION.md` §7.
+
 ## 1. Profil anlegen und bauen
 
 1. `og new <name>.profile.toml --id <id> --operator "<Servername>"` – legt Profil, Server-Schlüssel, Signier-
