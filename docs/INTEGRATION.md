@@ -199,6 +199,23 @@ and deploy the server config. The Studio tab *Rollout* does the same.
 - New OdinGuard version: rebuild with the same profile and keys, deploy server and client together (the Studio
   warns about protocol changes).
 
+## 9a. Web panel (MidgardCP, optional)
+
+The tables `og_client`, `og_component`, `og_ban`, `og_event`, `og_flag` and `og_command` are the interface for web panels; the
+reference copy is `server/sql/odinguard.sql`. A panel such as MidgardCP (planned, `kxdrsrt/MidgardCP`) reads them with a
+read-only database user and writes only:
+
+- `INSERT` / `DELETE` on `og_ban` (machine ban / unban; the login-server checks `og_ban` at every login, no restart),
+- `UPDATE og_flag SET state = 'cleared'` (false positive),
+- `INSERT` into `og_command` (`account_id` or `unique_id`, `command` = `kick` or `message`, `arg`, `issued_by`): the
+  map-server that has the player online runs it within `og_command_interval_ms` (default 3 s) and marks it `done`;
+  rows nobody takes become `expired` after `og_command_expire_s` (default 600). Only these fixed commands exist, no
+  free @commands. Typical use: machine ban in the panel, then `kick` so the ban takes effect immediately.
+
+Keep the column names stable; a change to these tables is a breaking change for panels. Planned on the OdinGuard
+side for panels (no HTTP API in the game server): an account HWID lock table, an opt-in crash-dump upload to the panel, and a published GRF manifest (see
+MidgardCP `docs/07-ecosystem.md`).
+
 ## 10. Troubleshooting
 
 | Symptom | Cause / fix |

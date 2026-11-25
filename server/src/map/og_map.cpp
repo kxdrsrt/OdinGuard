@@ -6,6 +6,7 @@
 #include <cmath>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <common/odinguard.hpp>
 #include <common/showmsg.hpp>
@@ -39,6 +40,7 @@
 TIMER_FUNC(og_lgp_flash_end);
 TIMER_FUNC(og_circle_tick);
 TIMER_FUNC(og_dark_tick);
+TIMER_FUNC(og_command_tick);
 
 static std::string og_esc(const std::string& s) {
 	std::string out(s.size() * 2 + 1, '\0');
@@ -117,6 +119,11 @@ void og_map_init() {
 	add_timer_interval(gettick() + 1000, og_circle_tick, 0, 0, 250);
 	add_timer_func_list(og_dark_tick, "og_dark_tick");
 	add_timer_interval(gettick() + 5000, og_dark_tick, 0, 0, 5000);
+	int32 command_ms = og_setting_int("og_command_interval_ms", 3000);
+	if (command_ms > 0) {
+		add_timer_func_list(og_command_tick, "og_command_tick");
+		add_timer_interval(gettick() + 5000, og_command_tick, 0, 0, std::max(command_ms, 1000));
+	}
 	og_map_guard_init();
 }
 
@@ -605,6 +612,78 @@ TIMER_FUNC(og_dark_tick) {
 			og_dark_check(sd);
 		return 0;
 	});
+	return 0;
+}
+
+// Command queue (og_command): a web panel asks the map-servers to act on players that are online right now, e.g. kick
+// a player right after a machine ban. Only fixed commands, no free @commands. Every map-server looks at the open rows,
+// takes a row only if one of its own players matches (account id or machine id) and marks it done with a conditional
+// UPDATE first, so a command runs at most once even with several map-servers. Rows nobody takes expire after
+// og_command_expire_s (the player is offline; a ban is checked at the next login anyway).
+struct s_og_command_target { uint32 account_id; const std::string* uid; std::vector<map_session_data*>* out; };
+
+static std::vector<map_session_data*> og_command_targets(uint32 account_id, const std::string& uid) {
+	std::vector<map_session_data*> out;
+	s_og_command_target t = { account_id, &uid, &out };
+	map_foreachpc([](map_session_data* sd, va_list ap) -> int32 {
+		auto* t = va_arg(ap, s_og_command_target*);
+		if (sd->fd <= 0 || !sd->state.active)
+			return 0;
+		bool hit = t->account_id != 0 && sd->status.account_id == t->account_id;
+		if (!hit && !t->uid->empty()) {
+			const s_og_info* info = og_info(sd->fd);
+			hit = info != nullptr && info->unique_id == *t->uid;
+		}
+		if (hit)
+			t->out->push_back(sd);
+		return 0;
+	}, &t);
+	return out;
+}
+
+TIMER_FUNC(og_command_tick) {
+	std::string expire = "UPDATE `og_command` SET `state` = 'expired', `done_at` = NOW() WHERE `state` = 'open' AND `created` < NOW() - INTERVAL " +
+		std::to_string(std::max(og_setting_int("og_command_expire_s", 600), 10)) + " SECOND";
+	if (SQL_ERROR == Sql_QueryStr(mmysql_handle, expire.c_str()))
+		Sql_ShowDebug(mmysql_handle);
+
+	struct s_row { uint64 id; uint32 account_id; std::string uid, command, arg, by; };
+	std::vector<s_row> rows;
+	if (SQL_ERROR == Sql_QueryStr(mmysql_handle,
+			"SELECT `id`, `account_id`, `unique_id`, `command`, `arg`, `issued_by` FROM `og_command` WHERE `state` = 'open' ORDER BY `id` LIMIT 50")) {
+		Sql_ShowDebug(mmysql_handle);
+		return 0;
+	}
+	while (SQL_SUCCESS == Sql_NextRow(mmysql_handle)) {
+		char* d[6];
+		for (int32 i = 0; i < 6; i++)
+			Sql_GetData(mmysql_handle, i, &d[i], nullptr);
+		rows.push_back({ strtoull(d[0], nullptr, 10), (uint32)strtoul(d[1], nullptr, 10), d[2] ? d[2] : "", d[3] ? d[3] : "", d[4] ? d[4] : "", d[5] ? d[5] : "" });
+	}
+	Sql_FreeResult(mmysql_handle);
+
+	for (const s_row& r : rows) {
+		if (r.account_id == 0 && r.uid.empty())
+			continue;
+		std::vector<map_session_data*> targets = og_command_targets(r.account_id, r.uid);
+		if (targets.empty())
+			continue; // another map-server, or the player is offline
+		std::string claim = "UPDATE `og_command` SET `state` = 'done', `done_at` = NOW() WHERE `id` = " + std::to_string(r.id) + " AND `state` = 'open'";
+		if (SQL_ERROR == Sql_QueryStr(mmysql_handle, claim.c_str())) {
+			Sql_ShowDebug(mmysql_handle);
+			continue;
+		}
+		if (Sql_NumRowsAffected(mmysql_handle) != 1)
+			continue; // taken by another map-server
+		for (map_session_data* sd : targets) {
+			if (r.command == "kick") {
+				ShowStatus("OdinGuard: web command %" PRIu64 " kicks %s (account %u) for %s: %s\n", r.id, sd->status.name, sd->status.account_id, r.by.c_str(), r.arg.c_str());
+				og_map_event(sd->fd, "web-kick", (r.by + ": " + r.arg).c_str(), OG_ACTION_KICK, 0);
+			} else if (r.command == "message") {
+				clif_displaymessage(sd->fd, r.arg.c_str());
+			}
+		}
+	}
 	return 0;
 }
 

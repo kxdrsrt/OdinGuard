@@ -12,7 +12,7 @@ A Studio release (`og build`) contains this folder plus the generated config.
 | `src/common/og_wire.c/.h`, `og_wire.cpp`, `og_proto.h` | `src/common/` | wire protocol and parsers, byte-identical with the client (`proto/`) |
 | `src/common/og_crypto.cpp` | `src/common/` | compiles `3rdparty/monocypher/monocypher.c` |
 | `src/login/og_login.cpp/.hpp` | `src/login/` | login check: client report, machine bans (exact + fuzzy), `og_client`/`og_component` |
-| `src/map/og_map.cpp/.hpp` | `src/map/` | events, kicks, bans, `!ping`/`!vsync`/`!crash`, machine limit, lite ground skills, name and item colours |
+| `src/map/og_map.cpp/.hpp` | `src/map/` | events, kicks, bans, `!ping`/`!vsync`/`!crash`, machine limit, lite ground skills, name and item colours, command queue `og_command` for web panels |
 | `src/map/og_map_guard.cpp` | `src/map/` | flags and ban waves, rate limit, behaviour rules (no-delay, autopot, macro), honeypot, captcha, command registry |
 | `conf/odinguard_athena.conf` | `conf/` | every switch with defaults; the Studio writes `conf/import/odinguard_conf.txt` |
 | `sql/odinguard.sql` | – | reference DDL; the servers create the tables at start |

@@ -1206,6 +1206,12 @@ const std::vector<const char*>& og_sql_ddl() {
 		" `rule` VARCHAR(64) NOT NULL, `score` INT NOT NULL DEFAULT 0, `ban` TINYINT(1) NOT NULL DEFAULT 0, `detail` VARCHAR(255) NOT NULL DEFAULT '',"
 		" `state` ENUM('open','banned','cleared') NOT NULL DEFAULT 'open',"
 		" PRIMARY KEY (`id`), KEY `account_id` (`account_id`, `state`), KEY `unique_id` (`unique_id`)) ENGINE=InnoDB",
+		"CREATE TABLE IF NOT EXISTS `og_command` ("
+		" `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+		" `account_id` INT UNSIGNED NOT NULL DEFAULT 0, `unique_id` CHAR(64) NOT NULL DEFAULT '',"
+		" `command` ENUM('kick','message') NOT NULL, `arg` VARCHAR(255) NOT NULL DEFAULT '', `issued_by` VARCHAR(24) NOT NULL DEFAULT '',"
+		" `state` ENUM('open','done','expired') NOT NULL DEFAULT 'open', `done_at` DATETIME NULL,"
+		" PRIMARY KEY (`id`), KEY `state` (`state`, `id`)) ENGINE=InnoDB",
 	};
 	return ddl;
 }
