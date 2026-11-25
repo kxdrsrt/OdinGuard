@@ -190,7 +190,7 @@ Commands eines nicht gewählten Moduls sind automatisch aus.
 
 ## 9. odin.grf
 
-Nur Assets (LGP-Kacheln `odinlgp_<farbe>.tga` und `hanmoon1/2.tga`, später UI), gebaut mit `rgrf-core` aus den Asset-Gruppen der
+Nur Assets (LGP-Kacheln `odinlgp_<farbe>.tga` und `hanmoon1/2.tga`, später UI), gebaut mit `rgrf-core` (als Kopie in `studio/vendor/rgrf-core`, Stand in `VENDORED.md`, erneuern mit `studio/tools/vendor-rgrf-core.sh`; Studio und `og` brauchen kein RustyGRF) aus den Asset-Gruppen der
 gewählten Module und danach mit `rgrf_core::verify` geprüft. DLLs und Server-Code liegen nie in der GRF.
 `odin.grf` ist Pflicht-Datei der `ch-file`-Challenge, das Competitive-Pack (`odin-dark.grf`) optional.
 Ladereihenfolge (`DATA.INI`): `0=odin.grf`, `1=odin-dark.grf` (falls gewählt), danach die GRFs des Clients.

@@ -29,6 +29,8 @@ enum Cmd {
     GrfScan { profile: PathBuf, #[arg(long)] client: PathBuf, #[arg(long)] full: bool, #[arg(long, default_value_t = 512)] full_max_mb: u64, #[arg(long)] keep_previous: bool, #[arg(long)] optional: Vec<String> },
     /// Size, tail hash and full hash of a GRF (the values of an og_grf_file / og_grf_mod line)
     GrfHash { grf: PathBuf },
+    /// Make the LGP skill sounds (group lgp-sound) from the operator's own client: data/wav/og_<skill id>.wav
+    LgpSounds { #[arg(long)] client: PathBuf, #[arg(long)] out: PathBuf, #[arg(long)] table: Option<PathBuf> },
     /// Allow an extra GRF (skin, darkworld variant, ...) by its tail hash, under any name
     GrfAllow { profile: PathBuf, grf: PathBuf, #[arg(long, default_value = "")] note: String },
     /// Tool groups of the profile's signature sources (switch off or change the action with signatures.groups)
@@ -120,6 +122,13 @@ fn run(cli: Cli) -> Result<()> {
         Cmd::GrfHash { grf } => {
             let (size, tail) = og_core::grf::tail_hash(&grf)?;
             println!("{size} {tail} {}", og_core::manifest::sha256_file(&grf)?.0);
+        }
+        Cmd::LgpSounds { client, out, table } => {
+            let table = table.unwrap_or_else(|| og_core::repo_root().join("assets/lgp-sound/sounds.tsv"));
+            let r = og_core::lgp_sounds::build(&client, &table, &out)?;
+            r.unreadable.iter().for_each(|u| eprintln!("warning: archive skipped, {u}"));
+            r.missing.iter().for_each(|(id, src)| eprintln!("missing in the client: {src} (skill {id})"));
+            println!("done: {} sounds in {}", r.written.len(), out.display());
         }
         Cmd::GrfAllow { profile, grf, note } => {
             let mut p = Profile::load(&profile)?;

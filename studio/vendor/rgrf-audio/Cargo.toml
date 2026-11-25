@@ -1,0 +1,13 @@
+[package]
+name = "rgrf-audio"
+description = "RustyGRF sound code (vendored copy, see VENDORED.md)"
+version = "0.2.3"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+test = false
+
+[dependencies]
+thiserror = "2.0.21"

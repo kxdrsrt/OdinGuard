@@ -2494,8 +2494,10 @@ name = "og-core"
 version = "1.0.0"
 dependencies = [
  "cc",
+ "encoding_rs",
  "hex",
  "minisign-verify 0.2.5",
+ "rgrf-audio",
  "rgrf-core",
  "serde",
  "serde_json",
@@ -3023,9 +3025,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rgrf-audio"
+version = "0.2.3"
+dependencies = [
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "rgrf-core"
 version = "0.2.3"
-source = "git+https://github.com/kxdrsrt/RustyGRF?rev=63b76c29f8d20c906df83a7b882b09bc648a9fa9#63b76c29f8d20c906df83a7b882b09bc648a9fa9"
 dependencies = [
  "aes",
  "crc32fast",

@@ -12,7 +12,7 @@ Umgebung: macOS (Cross-Compile mingw-w64), Docker (MariaDB + xAthena login/char/
 
 | Suite | Befehl | Umfang | Ergebnis |
 |---|---|---|---|
-| Rust Unit-Tests | `cd studio && cargo test --workspace` | 22 Tests (Liste unten) | grün, 22/22 (auch mit `rgrf-core` aus GitHub in frischem Target) |
+| Rust Unit-Tests | `cd studio && cargo test --workspace` | 23 Tests (Liste unten) | grün, 23/23 (`rgrf-core` liegt als Kopie in `studio/vendor/rgrf-core`, kein Netz und kein RustyGRF nötig) |
 | Rust Lints | `cargo clippy --workspace --all-targets` (+ `apps/studio/src-tauri`) | alle Lints deny | grün, 0 Warnungen |
 | Parser-Fuzzing | `make -C client fuzz` | Handshake, Records, Policy, Challenge, Sigs, Colors; ASan + UBSan | grün, 2 000 000 Iterationen |
 | Detection-Test | `dettest.exe <sigpack> positive <leerer Ordner>` (VM) | Prozess, Modul, Fensterklasse, Fenstertitel, Dateiname, Datei-Hash, GRF-Hash, Mutex, Registry (vorhanden/fehlend), Treiber (aktiver Systemtreiber), Einmal-Meldung, Allowlist | grün, 15/15 (Paket mit 300 Signaturen) |

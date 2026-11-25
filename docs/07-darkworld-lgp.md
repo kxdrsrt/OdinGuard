@@ -103,7 +103,7 @@ Bodenzellen und damit auch keine LGP.
    (23 Skills: Storm Gust, Meteor Storm, Thunderstorm, Fire Pillar, Fire Wall, Eiswand, Safety Wall, Quagmire,
    Sanctuary, Magnus, B.S. Sacramenti, Grand Cross, Hammer Fall, Venom Dust, alle Fallen; Zuordnung
    `assets/lgp-sound/sounds.tsv`, Zuordnung teils **[vermutet]**). Das Paket erlaubt nur 23 Zeichen Dateiname, die
-   Originale heißen länger (`effect\wizard_stormgust.wav`): `tools/pack/build_lgp_sounds.sh <Client-Ordner>` kopiert
+   Originale heißen länger (`effect\wizard_stormgust.wav`): `og lgp-sounds --client <Client-Ordner> --out <Ordner>` kopiert
    sie unter `data\wav\og_<skill id>.wav` aus dem eigenen Client des Betreibers in einen Ordner außerhalb des
    Repos; im Profil `[assets.odin_grf] lgp-sound = "<Ordner>"`, dann landen sie in `odin.grf` (ohne den Ordner gibt
    der Build nur eine Warnung). Einstellbar: global `og_lgp_sound: yes/no`, je Spieler `@lgpsound [on|off]`

@@ -145,7 +145,8 @@ Per-player flags (character variables, `@lgp`-style commands set them; script va
   first, so a different client build stays untouched.
 * **Skill sounds:** the original sound files have names longer than the 23 characters the sound packet allows, so the
   Studio copies them as `data\wav\og_<id>.wav` into `odin.grf`. The copies are made from the operator's own client
-  (never from this repository): `tools/pack/build_lgp_sounds.sh <client folder>`, then
+  (never from this repository): `og lgp-sounds --client <client folder> --out <folder>` (the Studio's own `og`, no other
+  tool needed), then
   `[assets.odin_grf] lgp-sound = "<folder>"` in the profile.
   Which file belongs to which skill is `assets/lgp-sound/sounds.tsv` (taken from the client's own effect table: the
   sound is the one the original animation plays, e.g. Thunderstorm `magician_thunderstorm.wav`, Raigekisai

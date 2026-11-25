@@ -12,9 +12,11 @@ build = "build.rs"
 workspace = true
 
 [dependencies]
+encoding_rs = "0.8.44"
 hex = "0.4"
 minisign-verify = "0.2"
-rgrf-core = { git = "https://github.com/kxdrsrt/RustyGRF", rev = "63b76c29f8d20c906df83a7b882b09bc648a9fa9" }
+rgrf-audio = { path = "../../vendor/rgrf-audio" }
+rgrf-core = { path = "../../vendor/rgrf-core" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"

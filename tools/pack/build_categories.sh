@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Regenerates the staging folders of the OdinGuard competitive pack (assets/competitive/recipe.toml).
+# Maintainer tool for rebuilding the pack assets only: OdinGuard, the Studio and `og` do not need it or the rgrf CLI.
 #
 # Every staging folder is <OUT>/<folder>/data/... and is what the Studio copies into odin-dark.grf
 # (profile: assets.competitive_source = <OUT>, assets.competitive = [<folder>, ...]).
