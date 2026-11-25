@@ -172,8 +172,10 @@ static inline void og_assets_reset(void) {}
 
 #if OG_MOD_SPLASH
 void og_splash_show(HINSTANCE inst, DWORD hold_ms);
+void og_title_apply(void);
 #else
 static inline void og_splash_show(HINSTANCE inst, DWORD hold_ms) { (void)inst; (void)hold_ms; }
+static inline void og_title_apply(void) {}
 #endif
 
 #if OG_MOD_LGP

@@ -91,7 +91,7 @@ Bodenzellen und damit auch keine LGP.
    - **Flash-Zellen:** Skills ohne Unit (Arrow Shower, Hammer Fall, Ganbantein …), kurzlebige Units (Heaven's
      Drive, 100 ms) und Einzelzellen-Units mit Fläche (Meteor-Einschläge) bekommen für `og_lgp_flash_ms`
      (Konfig 1500, Code-Standard 1000) eine Kachel pro Zelle; IDs 100.000.000+ (der Client ignoriert IDs ab 0x7E000000).
-   - `@square 1` = jeder Skill in seiner Farbe, `@square 2..15` = alle Skills in einer Farbe (Reihenfolge der
+   - `@square 1` = jeder Skill in seiner Farbe, `@square 2..18` = alle Skills in einer Farbe (Reihenfolge der
      `og_lgp_color`-Zeilen, die Form bleibt), `@circle` = Sage-Bänder für SG/LoV/MS, `@aoes` = nur SG/LoV/MS
      (**Achtung:** wer `@aoes` an hat, sieht für alle anderen Skills die normalen Effekte; `@lgp` schaltet es zurück).
 4. **Texturen:** `assets/odin-grf/lgp/data/texture/effect/odinlgp_<farbe>[_t][_<symbol>].tga`: 14 Farben × 2 Formen ×

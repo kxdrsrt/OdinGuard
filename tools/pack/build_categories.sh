@@ -154,6 +154,11 @@ for s in woe-bg-pvp all; do
     --fill-void --out "$OUT/$f"
 done
 
+# ---- snipable cells (type 5) get a hatch so they do not look like walkable floor
+for d in floor floor-flat-woe-bg-pvp floor-flat-all; do
+  want "$d" && [ -d "$OUT/$d/data/texture" ] && $PY restyle "$OUT/$d"
+done
+
 # ---- sizes and optional test GRFs
 dirs=(); for x in "${SEL[@]}"; do [ -d "$OUT/$x/data" ] && dirs+=("$OUT/$x"); done
 $PY measure "${dirs[@]}" | tee "$WORK/sizes.tsv"

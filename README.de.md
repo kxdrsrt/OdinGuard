@@ -50,6 +50,24 @@ og verify-release <release-ordner>
 GUI: `cd studio/apps/studio && npm install && npx tauri dev` (Profil öffnen, Module/Challenges/Commands/Signaturen/GRF-Regeln
 wählen, bauen, Rollout-Stufe prüfen). Das Release enthält ein Betreiber-Handbuch (`docs/handbook.md`).
 
+## LGP auf einen Blick
+
+*Lite Ground Skills* ersetzen die unruhigen Bodeneffekte (Storm Gust, Pneuma, Safety Wall, Songs, Fallen ...) durch
+flache, farbige Kacheln: **Quadrat = schützend, Dreieck = schädlich**, ein kleines Symbol zeigt die Art (`+` Buff-Feld,
+`−` Debuff-Zone, Schild, Note ...). Alles ist Spielerwahl:
+
+| Befehl | Wirkung |
+|---|---|
+| `@lgp` | Hauptschalter an/aus. Jeder Skill behält *seine* Farbe. |
+| `@square 2-18` | Farbset: eine Farbe für alle Skills (`@square 1` = Farbe je Skill, `@square off` = aus). |
+| `@aoes` | Kacheln nur für Storm Gust, Lord of Vermilion, Meteor Storm; alle anderen Skills zeigen ihren normalen Effekt. |
+| `@circle 1-5` | Ringe um den eigenen Charakter. |
+| `@lgpsound` | Skill-Sounds bei Kacheln behalten oder stumm. |
+| `!dark [on\|off]` | Competitive-Pack (flache Maps, dunkler Boden) an/aus; Neustart nötig. |
+
+Vollständiger Leitfaden mit allen Optionen, Flags und `!`-Befehlen: [docs/08-lgp-guide.md](docs/08-lgp-guide.md).
+Vorerst nur Pre-Renewal; der Rest von OdinGuard läuft auch mit Renewal-Clients.
+
 ## Inhalt
 
 | Pfad | Inhalt |

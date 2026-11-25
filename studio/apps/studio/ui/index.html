@@ -1,83 +1,178 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
 <title>OdinGuard Studio</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <img src="icon.png" alt="">
-  <div><h1>OdinGuard Studio</h1><span id="ver"></span></div>
-  <div class="grow"></div>
-  <span id="path" class="muted">kein Profil</span>
-  <button id="btn-new">Neu</button>
-  <button id="btn-open">Öffnen</button>
-  <button id="btn-save" class="primary" disabled>Speichern</button>
-</header>
-<nav>
-  <button data-tab="profile" class="active">Profil</button>
-  <button data-tab="modules">Module &amp; Challenges</button>
-  <button data-tab="commands">Commands</button>
-  <button data-tab="signatures">Signaturen</button>
-  <button data-tab="grf">GRF &amp; Mods</button>
-  <button data-tab="pack">Competitive-Pack</button>
-  <button data-tab="build">Build</button>
-  <button data-tab="rollout">Rollout</button>
-  <button data-tab="updates">Updates</button>
-</nav>
-<div id="status"></div>
-<main>
-  <section id="tab-profile" class="tab active">
-    <p class="muted">Ein Profil ist die einzige Quelle für ein Release: Module, Commands, Signaturen, Branding, Ports, Schlüsselpfade und Rollout-Stufe. Geheimnisse stehen nie im Profil, nur ihre Dateipfade.</p>
-    <div class="grid" id="general"></div>
-  </section>
-  <section id="tab-modules" class="tab"><div id="modules"></div></section>
-  <section id="tab-commands" class="tab"><table id="commands"></table></section>
-  <section id="tab-signatures" class="tab">
-    <p class="muted">Cheat-Signaturen nach Tool-Gruppe (Präfix der ID, z. B. <code>OG-RCX-001</code> → RCX). „Standard“ nimmt die Aktion jeder einzelnen Signatur, „aus“ lässt die Gruppe weg, eine Aktion ersetzt sie für die ganze Gruppe. „Client“ = Einträge, die der Guard prüfen kann (der Rest sind Analysedaten). Eigene Signaturen: weitere TOML-Datei unter Profil → Signatur-Quellen.</p>
-    <table id="siggroups"></table>
-  </section>
-  <section id="tab-grf" class="tab">
-    <p class="muted">GRF-Prüfung wie bei Gepard, aber patcher-tauglich: Jede GRF aus <code>DATA.INI</code> muss eine freigegebene Version (Größe + Tabellen-Hash, im Hintergrund zusätzlich der Datei-Hash) oder ein erlaubter Mod sein. Vor einem Patch: gepatchten Client einlesen mit „alte Versionen behalten“, Server-Konfig ausrollen, dann patchen. <code>odin.grf</code> und das Competitive-Pack trägt der Build selbst ein.</p>
-    <div class="grid" id="grf-actions"></div>
-    <p><label>Client-Ordner <input id="grf-client" placeholder="/pfad/zum/client"></label>
-      <label><input type="checkbox" id="grf-full" checked> Datei-Hash (langsam bei großen GRFs)</label>
-      <label><input type="checkbox" id="grf-keep" checked> alte Versionen behalten</label>
-      <button id="btn-grf-scan">Client einlesen</button>
-      <label>Mod-GRF <input id="grf-mod" placeholder="/pfad/zu/dark.grf"></label> <button id="btn-grf-mod">Als erlaubten Mod hinzufügen</button></p>
-    <h3>Freigegebene GRF-Versionen</h3><table id="grf-files"></table>
-    <h3>Erlaubte Mods</h3><table id="grf-mods"></table>
-    <p><label>Erlaubte Ordner für lose Dateien (Komma) <input id="grf-overlays" size="60"></label></p>
-  </section>
-  <section id="tab-pack" class="tab">
-    <p class="muted">Optionales Pack für alle Spieler (gleiche Bedingungen für alle). Jede Kategorie ist einzeln wählbar; das Studio baut daraus <code>odin-dark.grf</code> und trägt seinen Hash in die GRF-Prüfung ein. Rezept: <code>assets/competitive/recipe.toml</code>.</p>
-    <div class="grid" id="pack-src"></div>
-    <table id="pack-cats"></table>
-  </section>
-  <section id="tab-build" class="tab">
-    <button id="btn-preview">Vorschau</button> <button id="btn-build" class="primary">Release bauen</button> <button id="btn-verify">Release prüfen</button>
-    <pre id="build-out"></pre>
-  </section>
-  <section id="tab-rollout" class="tab">
-    <p class="muted">Stufe 1 Warnmodus → 2 Kick → 3 Patcher-Auslieferung → 4 Pflicht. Exportiere <code>og_event</code> und <code>og_client</code> (z. B. <code>mysql -B</code>) der letzten Tage.</p>
-    <div class="grid">
-      <label>og_event-Export <input id="ro-events" placeholder="/pfad/og_event.tsv"></label>
-      <label>og_client-Export <input id="ro-clients" placeholder="/pfad/og_client.tsv"></label>
-      <label>Aktive Accounts <input id="ro-active" type="number" min="1"></label>
-      <label>Fehlalarm-Schwelle % <input id="ro-fp" type="number" value="2" step="0.5"></label>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-profile" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-modules" viewBox="0 0 24 24"><path d="M12 3 3 7.5 12 12l9-4.5zM3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5"/></symbol>
+    <symbol id="i-commands" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h4"/></symbol>
+    <symbol id="i-signatures" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3 8 7.5 9.5 4.5-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol>
+    <symbol id="i-grf" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4.5" rx="1.2"/><path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5M10 13h4"/></symbol>
+    <symbol id="i-pack" viewBox="0 0 24 24"><path d="m14.5 4 5.5 5.5M4 20l5-1.5L20 7.5 16.5 4 5.5 15z"/><path d="m9 19.5-4.5-4.5"/></symbol>
+    <symbol id="i-build" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0 4.9 4.9L11 19.8a2.1 2.1 0 0 1-3-3z"/><path d="m16 4.5 3.5 3.5"/></symbol>
+    <symbol id="i-rollout" viewBox="0 0 24 24"><path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2M12 15l-3-3a22 22 0 0 1 2-4 12 12 0 0 1 9-5c0 2.7-.8 7.3-5 11a22 22 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1 5 0 5 0M12 15v5s3-.6 4-2c1-1.6 0-5 0-5"/></symbol>
+    <symbol id="i-updates" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-14 5.3M4 12a8 8 0 0 1 14-5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M9 7V4h6v3"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.8 2.8L16 9.5"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol>
+    <symbol id="i-error" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M4 12h16"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-5M4 17a9 9 0 1 1 16 0"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+  <aside class="sidebar" aria-label="Sections">
+    <div class="brand">
+      <img src="icon.png" alt="" width="34" height="34">
+      <div><b>OdinGuard</b><span>Studio <i id="ver"></i></span></div>
     </div>
-    <div id="stages"></div>
-    <button id="btn-ro-status">Auswerten</button> <button id="btn-ro-advance" class="primary">Nächste Stufe</button>
-    <pre id="ro-out"></pre>
-  </section>
-  <section id="tab-updates" class="tab">
-    <p class="muted">Studio-Updates kommen signiert (minisign) über https. Core- und Signatur-Updates prüft <code>og update</code> zusätzlich mit signiertem Manifest, verweigert Downgrades und erlaubt Rollback.</p>
-    <label>Kanal <select id="upd-channel"><option value="stable">stable</option><option value="beta">beta</option></select></label>
-    <button id="btn-upd">Nach Studio-Update suchen</button>
-    <pre id="upd-out"></pre>
-  </section>
-</main>
+    <nav id="nav">
+      <div class="nav-group">Configure</div>
+      <button data-tab="profile" class="active"><svg class="ic"><use href="#i-profile"/></svg>Profile</button>
+      <button data-tab="modules"><svg class="ic"><use href="#i-modules"/></svg>Modules</button>
+      <button data-tab="commands"><svg class="ic"><use href="#i-commands"/></svg>Commands</button>
+      <button data-tab="signatures"><svg class="ic"><use href="#i-signatures"/></svg>Signatures</button>
+      <div class="nav-group">Client files</div>
+      <button data-tab="grf"><svg class="ic"><use href="#i-grf"/></svg>GRF &amp; Mods</button>
+      <button data-tab="pack"><svg class="ic"><use href="#i-pack"/></svg>Competitive pack</button>
+      <div class="nav-group">Release</div>
+      <button data-tab="build"><svg class="ic"><use href="#i-build"/></svg>Build</button>
+      <button data-tab="rollout"><svg class="ic"><use href="#i-rollout"/></svg>Rollout</button>
+      <button data-tab="updates"><svg class="ic"><use href="#i-updates"/></svg>Updates</button>
+    </nav>
+  </aside>
+
+  <div class="content">
+    <header class="toolbar">
+      <div class="title">
+        <h1 id="page-title">Profile</h1>
+        <span id="path" class="path" title="">No profile open</span>
+      </div>
+      <span id="valid" class="pill" hidden></span>
+      <div class="spacer"></div>
+      <button id="btn-new" class="btn"><svg class="ic"><use href="#i-plus"/></svg>New</button>
+      <button id="btn-open" class="btn"><svg class="ic"><use href="#i-open"/></svg>Open</button>
+      <button id="btn-save" class="btn primary" disabled><svg class="ic"><use href="#i-save"/></svg>Save</button>
+    </header>
+
+    <main id="main">
+      <div id="welcome" class="empty" hidden>
+        <img src="icon.png" alt="" width="72" height="72">
+        <h2>Start with a profile</h2>
+        <p>A profile is the single source for a release: modules, commands, signatures, branding, ports, key paths and rollout stage. Secrets never live in the profile, only their file paths.</p>
+        <div class="row center">
+          <button id="btn-new2" class="btn primary"><svg class="ic"><use href="#i-plus"/></svg>New profile</button>
+          <button id="btn-open2" class="btn"><svg class="ic"><use href="#i-open"/></svg>Open profile</button>
+        </div>
+      </div>
+
+      <section id="tab-profile" class="tab active needs-profile">
+        <p class="lead">One profile builds one release. Keys are referenced by file path and never stored in the profile.</p>
+        <div id="general"></div>
+      </section>
+
+      <section id="tab-modules" class="tab needs-profile">
+        <p class="lead">Pick what the guard does. Switching a module on also switches on everything it needs.</p>
+        <div id="modules" class="cards"></div>
+      </section>
+
+      <section id="tab-commands" class="tab needs-profile">
+        <p class="lead">Enable, rename and rate-limit every command. <code>!</code> commands are answered by the client guard, <code>@</code> commands by the server.</p>
+        <div class="searchbar"><svg class="ic"><use href="#i-search"/></svg><input id="q-commands" type="search" placeholder="Filter commands" aria-label="Filter commands"></div>
+        <div class="table-wrap"><table id="commands"></table></div>
+      </section>
+
+      <section id="tab-signatures" class="tab needs-profile">
+        <p class="lead">Cheat signatures by tool group (prefix of the id, e.g. <code>OG-RCX-001</code> is RCX). <b>Default</b> keeps each signature's own action, <b>Off</b> drops the group, any action replaces it for the whole group. <b>Client</b> counts entries the guard can check; the rest is analysis data. Custom signatures: add another TOML file under Profile → Signature sources.</p>
+        <div class="searchbar"><svg class="ic"><use href="#i-search"/></svg><input id="q-sigs" type="search" placeholder="Filter groups" aria-label="Filter groups"></div>
+        <div class="table-wrap"><table id="siggroups"></table></div>
+      </section>
+
+      <section id="tab-grf" class="tab needs-profile">
+        <p class="lead">Like Gepard's GRF check, but made for patchers: every GRF in <code>DATA.INI</code> must be an approved version (size + table hash, plus the file hash in the background) or an allowed mod. Before patching: scan the patched client with “Keep previous versions”, roll out the server config, then patch. <code>odin.grf</code> and the competitive pack are added by the build itself.</p>
+        <h3>Reaction</h3>
+        <div class="card form" id="grf-actions"></div>
+        <h3>Scan a client</h3>
+        <div class="card form">
+          <label class="fld wide"><span>Client folder</span><input id="grf-client" placeholder="/path/to/client"></label>
+          <label class="switch-row"><span>Include file hash <small>slow on big GRFs</small></span><span class="switch"><input type="checkbox" id="grf-full" checked><i></i></span></label>
+          <label class="switch-row"><span>Keep previous versions <small>for the time between patches</small></span><span class="switch"><input type="checkbox" id="grf-keep" checked><i></i></span></label>
+          <div class="row"><button id="btn-grf-scan" class="btn primary"><svg class="ic"><use href="#i-scan"/></svg>Scan client</button></div>
+        </div>
+        <h3>Approved GRF versions</h3>
+        <div class="table-wrap"><table id="grf-files"></table></div>
+        <h3>Allowed mods</h3>
+        <div class="card form">
+          <label class="fld wide"><span>Mod GRF</span><input id="grf-mod" placeholder="/path/to/mod.grf"></label>
+          <div class="row"><button id="btn-grf-mod" class="btn"><svg class="ic"><use href="#i-plus"/></svg>Allow this mod</button></div>
+        </div>
+        <div class="table-wrap"><table id="grf-mods"></table></div>
+        <h3>Loose files</h3>
+        <div class="card form">
+          <label class="fld wide"><span>Allowed folders (comma separated)</span><input id="grf-overlays"></label>
+        </div>
+      </section>
+
+      <section id="tab-pack" class="tab needs-profile">
+        <p class="lead">Optional pack for all players, so everyone competes under the same conditions. Every category can be chosen on its own; the Studio builds <code>odin-dark.grf</code> from them and adds its hash to the GRF check. Recipe: <code>assets/competitive/recipe.toml</code>.</p>
+        <div class="card form" id="pack-src"></div>
+        <div class="table-wrap"><table id="pack-cats"></table></div>
+      </section>
+
+      <section id="tab-build" class="tab needs-profile">
+        <p class="lead">Preview shows what the release would contain. Build writes server config, client files and the manifest into the output folder.</p>
+        <div class="row">
+          <button id="btn-preview" class="btn"><svg class="ic"><use href="#i-eye"/></svg>Preview</button>
+          <button id="btn-build" class="btn primary"><svg class="ic"><use href="#i-build"/></svg>Build release</button>
+          <button id="btn-verify" class="btn"><svg class="ic"><use href="#i-check"/></svg>Verify a release</button>
+        </div>
+        <pre id="build-out" class="out" hidden></pre>
+      </section>
+
+      <section id="tab-rollout" class="tab needs-profile">
+        <p class="lead">Stage 1 warn mode, 2 kick, 3 patcher delivery, 4 mandatory. Export <code>og_event</code> and <code>og_client</code> (e.g. with <code>mysql -B</code>) for the last days; the gate checks false positives before the next stage.</p>
+        <div id="stages" class="stages"></div>
+        <div class="card form">
+          <label class="fld"><span>og_event export</span><input id="ro-events" placeholder="/path/og_event.tsv"></label>
+          <label class="fld"><span>og_client export</span><input id="ro-clients" placeholder="/path/og_client.tsv"></label>
+          <label class="fld"><span>Active accounts</span><input id="ro-active" type="number" min="1"></label>
+          <label class="fld"><span>False-positive limit (%)</span><input id="ro-fp" type="number" value="2" step="0.5"></label>
+        </div>
+        <div class="row">
+          <button id="btn-ro-status" class="btn"><svg class="ic"><use href="#i-gauge"/></svg>Evaluate</button>
+          <button id="btn-ro-advance" class="btn primary"><svg class="ic"><use href="#i-arrow"/></svg>Next stage</button>
+        </div>
+        <pre id="ro-out" class="out" hidden></pre>
+      </section>
+
+      <section id="tab-updates" class="tab">
+        <p class="lead">Studio updates are signed (minisign) and fetched over https. Core and signature updates are additionally checked by <code>og update</code> with a signed manifest; downgrades are refused and rollback is possible.</p>
+        <div class="card form">
+          <label class="fld"><span>Channel</span><select id="upd-channel"><option value="stable">stable</option><option value="beta">beta</option></select></label>
+        </div>
+        <div class="row"><button id="btn-upd" class="btn primary"><svg class="ic"><use href="#i-updates"/></svg>Check for updates</button></div>
+        <pre id="upd-out" class="out" hidden></pre>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </div>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

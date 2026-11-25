@@ -35,7 +35,7 @@ static const uint8_t sig_flatquad[] = { 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x0C, 0x53
 static const uint8_t sig_getjob[] = { 0x56, 0x8B, 0xF1, 0xFF, 0xB6, 0xB8, 0x02, 0x00, 0x00 };
 
 /* colour index of the marker (low byte); the same list is in the server conf (og_lgp_color) */
-static const char *const g_colors[] = { "blue", "cyan", "yellow", "red", "orange", "green", "purple", "brown", "pink", "white", "gold", "grey", "lightgrey", "lime" };
+static const char *const g_colors[] = { "blue", "cyan", "yellow", "red", "orange", "green", "purple", "brown", "pink", "white", "gold", "grey", "lightgrey", "lime", "lightgreen", "peach", "skyblue" };
 
 /* symbol number (marker bits 16..23, 0 = none) -> tile name suffix; same list as SYMBOLS in make_lgp_tiles.py */
 static const char *const g_symbols[] = { "plus", "minus", "shield", "note", "dnote", "apple", "heart", "star", "cross", "zzz", "coin", "swirl", "drum",

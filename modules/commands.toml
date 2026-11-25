@@ -41,6 +41,17 @@ help_en = "Writes a diagnostic report (odinguard-crash folder) for bug reports."
 help_de = "schreibt einen Fehlerbericht (Ordner odinguard-crash) für Bug-Meldungen"
 
 [[command]]
+id = "dark"
+kind = "client"
+name = "dark"
+module = "client-commands"
+group = 0
+rate_ms = 2000
+params = "[on|off]"
+help_en = "Switches the competitive pack (flat WoE / battleground maps, dark floor) on or off for the next game start."
+help_de = "Schaltet das Competitive-Pack (flache WoE-/BG-Maps, dunkler Boden) für den nächsten Spielstart ein oder aus"
+
+[[command]]
 id = "lgp"
 kind = "server"
 name = "lgp"

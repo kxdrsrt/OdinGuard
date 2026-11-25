@@ -462,6 +462,7 @@ static int handshake(og_sock *k)
     crypto_wipe(e_sec, 32);
     k->state = S_ACTIVE;
     og_log("handshake ok on socket %u", (unsigned)k->s);
+    og_title_apply();
     return 1;
 fail:
     crypto_wipe(e_sec, 32);

@@ -32,8 +32,14 @@ competitive_enforce = ["bg"]        # battlegrounds require the pack, WoE and Pv
 
 ## 2. How the player chooses
 
-The pack is just a GRF in `DATA.INI`. Players who prefer the normal maps leave `odin-dark.grf` out of `DATA.INI`
-(a launcher or patcher option, e.g. the OpenThorPatcher setting "competitive visuals: on/off", writes that line).
+The pack is **not mandatory**; it ships with OdinGuard and the client, and every player decides for themselves
+(unless the operator enforces it on some maps, see below). It is just a GRF in `DATA.INI`:
+
+* **In game:** `!dark on` / `!dark off` (a client command answered by the guard) inserts or removes `odin-dark.grf`
+  directly after `odin.grf` in `DATA.INI`. **Restart the game** afterwards, because the client reads `DATA.INI` only
+  at start. `!dark` alone shows the current state.
+* **Launcher / patcher:** the OpenThorPatcher setting "competitive visuals: on/off" writes the same line.
+* **By hand:** add or delete the `odin-dark.grf` line.
 OdinGuard accepts both states: the pack is an *optional protected file*: if present it must be the exact version the
 operator built, if absent nothing is reported.
 
@@ -87,4 +93,8 @@ og grf-scan myserver.profile.toml --client /path/to/client --keep-previous   # b
 ```
 
 `split_by_mode.py` copies the grounds an `.rsw` names (rush maps use the castles' ground) into the rsw's mode so a mode
-never points at a ground the operator did not pick. The staging folders are never part of the repository.
+never points at a ground the operator did not pick; the mode folders of the dark floor (`floor-flat-woe|bg|pvp`) get
+their `data/texture` tiles too. `competitive.py restyle` (part of `build_categories.sh`) draws **snipable** cells
+(type 5: not walkable, shots pass, e.g. water edges and barricade gaps) with a red hatch, because the dark floor
+otherwise makes them look like walkable ground while the cursor turns red. Use `@gatdebug` (see the LGP guide) to look
+at the server's walk grid on a map. The staging folders are never part of the repository.

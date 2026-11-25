@@ -35,6 +35,7 @@ void og_map_lgp_flash(map_session_data* viewer, const block_list& src, uint16 sk
 /// the same for a square of the given range around x,y (single-cell units with an area: Meteor Storm impacts ...)
 void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint16 skill_id, uint16 skill_lv, int16 x, int16 y, int32 range, bool skip_center);
 /// @lgp (kind 0), @square (1), @circle (2), @aoes (3); arg "", "on", "off" or a colour set (1 + og_lgp_color lines)
+void og_map_gatdebug(map_session_data* sd, int32 radius);
 void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg);
 /// @namecolor: permanent name colour of a character (-1 = none)
 void og_map_set_namecolor(map_session_data* sd, int32 rgb);

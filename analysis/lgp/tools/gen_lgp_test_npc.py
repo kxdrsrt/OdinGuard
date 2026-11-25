@@ -62,7 +62,7 @@ order = [s for _, s in rows]
 cstart, cend, cnames, crgb = [], [], [], []
 rgb = {"blue": 0x5AA0FF, "cyan": 0x40E0E0, "yellow": 0xFFE000, "red": 0xFF5030, "orange": 0xFF9020, "green": 0x30D060,
        "purple": 0xB060F0, "brown": 0xC08040, "pink": 0xFF70B0, "white": 0xF0F0F0, "gold": 0xFFBE3C, "grey": 0x969696,
-       "lightgrey": 0xD0D6E0, "lime": 0xAAEB28}
+       "lightgrey": 0xD0D6E0, "lime": 0xAAEB28, "lightgreen": 0x96FFA0, "peach": 0xFFAA78, "skyblue": 0x78C8FF}
 scol = []
 for c, cname in enumerate(colors):
     idx = [i for i, (cc, _) in enumerate(rows) if cc == c]

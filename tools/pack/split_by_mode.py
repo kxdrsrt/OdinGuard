@@ -54,6 +54,10 @@ def split(src, dst_prefix):
         os.makedirs(os.path.join(dst, 'data'))
         for lf in sorted(names):
             shutil.copyfile(os.path.join(data, files[lf]), os.path.join(dst, 'data', files[lf]))
+        # floor-flat folders also carry the tile textures (data/texture), every mode needs them
+        tex = os.path.join(src, 'data', 'texture')
+        if os.path.isdir(tex):
+            shutil.copytree(tex, os.path.join(dst, 'data', 'texture'))
         print('%s-%s: %d files' % (dst_prefix, m, len(names)))
     left = [f for lf, f in files.items() if not any(lf in n for n in out.values())]
     if left:

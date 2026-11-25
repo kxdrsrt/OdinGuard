@@ -102,6 +102,12 @@ check "no guard-code / exe-code / challenge failure for the honest client" '[ "$
 check "honest client: no GRF manifest report" '[ "$(events "type LIKE \"grf:%\"")" = 0 ]'
 check "challenges were sent (map log)" 'maplog | grep -q "enabled (required: no, log only: yes, .*challenges nonce code time file"'
 
+echo "== 1b !dark switches the competitive pack in DATA.INI"
+out=$(nettest Mave OgTester '!dark off;!dark on;!dark' 12)
+check "!dark off removes the pack from DATA.INI (restart needed)" 'printf "%s\n" "$out" | grep -q "Competitive pack OFF"'
+check "!dark on puts it back" 'printf "%s\n" "$out" | grep -q "Competitive pack ON. Restart"'
+check "DATA.INI lists odin-dark.grf again after on" 'vm "type $WIN_E2E\\DATA.INI" | grep -qi "odin-dark.grf"'
+
 echo "== 2 aura unlocks (player + GM)"
 out=$(nettest ogtest2 OgPlayer '+aura green' 5)
 check "player cannot wear a locked aura" 'printf '%s\n' "$out" | grep -q "You have not unlocked green yet"'
@@ -226,6 +232,8 @@ echo "== 7 tamper stubs: speed hack, code patches (test process only)"
 sql "DELETE FROM og_event"
 nettest ogtest2 OgPlayer '!ping' 160 "OG_SPEEDTEST=3" | grep -E "speed test" | sed 's/^/   /'
 check "speed hack: patched time API reported (api-hook)" '[ "$(events "type=\"api-hook\"")" -ge 1 ]'
+# the time challenge is issued at a random moment; one more session if the first did not meet it
+[ "$(events "type=\"challenge:time\"")" -ge 1 ] || nettest ogtest2 OgPlayer '!ping' 160 "OG_SPEEDTEST=3" >/dev/null
 check "speed hack: time challenge fails" '[ "$(events "type=\"challenge:time\"")" -ge 1 ]'
 sql "DELETE FROM og_event"
 nettest ogtest2 OgPlayer '!ping' 30 "OG_CODEPATCH=guard" | grep -E "code patch" | sed 's/^/   /'

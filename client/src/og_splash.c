@@ -125,3 +125,47 @@ void og_splash_show(HINSTANCE inst, DWORD hold_ms)
     g_inst = inst;
     if (hold_ms) CloseHandle(CreateThread(NULL, 0, splash_thread, (LPVOID)(UINT_PTR)hold_ms, 0, NULL));
 }
+
+/* After a successful handshake the game window shows that the server is protected, like Gepard's title:
+   "<operator> | OdinGuard Anti Cheat". The window is found by its process; it is retried for a while because the
+   handshake can finish before the game window is visible. */
+static BOOL CALLBACK title_enum(HWND w, LPARAM lp)
+{
+    DWORD pid = 0;
+    char cls[64], cur[256];
+    GetWindowThreadProcessId(w, &pid);
+    if (pid != GetCurrentProcessId() || !IsWindowVisible(w) || GetWindow(w, GW_OWNER)) return TRUE;
+    GetClassNameA(w, cls, sizeof cls);
+    if (!_stricmp(cls, "OdinGuardSplash")) return TRUE;
+    cur[0] = 0;
+    GetWindowTextA(w, cur, sizeof cur);
+    if (!cur[0]) return TRUE;
+    *(HWND *)lp = w;
+    return FALSE;
+}
+
+static DWORD WINAPI title_thread(LPVOID unused)
+{
+    static const char want[] = OG_PROFILE_OPERATOR " | OdinGuard Anti Cheat";
+    int i;
+    (void)unused;
+    for (i = 0; i < 120; i++) {
+        HWND w = NULL;
+        EnumWindows(title_enum, (LPARAM)&w);
+        if (w) {
+            char cur[256];
+            GetWindowTextA(w, cur, sizeof cur);
+            if (strcmp(cur, want)) SetWindowTextA(w, want);
+            if (i > 20) return 0;   /* a few more rounds in case the client sets its own title again */
+        }
+        Sleep(500);
+    }
+    return 0;
+}
+
+void og_title_apply(void)
+{
+    static volatile LONG started;
+    if (InterlockedExchange(&started, 1)) return;
+    CloseHandle(CreateThread(NULL, 0, title_thread, NULL, 0, NULL));
+}

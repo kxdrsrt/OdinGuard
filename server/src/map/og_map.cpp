@@ -3,6 +3,7 @@
 #include "og_map.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <unordered_map>
 
@@ -132,12 +133,16 @@ bool og_map_chat_command(map_session_data* sd, const char* message) {
 		*arg++ = '\0';
 	// client commands can be renamed in the profile (og_cmdname_<id>)
 	const char* id = !strcmpi(cmd, og_map_command_name("ping")) ? "ping" : !strcmpi(cmd, og_map_command_name("vsync")) ? "vsync"
-		: !strcmpi(cmd, og_map_command_name("crash")) ? "crash" : nullptr;
+		: !strcmpi(cmd, og_map_command_name("crash")) ? "crash" : !strcmpi(cmd, og_map_command_name("dark")) ? "dark" : nullptr;
 	if (id == nullptr || !og_module_on("og_client_commands", true))
 		return false;
 	if (!og_map_command_allowed(sd, id, !strcmp(id, "crash") ? 60000 : !strcmp(id, "ping") ? 2000 : 1000))
 		return true;
+	char argbuf[32] = "";
+	if (arg != nullptr)
+		safestrncpy(argbuf, arg, sizeof(argbuf));
 	safestrncpy(cmd, id, sizeof(cmd));
+	arg = argbuf; // cmd is reused for the id and held the argument
 	if (!og_session_active(sd->fd)) {
 		clif_displaymessage(sd->fd, "OdinGuard is not active on this client.");
 		return true;
@@ -146,7 +151,13 @@ bool og_map_chat_command(map_session_data* sd, const char* message) {
 		og_send_ping(sd->fd);
 	else if (!strcmpi(cmd, "crash"))
 		og_send_command(sd->fd, "crash");
-	else if (arg != nullptr && (!strcmpi(arg, "on") || !strcmpi(arg, "off")))
+	else if (!strcmpi(cmd, "dark")) {
+		char c[32] = "dark";
+		if (!strcmpi(arg, "on") || !strcmpi(arg, "off"))
+			safesnprintf(c, sizeof(c), "dark %s", arg);
+		og_send_command(sd->fd, c);
+	}
+	else if (!strcmpi(arg, "on") || !strcmpi(arg, "off"))
 		og_send_command(sd->fd, !strcmpi(arg, "on") ? "vsync on" : "vsync off");
 	else
 		og_send_command(sd->fd, "vsync");
@@ -357,11 +368,11 @@ void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint
 // @circle: rings of tiles around the player's own character (look 1-5). The tiles are lite units that only this
 // player's client knows (ids OG_CIRCLE_BASE+i); a timer redraws them when the character moved.
 #define OG_CIRCLE_BASE 105000000u
-#define OG_CIRCLE_IDS 128
+#define OG_CIRCLE_IDS 192
 struct s_og_circle_look { int32 radii[3]; int32 colours[3]; };
 // colour numbers as in og_lgp_color / client patch: 1 cyan, 2 yellow, 4 orange, 12 lightgrey
 static const s_og_circle_look og_circle_looks[] = {
-	{ { 4, 0, 0 }, { 1, 0, 0 } },   // 1: 9x9 cyan (Storm Gust, Lord of Vermilion, Magnus ...)
+	{ { 4, 0, 0 }, { 1, 0, 0 } },   // 1: radius 4 cyan (Storm Gust, Lord of Vermilion, Magnus ...)
 	{ { 3, 0, 0 }, { 4, 0, 0 } },   // 2: 7x7 orange (Meteor Storm)
 	{ { 2, 0, 0 }, { 2, 0, 0 } },   // 3: 5x5 yellow
 	{ { 2, 3, 4 }, { 2, 4, 1 } },   // 4: all three rings: 5x5 yellow, 7x7 orange, 9x9 cyan
@@ -389,9 +400,10 @@ static void og_circle_draw(map_session_data* sd, s_og_circle_state& st, int32 lo
 	for (int32 ring = 0; ring < 3; ring++) {
 		int32 radius = lk.radii[ring];
 		if (radius <= 0) continue;
-		for (int32 dy = -radius; dy <= radius; dy++) {
-			for (int32 dx = -radius; dx <= radius; dx++) {
-				if (std::max(abs(dx), abs(dy)) != radius) continue;
+		// a round ring: cells whose centre is about radius + 0.5 cells away (like Gepard's circles, not a square frame)
+		for (int32 dy = -radius - 1; dy <= radius + 1; dy++) {
+			for (int32 dx = -radius - 1; dx <= radius + 1; dx++) {
+				if (fabs(sqrt((double)(dx * dx + dy * dy)) - (radius + 0.5)) >= 0.5) continue;
 				int16 cx = sd->x + dx, cy = sd->y + dy;
 				if (n >= OG_CIRCLE_IDS || cx < 0 || cy < 0 || cx >= map[sd->m].xs || cy >= map[sd->m].ys || map_getcell(sd->m, cx, cy, CELL_CHKWALL))
 					continue;
@@ -441,6 +453,54 @@ TIMER_FUNC(og_circle_tick) {
 		return 0;
 	});
 	return 0;
+}
+
+// Admin check of a map: the server's own walk grid around the player drawn as lite tiles (green = walkable, purple =
+// not walkable but shots pass, i.e. the snipable cells). Compare it with what the client shows (competitive pack:
+// teal = walkable, brown = snipable) to see whether client .gat and server map cache agree.
+#define OG_GATDBG_BASE 106000000u
+#define OG_GATDBG_IDS 4096
+static std::unordered_map<int32, int32> og_gatdbg_count;
+
+void og_map_gatdebug(map_session_data* sd, int32 radius) {
+	for (int32 i = 0; i < og_gatdbg_count[sd->id]; i++) {
+		unsigned char buf[6];
+		WBUFW(buf, 0) = 0x0120;
+		WBUFL(buf, 2) = OG_GATDBG_BASE + i;
+		clif_send(buf, sizeof(buf), sd, SELF);
+	}
+	og_gatdbg_count[sd->id] = 0;
+	if (radius <= 0 || sd->m < 0)
+		return;
+	radius = std::min(radius, 20);
+	const s_og_info* info = og_info(sd->fd);
+	bool palette = info != nullptr && info->lgp_palette;
+	int32 n = 0;
+	for (int32 dy = -radius; dy <= radius; dy++) {
+		for (int32 dx = -radius; dx <= radius; dx++) {
+			int16 cx = sd->x + dx, cy = sd->y + dy;
+			if (n >= OG_GATDBG_IDS || cx < 0 || cy < 0 || cx >= map[sd->m].xs || cy >= map[sd->m].ys)
+				continue;
+			bool nopass = map_getcell(sd->m, cx, cy, CELL_CHKNOPASS);
+			bool noreach = map_getcell(sd->m, cx, cy, CELL_CHKNOREACH);
+			if (nopass && noreach)
+				continue;
+			unsigned char buf[23];
+			WBUFW(buf, 0) = 0x09ca;
+			WBUFW(buf, 2) = sizeof(buf);
+			WBUFL(buf, 4) = OG_GATDBG_BASE + n;
+			WBUFL(buf, 8) = palette ? (0x7C000000u | (nopass ? 6u : 5u)) : sd->id;
+			WBUFW(buf, 12) = cx;
+			WBUFW(buf, 14) = cy;
+			WBUFL(buf, 16) = 0xc8;
+			WBUFB(buf, 20) = 0;
+			WBUFB(buf, 21) = 1;
+			WBUFB(buf, 22) = 1;
+			clif_send(buf, sizeof(buf), sd, SELF);
+			n++;
+		}
+	}
+	og_gatdbg_count[sd->id] = n;
 }
 
 // Enforced competitive visuals: og_dark_enforce lists the modes (bg, woe, pvp, all, none) for which a player must have
@@ -527,7 +587,7 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 		else look = cur > 0 ? 0 : 1; // no argument: toggle
 		if (look > looks) {
 			char m[CHAT_SIZE_MAX];
-			safesnprintf(m, sizeof(m), "Circle looks: 1 = 9x9 ring, 2 = 7x7, 3 = 5x5, 4 = all three rings, 5 = 9 cells (sight); @circle off.");
+			safesnprintf(m, sizeof(m), "Circle looks: 1 = radius 4, 2 = radius 3, 3 = radius 2, 4 = all three, 5 = radius 9 (sight); @circle off.");
 			clif_displaymessage(sd->fd, m);
 			return;
 		}
@@ -536,7 +596,7 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 			clif_displaymessage(sd->fd, "Circle off.");
 		else {
 			char m[CHAT_SIZE_MAX];
-			static const char* names[] = { "", "9x9 ring", "7x7 ring", "5x5 ring", "5x5, 7x7 and 9x9 rings", "ring at 9 cells" };
+			static const char* names[] = { "", "radius 4 circle", "radius 3 circle", "radius 2 circle", "circles of radius 2, 3 and 4", "radius 9 circle (sight)" };
 			safesnprintf(m, sizeof(m), "Circle %d on: %s around your character.", look, names[look]);
 			clif_displaymessage(sd->fd, m);
 		}
@@ -657,6 +717,7 @@ void og_map_on_load(map_session_data* sd, bool first) {
 
 void og_map_on_quit(map_session_data* sd) {
 	og_circle_states.erase(sd->id);
+	og_gatdbg_count.erase(sd->id);
 	og_map_guard_quit(sd);
 	if (og_enabled() && og_namecolor(sd) >= 0)
 		og_announce_name(sd, true);

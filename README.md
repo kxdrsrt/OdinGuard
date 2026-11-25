@@ -71,6 +71,24 @@ tie every server to one vendor. OdinGuard is:
 | Features | `!ping`, `!vsync`, `!crash` (crash reports with the last packets), colour names and items, **lite ground skills** (`@lgp`, `@square`, `@circle`, `@lgpsound`: every ground skill as a flat tile in its colour, shape and symbol, [guide](docs/08-lgp-guide.md)), **competitive pack** per mode (flat WoE / battleground / PvP maps, optionally required on those maps, [guide](docs/09-competitive-pack.md)) |
 | Tooling | Studio GUI (Tauri 2) and `og` CLI: profiles, validation, reproducible signed releases, signature packages, GRF scan, rollout gate, signed self-update |
 
+## LGP at a glance
+
+*Lite ground skills* replace the busy ground effects (Storm Gust, Pneuma, Safety Wall, songs, traps, ...) with flat,
+coloured tiles: **square = protective, triangle = hostile**, a small symbol says what kind (`+` buffing field,
+`−` harmful zone, shield, note, ...). Everything is a player choice:
+
+| Command | What it does |
+|---|---|
+| `@lgp` | Master switch: LGP on/off. Every skill keeps *its own* colour. |
+| `@square 2-18` | Colour set: one single colour for every skill (`@square 1` = per-skill colours, `@square off` = off). |
+| `@aoes` | Tiles only for Storm Gust, Lord of Vermilion and Meteor Storm; all other skills show their normal effect. |
+| `@circle 1-5` | Rings around your own character. |
+| `@lgpsound` | Keep or mute the skill sounds while tiles are shown. |
+| `!dark [on\|off]` | Competitive pack (flat maps, dark floor) on/off; restart the game to apply. |
+
+Full guide with every option, flag and `!` command: [docs/08-lgp-guide.md](docs/08-lgp-guide.md). Pre-renewal only for
+now; the rest of OdinGuard also works on renewal clients.
+
 ## Quick start
 
 ```sh

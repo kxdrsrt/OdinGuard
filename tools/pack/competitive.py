@@ -8,6 +8,7 @@ extracted files:
   stage    <manifest.tsv> <cache> <out>      copy the entries of a manifest from extracted GRFs, check MD5
   floor    --maps-dir D --tiles T --out O   ground tiles on every top surface of the maps' .gnd
            [--markers M] [--fill-void] [--maps FILE]
+  restyle  <staging dir>...                  make snipable cells (gat type 5) look blocked: hatch on the brown quadrants
   measure  <dir>...                          files and bytes per staging folder (TSV)
 """
 import argparse, hashlib, os, re, shutil, struct, sys
@@ -201,6 +202,40 @@ def floor(args):
     print('floor: %d maps, %d tile textures, %s; skipped %d %s' % (len(stats), len(used), tot, len(skipped), skipped[:10]))
 
 
+def restyle(args):
+    """Snipable cells (type 5: not walkable, shots pass) are drawn brown by the darkworld tiles and look like floor.
+    A diagonal hatch in a warning colour on exactly those quadrants makes them read as 'blocked'. The quadrants are found
+    by colour, so the tile naming and orientation do not matter. Needs Pillow."""
+    from PIL import Image, ImageDraw
+    n = 0
+    for d in args.dirs:
+        for root, _, files in os.walk(os.path.join(d, 'data', 'texture')):
+            for f in files:
+                if not re.match(r'^c-?\d+c-?\d+c-?\d+c-?\d+\.bmp$', f, re.I):
+                    continue
+                path = os.path.join(root, f)
+                im = Image.open(path).convert('RGB')
+                w, h = im.size
+                hw, hh = w // 2, h // 2
+                dr = ImageDraw.Draw(im)
+                changed = False
+                for qx in (0, 1):
+                    for qy in (0, 1):
+                        box = (qx * hw, qy * hh, (qx + 1) * hw, (qy + 1) * hh)
+                        px = im.crop(box).resize((1, 1), Image.BOX).getpixel((0, 0))
+                        if px[0] > px[2] + 15 and px[0] > 70:      # the brown of type 5
+                            q = Image.new('RGB', (hw, hh), (62, 46, 40))
+                            qd = ImageDraw.Draw(q)
+                            for k in range(-hh, hw + hh, 8):
+                                qd.line((k, 0, k + hh, hh), fill=(214, 96, 52), width=2)
+                            im.paste(q, box[:2])
+                            changed = True
+                if changed:
+                    im.save(path)
+                    n += 1
+    print('restyle: %d tile textures changed' % n)
+
+
 def measure(args):
     print('folder\tfiles\tbytes')
     for d in args.dirs:
@@ -225,6 +260,7 @@ def main():
     a.add_argument('--maps', help='file with map names (default: every .gnd in --maps-dir)')
     a.add_argument('--out', required=True)
     a.set_defaults(f=floor)
+    a = sp.add_parser('restyle'); a.add_argument('dirs', nargs='+'); a.set_defaults(f=restyle)
     a = sp.add_parser('measure'); a.add_argument('dirs', nargs='+'); a.set_defaults(f=measure)
     args = ap.parse_args(); args.f(args)
 

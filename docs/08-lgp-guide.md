@@ -19,14 +19,14 @@ to switch anything on.
 | Command | What it does |
 |---|---|
 | `@lgp` | **Switches LGP on or off.** This is the master switch. With LGP on, every skill is drawn in *its own colour* (colour set 1). |
-| `@square` | **Chooses the colour set** (it also switches LGP on). `@square 1` = every skill in its own colour (same as plain `@lgp`), `@square 2` to `@square 15` = *one single colour for every skill* (the colour order is listed below). `@square off` = LGP off. |
+| `@square` | **Chooses the colour set** (it also switches LGP on). `@square 1` = every skill in its own colour (same as plain `@lgp`), `@square 2` to `@square 18` = *one single colour for every skill* (the colour order is listed below). `@square off` = LGP off. |
 
 So `@lgp` and `@square` do **not** do the same thing: `@lgp` is the on/off switch, `@square <n>` selects *which
-colouring* is used while it is on. `@square 1` and `@lgp on` end up in the same state; `@square 2..15` is for players
+colouring* is used while it is on. `@square 1` and `@lgp on` end up in the same state; `@square 2..18` is for players
 who want, for example, all skill cells in one high-contrast colour (`@square 5` = every skill red).
 
-Colour numbers for `@square 2..15`: 2 blue, 3 cyan, 4 yellow, 5 red, 6 orange, 7 green, 8 purple, 9 brown, 10 pink,
-11 white, 12 gold, 13 grey, 14 light grey, 15 lime (order of the `og_lgp_color:` lines in the server config).
+Colour numbers for `@square 2..18`: 2 blue, 3 cyan, 4 yellow, 5 red, 6 orange, 7 green, 8 purple, 9 brown, 10 pink,
+11 white, 12 gold, 13 grey, 14 light grey, 15 lime, 16 light green, 17 peach, 18 sky blue (order of the `og_lgp_color:` lines in the server config).
 
 ## 2. Shape = what the skill does, colour = which skill, symbol = what kind
 
@@ -40,11 +40,11 @@ never be mixed up.
 
 Colours (colour set 1): blue = water/ice (Storm Gust, Deluge), cyan = holy/ice walls (Magnus, Basilica), yellow =
 lightning/wind (Lord of Vermilion, Thunderstorm), red = fire (Meteor Storm, Volcano, Fire Pillar), orange = Fire
-Wall, green = Pneuma, Sanctuary, lime = Violent Gale, purple = poison/gravity, brown = earth (Heaven's Drive,
+Wall, light green = Pneuma, green = Sanctuary, lime = Violent Gale, purple = poison/gravity, brown = earth (Heaven's Drive,
 Quagmire, Arrow Shower, Hammer Fall), pink = Safety Wall, white = Land Protector, light grey = Wall of Fog, gold =
-songs, grey = traps and Fiber Lock.
+Bard songs, peach = Dancer dances and Moonlit, sky blue = ensemble songs, grey = traps and Fiber Lock.
 
-Symbols in the middle of the tile (only in colour set 1; `@square 2..15` stays plain):
+Symbols in the middle of the tile (only in colour set 1; `@square 2..18` stays plain):
 
 | Symbol | Skills |
 |---|---|
@@ -70,7 +70,7 @@ Every command has a one-second delay between uses.
 | Command | Meaning |
 |---|---|
 | `@lgp [on\|off]` | LGP on/off. Without an argument it toggles. |
-| `@square [on\|off\|1-15]` | Colour set, see section 1. `@square` without argument = on, colour set 1. |
+| `@square [on\|off\|1-18]` | Colour set, see section 1. `@square` without argument = on, colour set 1. |
 | `@aoes [on\|off]` | Only Storm Gust, Lord of Vermilion and Meteor Storm are drawn as tiles; **all other skills show their normal effects**. `@lgp` or `@square` switches this back. |
 | `@circle [on\|off\|1-5]` | Rings of tiles around **your own character** (independent of LGP, also works together with it): 1 = 9x9 ring (cyan), 2 = 7x7 ring (orange), 3 = 5x5 ring (yellow), 4 = all three rings, 5 = ring at 9 cells (light grey, sight distance). Without an argument it toggles look 1. The rings follow you; `@circle off` removes them. |
 | `@lgpsound [on\|off]` | Sound of the ground skills for LGP players. LGP removes the animation, and with it the sound, so the server sends the sound alone for the main skills (Storm Gust, Meteor Storm, Thunderstorm, Fire Pillar, Fire Wall, Ice Wall, Safety Wall, Quagmire, Sanctuary, Magnus, B.S. Sacramenti, Grand Cross, Hammer Fall, Venom Dust, all traps). The client's own `/sound` switch still mutes it. |
@@ -84,6 +84,8 @@ for a feature that should *simplify* the effects, so rings around the own charac
 |---|---|
 | `@lgptest [skill id]` | (group 98+) casts every LGP skill one after the other on an empty field (or one skill). `@lgptest stop` aborts. |
 | NPC **LGP Test** (Prontera 156,186) | The same through a menu: run everything, by colour, one skill, seconds per skill. Talk to it during a run to abort. The NPC gives itself the items the skills consume (gems via `bNoGemStone`, traps, bottles, stones). |
+| `@gatdebug [radius]` | (group 98+) draws the **server's walk grid** around you as tiles: green = walkable, purple = snipable (not walkable, shots pass). Compare it with what the client floor shows; used to check competitive maps. |
+| `@ogwarp <map> <x> <y>` | (group 98+) warps into maps that `@mapmove` refuses (nowarpto battleground maps). Logging in directly on a battleground map sends you back to the save point. |
 | `@oginfo [char]`, `@ogflags [char]` | Guard information; unrelated to LGP, listed for completeness. |
 
 ## 5. `!` commands (client commands, typed in the chat)
@@ -94,6 +96,7 @@ These are answered by the OdinGuard client itself, not by the server. They need 
 |---|---|
 | `!ping` | Latency to the server. |
 | `!vsync [on\|off]` | Removes or restores the frame limit. |
+| `!dark [on\|off]` | Switches the [competitive pack](09-competitive-pack.md) (`odin-dark.grf`) on or off in `DATA.INI`. **Restart the game** to apply it. Without argument it shows the current state. Servers can still require the pack on some maps. |
 | `!crash` | Writes a crash report (folder `odinguard-crash`) for bug reports. |
 
 The `@`-commands of this guide are server commands; operators can switch off, rename or limit every command in the
@@ -107,7 +110,7 @@ and `conf/import/odinguard_conf.txt` (generated by the Studio; the import file w
 | Key | Meaning |
 |---|---|
 | `og_lgp_enable: yes/no` | Master switch of the module on the server. |
-| `og_lgp_color: <name>,<number>` | A colour (name and the number in the client patch). The order of the lines is the order of `@square 2..15`. |
+| `og_lgp_color: <name>,<number>` | A colour (name and the number in the client patch). The order of the lines is the order of `@square 2..18`. |
 | `og_lgp: <skill id>,<colour>` | Colour of a skill. Skills not listed are not drawn as tiles. Style prefixes (`set2,...`) give a skill a different look in a colour set. |
 | `og_lgp_attack: <ids>` | Skills shown as triangles (hostile). All others are squares. |
 | `og_lgp_symbol_def: <name>,<number>` / `og_lgp_symbol: <name>,<ids>` | Symbols of the client patch and which skill gets which. `none` removes a symbol. |
@@ -121,7 +124,7 @@ Per-player flags (character variables, `@lgp`-style commands set them; script va
 | Variable | Meaning |
 |---|---|
 | `og_flags` | bit 1 (value 2) = LGP on, bit 3 (value 8) = only SG/LoV/MS (`@aoes`), bit 4 (value 16) = no LGP sound. Bit 0 belongs to the aura feature. |
-| `og_lgp_style` | 0 = colour set 1, 2..15 = one colour for every skill (the `@square` number). |
+| `og_lgp_style` | 0 = colour set 1, 2..18 = one colour for every skill (the `@square` number). |
 | `og_circle` | 0 = off, 1..5 = `@circle` look. |
 
 ## 7. Client side and the files you ship

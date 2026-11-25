@@ -41,6 +41,9 @@ PALETTE = [
     ("grey", (125, 125, 135)),
     ("lightgrey", (200, 206, 218)),
     ("lime", (170, 235, 40)),
+    ("lightgreen", (150, 255, 160)),   # Pneuma
+    ("peach", (255, 170, 120)),        # dancer dances
+    ("skyblue", (120, 200, 255)),      # ensemble songs
 ]
 
 # symbols inside the tile (marker bits 16..23); the number is the index here + 1, same list in client/src/og_lgp.c
@@ -248,8 +251,8 @@ def build(root):
     # fallback without the client patch: 0xc8 = protective (square), 0xc9 = hostile (triangle), both tinted blue
     out["hanmoon2.tga"] = (tri_tile((170, 210, 255), H3, 3, fill_alpha=150), "vanilla")
     for name, rgb in PALETTE:
-        out[f"odinlgp_{name}.tga"] = (tile(rgb, False, H3, 3, fill_alpha=140, border_scale=0.40), "patch")
-        out[f"odinlgp_{name}_t.tga"] = (tri_tile(rgb, H3 * 1.12, 3, fill_alpha=150, border_scale=0.40), "patch")
+        out[f"odinlgp_{name}.tga"] = (tile(rgb, False, H3, 3, fill_alpha=185, border_scale=0.55), "patch")
+        out[f"odinlgp_{name}_t.tga"] = (tri_tile(rgb, H3 * 1.12, 3, fill_alpha=190, border_scale=0.55), "patch")
         for sym in SYMBOLS:
             out[f"odinlgp_{name}_{sym}.tga"] = (place(out[f"odinlgp_{name}.tga"][0], sym, SIZE / 2, SIZE / 2, 11.5), "patch")
             out[f"odinlgp_{name}_t_{sym}.tga"] = (place(out[f"odinlgp_{name}_t.tga"][0], sym, SIZE / 2, SIZE / 2 + 7, 9.5), "patch")
