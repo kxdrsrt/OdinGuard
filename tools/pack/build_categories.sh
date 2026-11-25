@@ -109,16 +109,17 @@ while IFS= read -r m; do
   "$RGRF" -q --names cp949 --json map info "$CL/$g" "data\\$m.rsw" | python3 -c 'import json,sys; print(json.load(sys.stdin)["ground"].lower()[:-4])'
 done < "$LISTS/maps-woe-bg-pvp.txt" | sort -u > "$LISTS/ground-woe-bg-pvp.txt"
 
-# ---- flat maps (rgrf map flat = GRF Editor's flat maps maker: flatten, remove light and shadow)
+# ---- flat maps (rgrf map flat = GRF Editor's flat maps maker: flatten, remove light and shadow, neutral sun light like
+#      darkworld, so the floor tiles keep their colours on every map)
 for s in woe-bg-pvp all; do
   f="flat-maps-$s"
   if want "$f" || { want "floor-flat-$s" && [ ! -d "$OUT/$f/data" ]; }; then
     rm -rf "${OUT:?}/$f"; mkdir -p "$OUT/$f"
     if [ "$s" = all ]; then
-      rg map flat --flatten --remove-light --remove-shadow --overwrite -o "$WORK/$f.grf" "$CL" || flat_rc=$?
+      rg map flat --flatten --remove-light --remove-shadow --reset-light --overwrite -o "$WORK/$f.grf" "$CL" || flat_rc=$?
     else
       # shellcheck disable=SC2046
-      rg map flat --flatten --remove-light --remove-shadow --overwrite -o "$WORK/$f.grf" "$CL" $(cat "$LISTS/maps-$s.txt") || flat_rc=$?
+      rg map flat --flatten --remove-light --remove-shadow --reset-light --overwrite -o "$WORK/$f.grf" "$CL" $(cat "$LISTS/maps-$s.txt") || flat_rc=$?
     fi
     # exit 3 = some maps of the client lack files (listed above); they are left out
     case "${flat_rc:-0}" in 0|3) ;; *) echo "rgrf map flat failed ($flat_rc)" >&2; exit 1;; esac; flat_rc=0

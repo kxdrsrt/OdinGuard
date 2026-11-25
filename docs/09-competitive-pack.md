@@ -85,6 +85,13 @@ ground was raised, the boxes missed the new ground at height 0, so walkable cell
 could not be clicked (measured: all 79 WoE/BG/PvP maps had such boxes, e.g. `prtg_cas01` around 84,11). Since then
 `map flat --flatten` computes the heights of every box from the new ground like BrowEdit. Rebuild older
 `flat-maps-*` folders (`tools/pack/build_categories.sh flat-maps-woe-bg-pvp flat-maps-all`).
+Measured in the game (2026-11-25, test client, 10 positions on `prtg_cas01`): with the old pack the cursor was red on
+green tiles at 3 of them (85,9 among them), with the new one only on black tiles. The darkworld originals had correct
+boxes, which is why the problem only showed up with our own flat maps.
+
+The flat maps also get a neutral sun light (`--reset-light`, diffuse and ambient 1) like the darkworld maps, so the
+tiles keep their colours on every map. The map's fog (`data\fogparametertable.txt`, e.g. red on `bat_a01`) stays; players
+switch it with `/fog`.
 
 ## 4. Aliased maps need their minimaps
 
