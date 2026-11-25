@@ -3,6 +3,7 @@
  * card at run time, so one splash bitmap serves every operator. */
 #include "og.h"
 #include "og_version.h"
+#include <stdio.h>
 
 #define SPLASH_BITMAP 100
 #define SPLASH_ICON 1
@@ -145,14 +146,23 @@ static BOOL CALLBACK title_enum(HWND w, LPARAM lp)
     return FALSE;
 }
 
+static volatile LONG g_title_state;   /* 0 = waiting for the server, 1 = protected, 2 = handshake failed */
+static char g_title_note[100];
+
 static DWORD WINAPI title_thread(LPVOID unused)
 {
-    static const char want[] = OG_PROFILE_OPERATOR " | OdinGuard Anti Cheat " OG_VERSION_STR;
+    static const char base[] = OG_PROFILE_OPERATOR " | OdinGuard Anti Cheat " OG_VERSION_STR;
     (void)unused;
     /* For the life of the process: the client sets its own title again at times (window mode switch, map change), and the
-       first window can appear long after the handshake. One enumeration every 1.5 s costs nothing. */
+       first window can appear long after the guard started. One enumeration every 1.5 s costs nothing.
+       The title always says what the guard is doing, so a player (or you) can see at a glance whether it is active. */
     for (;;) {
         HWND w = NULL;
+        char want[256];
+        LONG st = g_title_state;
+        if (st == 1) snprintf(want, sizeof want, "%s", base);
+        else if (st == 2) snprintf(want, sizeof want, "%s - NOT CONNECTED (%s)", base, g_title_note);
+        else snprintf(want, sizeof want, "%s - waiting for the server", base);
         EnumWindows(title_enum, (LPARAM)&w);
         if (w) {
             char cur[256];
@@ -165,9 +175,23 @@ static DWORD WINAPI title_thread(LPVOID unused)
     return 0;
 }
 
-void og_title_apply(void)
+void og_title_start(void)
 {
     static volatile LONG started;
     if (InterlockedExchange(&started, 1)) return;
     CloseHandle(CreateThread(NULL, 0, title_thread, NULL, 0, NULL));
+}
+
+void og_title_fail(void)
+{
+    /* a failed attempt must not overwrite a working connection (the client opens several sockets) */
+    if (g_title_state == 1) return;
+    snprintf(g_title_note, sizeof g_title_note, "%s", og_last_log());
+    g_title_state = 2;
+}
+
+void og_title_apply(void)
+{
+    g_title_state = 1;
+    og_title_start();
 }

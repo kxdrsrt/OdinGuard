@@ -125,7 +125,7 @@ OG_API int OdinGuard_Start(void)
     return 1;
 }
 
-static DWORD WINAPI start_thread(LPVOID p) { (void)p; OdinGuard_Start(); return 0; }
+static DWORD WINAPI start_thread(LPVOID p) { (void)p; og_title_start(); OdinGuard_Start(); return 0; }
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res)
 {

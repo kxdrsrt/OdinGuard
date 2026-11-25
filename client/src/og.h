@@ -36,6 +36,7 @@ int  og_unhex(const char *hex, uint8_t *out, size_t n);
 /* log, message box, profile secrets */
 void og_log_open(const char *dir);
 void og_log(const char *fmt, ...);
+const char *og_last_log(void);
 int  og_message(const char *text, UINT type);
 extern HINSTANCE og_instance;
 int  og_contains_i(const char *hay, const char *needle);
@@ -172,10 +173,14 @@ static inline void og_assets_reset(void) {}
 
 #if OG_MOD_SPLASH
 void og_splash_show(HINSTANCE inst, DWORD hold_ms);
-void og_title_apply(void);
+void og_title_apply(void);   /* handshake ok */
+void og_title_fail(void);    /* handshake failed: the title says so */
+void og_title_start(void);   /* from the first moment: "waiting for the server" */
 #else
 static inline void og_splash_show(HINSTANCE inst, DWORD hold_ms) { (void)inst; (void)hold_ms; }
 static inline void og_title_apply(void) {}
+static inline void og_title_fail(void) {}
+static inline void og_title_start(void) {}
 #endif
 
 #if OG_MOD_LGP

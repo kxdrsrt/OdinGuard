@@ -15,10 +15,18 @@ void og_log_open(const char *dir)
     g_log = fopen(p, "a");
 }
 
+static char g_last[160];
+
+/* the last message logged, for the window title ("not protected: ...") */
+const char *og_last_log(void) { return g_last; }
+
 void og_log(const char *fmt, ...)
 {
     va_list ap;
     SYSTEMTIME t;
+    va_start(ap, fmt);
+    vsnprintf(g_last, sizeof g_last, fmt, ap);
+    va_end(ap);
     if (!g_log) return;
     GetLocalTime(&t);
     fprintf(g_log, "%04d-%02d-%02d %02d:%02d:%02d ", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);

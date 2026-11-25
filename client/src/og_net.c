@@ -467,6 +467,7 @@ static int handshake(og_sock *k)
 fail:
     crypto_wipe(e_sec, 32);
     k->state = S_FAILED;
+    og_title_fail();
     return 0;
 }
 
