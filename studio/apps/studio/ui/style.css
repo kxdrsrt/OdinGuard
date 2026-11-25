@@ -98,6 +98,7 @@ main { flex: 1; overflow-y: auto; padding: 22px 28px 90px; scroll-behavior: smoo
 .lead b { color: var(--text); font-weight: 600; }
 body.no-profile .needs-profile { display: none !important; }
 .empty { max-width: 520px; margin: 9vh auto 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.empty[hidden] { display: none; }
 .empty p { color: var(--muted); margin: 0 0 8px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; align-items: center; }
 .row.center { justify-content: center; }

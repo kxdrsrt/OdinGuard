@@ -39,6 +39,12 @@ Deutsch: [README.de.md](README.de.md)
   <img src="docs/images/lgp-symbols.png" width="49%" alt="All LGP tile symbols in four colours, square and triangle">
 </p>
 
+<p align="center">
+  <img src="docs/images/studio-modules.png" width="49%" alt="OdinGuard Studio: choose the modules of the guard">
+  &nbsp;
+  <img src="docs/images/studio-signatures.png" width="49%" alt="OdinGuard Studio: cheat signatures by tool group, one reaction per group">
+</p>
+
 ---
 
 Open-source, modular anti-cheat for Ragnarok Online servers running **rAthena** (or a fork). Server owners pick

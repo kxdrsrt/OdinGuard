@@ -281,7 +281,8 @@ async function busy(btn, label, fn) {
 function render() {
   const has = !!profile;
   document.body.classList.toggle("no-profile", !has);
-  $("#path").textContent = path || "No profile open";
+  // the left-to-right mark keeps the leading "/" in place in the right-to-left (ellipsis at the start) label
+  $("#path").textContent = path ? "\u200E" + path : "No profile open";
   $("#path").title = path || "";
   $("#btn-save").disabled = !has;
   setTab(tab);

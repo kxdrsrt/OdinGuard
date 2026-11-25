@@ -26,6 +26,12 @@ deshalb werden beide gemeinsam versioniert und veröffentlicht (ein Tag, ein Rel
   <img src="docs/images/lgp-symbols.png" width="49%" alt="Alle LGP-Symbole in vier Farben, Quadrat und Dreieck">
 </p>
 
+<p align="center">
+  <img src="docs/images/studio-modules.png" width="49%" alt="OdinGuard Studio: Module des Guards auswählen">
+  &nbsp;
+  <img src="docs/images/studio-signatures.png" width="49%" alt="OdinGuard Studio: Cheat-Signaturen je Tool-Gruppe mit eigener Reaktion">
+</p>
+
 English: [README.md](README.md) · Einbau-Anleitung: [docs/INTEGRATION.md](docs/INTEGRATION.md)
 
 Universelles, modulares Anti-Cheat-Toolkit für Ragnarok-Online-Server auf rAthena-Basis (getestet mit xAthena,
