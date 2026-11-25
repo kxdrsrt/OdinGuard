@@ -163,7 +163,9 @@ static inline void og_input_enable(int on) { (void)on; }
 #if OG_MOD_ASSETS
 int  og_assets_check(char *detail, size_t cap);   /* 1 = loose-file violation; manifest hits are reported directly */
 void og_assets_reset(void);
+int  og_darkpack_active(void);
 #else
+static inline int og_darkpack_active(void) { return 0; }
 static inline int og_assets_check(char *detail, size_t cap) { if (cap) detail[0] = 0; return 0; }
 static inline void og_assets_reset(void) {}
 #endif

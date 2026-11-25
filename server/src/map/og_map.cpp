@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <string>
+#include <unordered_map>
 
 #include <common/odinguard.hpp>
 #include <common/showmsg.hpp>
@@ -29,11 +30,14 @@
 #define OG_REG_FLAGS "og_flags"         // bit 1: lite ground skills, bit 3: only SG/LoV/MS (bit 0 was "hide auras", now src/map/aura.cpp)
 #define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2.. = one colour for every skill (og_lgp_color order)
 #define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
+#define OG_REG_CIRCLE "og_circle"       // @circle look 1-5, 0 = off
 #define OG_FLAG_LGP 2
 #define OG_FLAG_LGP_AOES 8
 #define OG_FLAG_LGP_NOSOUND 16 // @lgpsound off: no skill sounds for the lite ground skills
 
 TIMER_FUNC(og_lgp_flash_end);
+TIMER_FUNC(og_circle_tick);
+TIMER_FUNC(og_dark_tick);
 
 static std::string og_esc(const std::string& s) {
 	std::string out(s.size() * 2 + 1, '\0');
@@ -108,6 +112,10 @@ void og_map_init() {
 			Sql_ShowDebug(mmysql_handle);
 	og_set_handlers(og_map_event, og_map_text, og_map_pong);
 	add_timer_func_list(og_lgp_flash_end, "og_lgp_flash_end");
+	add_timer_func_list(og_circle_tick, "og_circle_tick");
+	add_timer_interval(gettick() + 1000, og_circle_tick, 0, 0, 250);
+	add_timer_func_list(og_dark_tick, "og_dark_tick");
+	add_timer_interval(gettick() + 5000, og_dark_tick, 0, 0, 5000);
 	og_map_guard_init();
 }
 
@@ -346,6 +354,145 @@ void og_map_lgp_flash_area(map_session_data* viewer, const block_list& src, uint
 		add_timer(gettick() + og_setting_int("og_lgp_flash_ms", 1000), og_lgp_flash_end, viewer->id, (intptr_t)((start << 8) | (uint32)sent));
 }
 
+// @circle: rings of tiles around the player's own character (look 1-5). The tiles are lite units that only this
+// player's client knows (ids OG_CIRCLE_BASE+i); a timer redraws them when the character moved.
+#define OG_CIRCLE_BASE 105000000u
+#define OG_CIRCLE_IDS 128
+struct s_og_circle_look { int32 radii[3]; int32 colours[3]; };
+// colour numbers as in og_lgp_color / client patch: 1 cyan, 2 yellow, 4 orange, 12 lightgrey
+static const s_og_circle_look og_circle_looks[] = {
+	{ { 4, 0, 0 }, { 1, 0, 0 } },   // 1: 9x9 cyan (Storm Gust, Lord of Vermilion, Magnus ...)
+	{ { 3, 0, 0 }, { 4, 0, 0 } },   // 2: 7x7 orange (Meteor Storm)
+	{ { 2, 0, 0 }, { 2, 0, 0 } },   // 3: 5x5 yellow
+	{ { 2, 3, 4 }, { 2, 4, 1 } },   // 4: all three rings: 5x5 yellow, 7x7 orange, 9x9 cyan
+	{ { 9, 0, 0 }, { 12, 0, 0 } },  // 5: ring at 9 cells (light grey, sight distance)
+};
+struct s_og_circle_state { int16 m = -1, x = -1, y = -1; int32 look = 0, count = 0; };
+static std::unordered_map<int32, s_og_circle_state> og_circle_states;
+
+static void og_circle_clear(map_session_data* sd, s_og_circle_state& st) {
+	for (int32 i = 0; i < st.count; i++) {
+		unsigned char buf[6];
+		WBUFW(buf, 0) = 0x0120; // ZC_SKILL_DISAPPEAR
+		WBUFL(buf, 2) = OG_CIRCLE_BASE + i;
+		clif_send(buf, sizeof(buf), sd, SELF);
+	}
+	st.count = 0;
+	st.m = -1;
+}
+
+static void og_circle_draw(map_session_data* sd, s_og_circle_state& st, int32 look) {
+	const s_og_circle_look& lk = og_circle_looks[look - 1];
+	const s_og_info* info = og_info(sd->fd);
+	bool palette = info != nullptr && info->lgp_palette;
+	int32 n = 0;
+	for (int32 ring = 0; ring < 3; ring++) {
+		int32 radius = lk.radii[ring];
+		if (radius <= 0) continue;
+		for (int32 dy = -radius; dy <= radius; dy++) {
+			for (int32 dx = -radius; dx <= radius; dx++) {
+				if (std::max(abs(dx), abs(dy)) != radius) continue;
+				int16 cx = sd->x + dx, cy = sd->y + dy;
+				if (n >= OG_CIRCLE_IDS || cx < 0 || cy < 0 || cx >= map[sd->m].xs || cy >= map[sd->m].ys || map_getcell(sd->m, cx, cy, CELL_CHKWALL))
+					continue;
+				unsigned char buf[23];
+				WBUFW(buf, 0) = 0x09ca; // ZC_SKILL_ENTRY5
+				WBUFW(buf, 2) = sizeof(buf);
+				WBUFL(buf, 4) = OG_CIRCLE_BASE + n;
+				WBUFL(buf, 8) = palette ? (0x7C000000u | (uint32)lk.colours[ring]) : sd->id;
+				WBUFW(buf, 12) = cx;
+				WBUFW(buf, 14) = cy;
+				WBUFL(buf, 16) = 0xc8;
+				WBUFB(buf, 20) = 0;
+				WBUFB(buf, 21) = 1;
+				WBUFB(buf, 22) = 1;
+				clif_send(buf, sizeof(buf), sd, SELF);
+				n++;
+			}
+		}
+	}
+	st.count = n;
+	st.m = sd->m;
+	st.x = sd->x;
+	st.y = sd->y;
+	st.look = look;
+}
+
+TIMER_FUNC(og_circle_tick) {
+	if (!og_module_on("og_lgp_enable", true))
+		return 0;
+	map_foreachpc([](map_session_data* sd, va_list) -> int32 {
+		if (sd->fd <= 0 || !session_isActive(sd->fd) || !og_session_active(sd->fd) || !sd->state.active)
+			return 0;
+		int32 look = (int32)pc_readglobalreg(sd, add_str(OG_REG_CIRCLE));
+		auto it = og_circle_states.find(sd->id);
+		if (look < 1 || look > (int32)(sizeof(og_circle_looks) / sizeof(*og_circle_looks))) {
+			if (it != og_circle_states.end()) {
+				og_circle_clear(sd, it->second);
+				og_circle_states.erase(it);
+			}
+			return 0;
+		}
+		s_og_circle_state& st = og_circle_states[sd->id];
+		if (st.m == sd->m && st.x == sd->x && st.y == sd->y && st.look == look)
+			return 0;
+		og_circle_clear(sd, st);
+		og_circle_draw(sd, st, look);
+		return 0;
+	});
+	return 0;
+}
+
+// Enforced competitive visuals: og_dark_enforce lists the modes (bg, woe, pvp, all, none) for which a player must have
+// the competitive pack (odin-dark.grf, accepted version) loaded. Anyone without it is sent back to the save point with
+// a message. The client reports the pack in the hello and every heartbeat; nobody is judged before the first heartbeat.
+enum { OG_MODE_NONE = 0, OG_MODE_BG = 1, OG_MODE_WOE = 2, OG_MODE_PVP = 4 };
+
+static int32 og_dark_modes() {
+	char list[64];
+	safestrncpy(list, og_setting("og_dark_enforce", "none"), sizeof(list));
+	int32 modes = 0;
+	for (char* t = strtok(list, ", "); t != nullptr; t = strtok(nullptr, ", ")) {
+		if (!strcmpi(t, "all")) modes |= OG_MODE_BG | OG_MODE_WOE | OG_MODE_PVP;
+		else if (!strcmpi(t, "bg")) modes |= OG_MODE_BG;
+		else if (!strcmpi(t, "woe")) modes |= OG_MODE_WOE;
+		else if (!strcmpi(t, "pvp")) modes |= OG_MODE_PVP;
+	}
+	return modes;
+}
+
+static int32 og_map_mode(int16 m) {
+	map_data* md = map_getmapdata(m);
+	if (md == nullptr) return OG_MODE_NONE;
+	if (md->getMapFlag(MF_BATTLEGROUND)) return OG_MODE_BG;
+	if (md->getMapFlag(MF_GVG_CASTLE) || md->getMapFlag(MF_GVG_DUNGEON) || md->getMapFlag(MF_GVG) || md->getMapFlag(MF_GVG_TE) || md->getMapFlag(MF_GVG_TE_CASTLE)) return OG_MODE_WOE;
+	if (md->getMapFlag(MF_PVP)) return OG_MODE_PVP;
+	return OG_MODE_NONE;
+}
+
+static void og_dark_check(map_session_data* sd) {
+	int32 modes = og_dark_modes();
+	if (modes == 0 || sd->m < 0 || (og_map_mode(sd->m) & modes) == 0 || pc_get_group_level(sd) >= og_setting_int("og_dark_gm_level", 98))
+		return;
+	const s_og_info* info = og_info(sd->fd);
+	if (info == nullptr || !info->alive_seen || info->darkpack)
+		return;
+	og_report(sd->fd, "darkpack:required", map_getmapdata(sd->m)->name, OG_ACTION_LOG, 0);
+	clif_displaymessage(sd->fd, "This map needs the competitive pack (odin-dark.grf) of this server. Update your client (patcher) and try again.");
+	pc_setpos_savepoint(*sd);
+}
+
+TIMER_FUNC(og_dark_tick) {
+	if (og_dark_modes() == 0)
+		return 0;
+	map_foreachpc([](map_session_data* sd, va_list) -> int32 {
+		if (sd->fd > 0 && session_isActive(sd->fd) && og_session_active(sd->fd))
+			og_dark_check(sd);
+		return 0;
+	});
+	return 0;
+}
+
 struct s_og_area { const block_list* src; const void* buf; int32 len; bool (*keep)(map_session_data*, const block_list&, void*); void* ctx; };
 
 void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx) {
@@ -372,6 +519,29 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 			: on ? "Lite ground skill sounds on (the client's /sound switch still mutes them)." : "Lite ground skill sounds off.");
 		return;
 	}
+	if (kind == 2) {
+		int32 looks = (int32)(sizeof(og_circle_looks) / sizeof(*og_circle_looks)), cur = (int32)pc_readglobalreg(sd, add_str(OG_REG_CIRCLE)), look = cur;
+		if (!strcmpi(arg, "off")) look = 0;
+		else if (!strcmpi(arg, "on")) look = cur > 0 ? cur : 1;
+		else if (atoi(arg) > 0) look = atoi(arg);
+		else look = cur > 0 ? 0 : 1; // no argument: toggle
+		if (look > looks) {
+			char m[CHAT_SIZE_MAX];
+			safesnprintf(m, sizeof(m), "Circle looks: 1 = 9x9 ring, 2 = 7x7, 3 = 5x5, 4 = all three rings, 5 = 9 cells (sight); @circle off.");
+			clif_displaymessage(sd->fd, m);
+			return;
+		}
+		pc_setglobalreg(sd, add_str(OG_REG_CIRCLE), look);
+		if (look == 0)
+			clif_displaymessage(sd->fd, "Circle off.");
+		else {
+			char m[CHAT_SIZE_MAX];
+			static const char* names[] = { "", "9x9 ring", "7x7 ring", "5x5 ring", "5x5, 7x7 and 9x9 rings", "ring at 9 cells" };
+			safesnprintf(m, sizeof(m), "Circle %d on: %s around your character.", look, names[look]);
+			clif_displaymessage(sd->fd, m);
+		}
+		return;
+	}
 	int32 flags = og_flags(sd), style = (int32)pc_readglobalreg(sd, add_str(OG_REG_LGP_STYLE));
 	bool on = !(flags & OG_FLAG_LGP);
 	if (!strcmpi(arg, "on")) on = true;
@@ -389,7 +559,6 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 	} else if (kind != 0 && *arg == '\0')
 		on = true;
 	if (kind == 1 && atoi(arg) <= 0) style = 0;
-	if (kind == 2) style = 1;
 	if (kind == 3) flags = on ? (flags | OG_FLAG_LGP_AOES) : (flags & ~OG_FLAG_LGP_AOES);
 	else if (kind != 0) flags &= ~OG_FLAG_LGP_AOES;
 	flags = on ? (flags | OG_FLAG_LGP) : (flags & ~(OG_FLAG_LGP | OG_FLAG_LGP_AOES));
@@ -400,7 +569,7 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 		safesnprintf(msg, sizeof(msg), "Lite ground skills off: normal skill effects.");
 	else
 		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat coloured cells.",
-			style == 1 ? "circle" : style > 1 ? "colour set " : "square", style > 1 ? std::to_string(style).c_str() : "",
+			style > 1 ? "colour set " : "square", style > 1 ? std::to_string(style).c_str() : "",
 			(flags & OG_FLAG_LGP_AOES) ? "Storm Gust, Lord of Vermilion and Meteor Storm" : "area skills");
 	clif_displaymessage(sd->fd, msg);
 }
@@ -461,6 +630,8 @@ void og_map_set_namecolor(map_session_data* sd, int32 rgb) {
 }
 
 void og_map_on_load(map_session_data* sd, bool first) {
+	if (og_enabled())
+		og_dark_check(sd);
 	if (!og_enabled())
 		return;
 	if (first) {
@@ -485,6 +656,7 @@ void og_map_on_load(map_session_data* sd, bool first) {
 }
 
 void og_map_on_quit(map_session_data* sd) {
+	og_circle_states.erase(sd->id);
 	og_map_guard_quit(sd);
 	if (og_enabled() && og_namecolor(sd) >= 0)
 		og_announce_name(sd, true);

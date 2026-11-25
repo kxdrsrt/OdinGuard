@@ -10,7 +10,7 @@ German notes: [03-integration.md](03-integration.md). Architecture: [02-architec
 
 | | |
 |---|---|
-| Server | rAthena (or a fork) with MariaDB/MySQL, C++17 toolchain. Tested: PACKETVER 20180620 pre-renewal. |
+| Server | rAthena (or a fork) with MariaDB/MySQL, C++17 toolchain. Tested: PACKETVER 20180620 **pre-renewal**. The lite ground skills (LGP) and the competitive-pack map lists are pre-renewal only; all other features are not tied to the renewal switch but untested there. |
 | Client | Windows client 2010-07-30 or newer that loads `ijl15.dll` (all Ragexe/RagexeRE builds do). Tested: 2018-06-20. |
 | Build machine | macOS or Linux with `mingw-w64` (`brew install mingw-w64` / `apt install mingw-w64`), Rust (rustup), optional Node.js for the Studio GUI. Windows works through WSL. |
 | Patcher | any patcher that can ship files and DATA.INI changes (Thor, NeonCube, rpatchur, ...). |
@@ -81,6 +81,12 @@ floors, flat maps, simplified effects, ... – WoE RO / darkworld style). Pick c
 *Competitive-Pack* (recipe `assets/competitive/recipe.toml`, staging folders built by
 `tools/pack/build_categories.sh`) or point `assets.competitive_pack` to a ready GRF. Its hash enters the GRF
 check, so modified or foreign variants are reported.
+
+Per game mode and optionally **required**: pick the map variants `woe`, `bg`, `pvp` one by one
+(`tools/pack/split_by_mode.py`), and set `assets.competitive_enforce = ["bg", ...]` so players without the pack are
+sent back from those maps (empty = player choice). Check that the pack's maps match the server's map cache with
+`tools/pack/verify_mapcache.py`. Everything is in [09-competitive-pack.md](09-competitive-pack.md); the lite ground
+skills (`@lgp`, `@square`, `@circle`, `@lgpsound`) are in [08-lgp-guide.md](08-lgp-guide.md).
 
 ## 5. Build and verify the release
 

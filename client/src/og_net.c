@@ -394,7 +394,7 @@ static int handshake(og_sock *k)
     memset(hello, 0, sizeof hello);
     wr16(hello, OG_HELLO_ID);
     hello[4] = OG_PROTO_VERSION;
-    hello[5] = (uint8_t)((og_is_vm(why, sizeof why) ? OG_FLAG_VM : 0) | (IsDebuggerPresent() ? OG_FLAG_DEBUGGER : 0) | (og_lgp_palette_active() ? OG_FLAG_LGP_PALETTE : 0));
+    hello[5] = (uint8_t)((og_is_vm(why, sizeof why) ? OG_FLAG_VM : 0) | (IsDebuggerPresent() ? OG_FLAG_DEBUGGER : 0) | (og_lgp_palette_active() ? OG_FLAG_LGP_PALETTE : 0) | (og_darkpack_active() ? OG_FLAG_DARKPACK : 0));
     memcpy(hello + 6, e_pub, 32);
     memcpy(hello + 38, nonce_c, 32);
     og_identity(hello + 70, comp, &ncomp);

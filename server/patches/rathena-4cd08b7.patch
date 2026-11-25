@@ -3561,10 +3561,10 @@ index ce4d0b1..f1a6908 100644
        can_trade: true
 diff --git a/conf/odinguard_athena.conf b/conf/odinguard_athena.conf
 new file mode 100644
-index 0000000..bd7bb2a
+index 0000000..3103b4f
 --- /dev/null
 +++ b/conf/odinguard_athena.conf
-@@ -0,0 +1,340 @@
+@@ -0,0 +1,342 @@
 +// OdinGuard Anti Cheat settings. Local overrides: conf/import/odinguard_conf.txt (created at the first start).
 +// The OdinGuard Studio generates the profile values (key, proto salt, build secret, signature package, module
 +// switches, commands, auras) into conf/import/odinguard_conf.txt; the environment variables ODINGUARD_KEY,
@@ -3655,7 +3655,7 @@ index 0000000..bd7bb2a
 +
 +// ---- Display features (map-server; need OdinGuard on the client) ----
 +
-+// Lite ground skills (@lgp, @square, @circle, @aoes). For players with LGP on, every cell of these skills is drawn as
++// Lite ground skills (@lgp, @square, @aoes; @circle draws rings around the own character). For players with LGP on, every cell of these skills is drawn as
 +// a flat tile, and the heavy animation is not sent. The COLOUR says which skill it is, the SHAPE says what it does:
 +//   square   = protective / helpful (Safety Wall, Pneuma, Sanctuary, Basilica, songs that help, Deluge ...)
 +//   triangle = hostile: damage or harm to enemies (Storm Gust, Meteor Storm, Quagmire, traps, Dissonance ...)
@@ -3665,7 +3665,7 @@ index 0000000..bd7bb2a
 +//     the lines is the order of @square 2..13 (one colour for every skill). Clients without the patch (other
 +//     builds, or the first moments after the login) get blue squares / blue triangles.
 +//   og_lgp_attack: <skill ids>   shown as triangles; every other LGP skill is a square
-+//   og_lgp: [style,]<skill id>,<colour name | unit id>   (style: square = default, circle, setN; 0 removes)
++//   og_lgp: [style,]<skill id>,<colour name | unit id>   (style: square = default, setN; 0 removes)
 +//     Skills with dummy cells (Storm Gust ...) and with own units (Fire Wall, Pneuma, Ice Wall ...) get lite
 +//     units; skills without a unit (Arrow Shower, Hammer Fall ...) get flash cells for og_lgp_flash_ms.
 +//     Not covered on purpose: Warp Portal (the portal itself), Scribble, summons (Flora, Marine Sphere), guild auras.
@@ -3804,10 +3804,6 @@ index 0000000..bd7bb2a
 +og_lgp: 339,purple
 +og_lgp: 670,purple
 +og_lgp: 653,brown
-+// @circle: the round ground bands of the Sage units for the big three (WoE-RO look); the rest stays as above
-+og_lgp: circle,89,0x9b
-+og_lgp: circle,83,0x9a
-+og_lgp: circle,85,0x9c
 +og_lgp_aoes: 89,83,85
 +og_lgp_symbol: plus,70,69,369,478
 +og_lgp_symbol: swordplus,285,286,287
@@ -3903,6 +3899,12 @@ index 0000000..bd7bb2a
 +//og_cmd_lgp: yes
 +//og_cmdrate_lgp: 1000
 +//og_cmdname_ping: ping
++// Competitive pack on competitive maps. The pack (odin-dark.grf: flat maps, dark floor, transparent trees ...) is built
++// from the categories the operator picks in the Studio; the pack's maps are cell-identical to the server's map cache
++// (OdinGuard tools/pack/verify_mapcache.py). Which modes REQUIRE it: bg, woe, pvp (comma separated), all or none.
++// Players without the pack (not in DATA.INI, or another version) are sent back to the save point from such maps.
++// With none the pack stays a player choice (patcher setting). GMs from og_dark_gm_level (group level, default 98) are exempt.
++og_dark_enforce: none
 +
 +import: conf/import/odinguard_conf.txt
 diff --git a/src/char/char_clif.cpp b/src/char/char_clif.cpp
@@ -4036,10 +4038,10 @@ index 62b4259..d6b0cf7 100644
      </ClCompile>
 diff --git a/src/common/odinguard.cpp b/src/common/odinguard.cpp
 new file mode 100644
-index 0000000..4d68cb6
+index 0000000..4200e18
 --- /dev/null
 +++ b/src/common/odinguard.cpp
-@@ -0,0 +1,1276 @@
+@@ -0,0 +1,1279 @@
 +// OdinGuard Anti Cheat – server side. See odinguard.hpp, og_proto.h and og_wire.h.
 +
 +#include "odinguard.hpp"
@@ -4959,6 +4961,8 @@ index 0000000..4d68cb6
 +		if (a.flags & OG_ALIVE_API_HOOKED) og_event(fd, "api-hook", "timing/input API patched", og_cfg.tamper_action);
 +		if (a.flags & OG_ALIVE_GRF_VIOLATION) og_event(fd, "grf", "protected resource overridden", og_cfg.grf_action);
 +		o->info.lgp_palette = (a.flags & OG_ALIVE_LGP_PALETTE) != 0 || o->info.lgp_palette;
++		o->info.darkpack = (a.flags & OG_ALIVE_DARKPACK) != 0;
++		o->info.alive_seen = true;
 +		break;
 +	}
 +	case OG_C_DETECT: {
@@ -5010,6 +5014,7 @@ index 0000000..4d68cb6
 +	o->info.version = h.version;
 +	o->info.flags = h.flags;
 +	o->info.lgp_palette = (h.flags & OG_FLAG_LGP_PALETTE) != 0;
++	o->info.darkpack = (h.flags & OG_FLAG_DARKPACK) != 0;
 +	o->info.unique_id = to_hex(h.unique_id, 32);
 +	o->info.exe_code = to_hex(h.exe_code, 32);
 +	o->info.build.assign((const char*)h.build, strnlen((const char*)h.build, 16));
@@ -5318,10 +5323,10 @@ index 0000000..4d68cb6
 +}
 diff --git a/src/common/odinguard.hpp b/src/common/odinguard.hpp
 new file mode 100644
-index 0000000..e9a926f
+index 0000000..20022c7
 --- /dev/null
 +++ b/src/common/odinguard.hpp
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,92 @@
 +// OdinGuard server side: handshake, encrypted record layer and policy for client connections.
 +// Wire format: og_proto.h (shared with the OdinGuard client DLL).
 +
@@ -5350,6 +5355,8 @@ index 0000000..e9a926f
 +	std::string build;
 +	uint8 flags = 0;
 +	uint8 version = 0;
++	bool darkpack = false;    // odin-dark.grf is loaded and accepted (OG_ALIVE_DARKPACK)
++	bool alive_seen = false;  // the first heartbeat has arrived (darkpack is only known from then on)
 +	bool lgp_palette = false; // the client draws the LGP colour units (OG_ALIVE_LGP_PALETTE)
 +	std::vector<std::pair<std::string, std::string>> components; // name, hex hash
 +};
@@ -5422,10 +5429,10 @@ index 0000000..6fd3e15
 +#include "../../3rdparty/monocypher/monocypher.c"
 diff --git a/src/common/og_proto.h b/src/common/og_proto.h
 new file mode 100644
-index 0000000..abf5a9d
+index 0000000..1a53385
 --- /dev/null
 +++ b/src/common/og_proto.h
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,143 @@
 +/* OdinGuard Anti Cheat – wire protocol v2. Shared by the client DLL (C) and the server module (C++).
 + * All integers little-endian. The parsers for every message live in og_wire.c (pure C, fuzzed natively).
 + *
@@ -5471,6 +5478,8 @@ index 0000000..abf5a9d
 +/* client hello flags */
 +#define OG_FLAG_VM        0x01
 +#define OG_FLAG_DEBUGGER  0x02
++#define OG_FLAG_LGP_PALETTE 0x04 /* the client draws LGP colours and shapes (og_lgp.c) */
++#define OG_FLAG_DARKPACK  0x08 /* odin-dark.grf (competitive pack) is loaded and is the accepted version (og_assets.c) */
 +
 +/* server hello status */
 +#define OG_STATUS_OK       0
@@ -5496,6 +5505,7 @@ index 0000000..abf5a9d
 +#define OG_ALIVE_API_HOOKED     0x08 /* timing/input APIs patched by a foreign module (speed hacks, macro tools) */
 +#define OG_ALIVE_HW_BREAKPOINT  0x10 /* debug registers set on the game thread */
 +#define OG_ALIVE_LGP_PALETTE    0x20 /* capability, not a violation: the client draws the LGP colour units (og_lgp.c) */
++#define OG_ALIVE_DARKPACK       0x40 /* capability, not a violation: odin-dark.grf is loaded and accepted (og_assets.c) */
 +
 +/* control messages, server -> client */
 +#define OG_S_POLICY    0x81 /* u8 block_vm, u8 max_windows, u16 alive_interval_s, u8 input_filter, u8 grf_strict,
@@ -6880,16 +6890,17 @@ index 4130361..ae2e677 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 0000000..fab3c29
+index 0000000..af6bf5f
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,491 @@
+@@ -0,0 +1,663 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
 +
 +#include <algorithm>
 +#include <string>
++#include <unordered_map>
 +
 +#include <common/odinguard.hpp>
 +#include <common/showmsg.hpp>
@@ -6915,11 +6926,14 @@ index 0000000..fab3c29
 +#define OG_REG_FLAGS "og_flags"         // bit 1: lite ground skills, bit 3: only SG/LoV/MS (bit 0 was "hide auras", now src/map/aura.cpp)
 +#define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2.. = one colour for every skill (og_lgp_color order)
 +#define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
++#define OG_REG_CIRCLE "og_circle"       // @circle look 1-5, 0 = off
 +#define OG_FLAG_LGP 2
 +#define OG_FLAG_LGP_AOES 8
 +#define OG_FLAG_LGP_NOSOUND 16 // @lgpsound off: no skill sounds for the lite ground skills
 +
 +TIMER_FUNC(og_lgp_flash_end);
++TIMER_FUNC(og_circle_tick);
++TIMER_FUNC(og_dark_tick);
 +
 +static std::string og_esc(const std::string& s) {
 +	std::string out(s.size() * 2 + 1, '\0');
@@ -6994,6 +7008,10 @@ index 0000000..fab3c29
 +			Sql_ShowDebug(mmysql_handle);
 +	og_set_handlers(og_map_event, og_map_text, og_map_pong);
 +	add_timer_func_list(og_lgp_flash_end, "og_lgp_flash_end");
++	add_timer_func_list(og_circle_tick, "og_circle_tick");
++	add_timer_interval(gettick() + 1000, og_circle_tick, 0, 0, 250);
++	add_timer_func_list(og_dark_tick, "og_dark_tick");
++	add_timer_interval(gettick() + 5000, og_dark_tick, 0, 0, 5000);
 +	og_map_guard_init();
 +}
 +
@@ -7232,6 +7250,145 @@ index 0000000..fab3c29
 +		add_timer(gettick() + og_setting_int("og_lgp_flash_ms", 1000), og_lgp_flash_end, viewer->id, (intptr_t)((start << 8) | (uint32)sent));
 +}
 +
++// @circle: rings of tiles around the player's own character (look 1-5). The tiles are lite units that only this
++// player's client knows (ids OG_CIRCLE_BASE+i); a timer redraws them when the character moved.
++#define OG_CIRCLE_BASE 105000000u
++#define OG_CIRCLE_IDS 128
++struct s_og_circle_look { int32 radii[3]; int32 colours[3]; };
++// colour numbers as in og_lgp_color / client patch: 1 cyan, 2 yellow, 4 orange, 12 lightgrey
++static const s_og_circle_look og_circle_looks[] = {
++	{ { 4, 0, 0 }, { 1, 0, 0 } },   // 1: 9x9 cyan (Storm Gust, Lord of Vermilion, Magnus ...)
++	{ { 3, 0, 0 }, { 4, 0, 0 } },   // 2: 7x7 orange (Meteor Storm)
++	{ { 2, 0, 0 }, { 2, 0, 0 } },   // 3: 5x5 yellow
++	{ { 2, 3, 4 }, { 2, 4, 1 } },   // 4: all three rings: 5x5 yellow, 7x7 orange, 9x9 cyan
++	{ { 9, 0, 0 }, { 12, 0, 0 } },  // 5: ring at 9 cells (light grey, sight distance)
++};
++struct s_og_circle_state { int16 m = -1, x = -1, y = -1; int32 look = 0, count = 0; };
++static std::unordered_map<int32, s_og_circle_state> og_circle_states;
++
++static void og_circle_clear(map_session_data* sd, s_og_circle_state& st) {
++	for (int32 i = 0; i < st.count; i++) {
++		unsigned char buf[6];
++		WBUFW(buf, 0) = 0x0120; // ZC_SKILL_DISAPPEAR
++		WBUFL(buf, 2) = OG_CIRCLE_BASE + i;
++		clif_send(buf, sizeof(buf), sd, SELF);
++	}
++	st.count = 0;
++	st.m = -1;
++}
++
++static void og_circle_draw(map_session_data* sd, s_og_circle_state& st, int32 look) {
++	const s_og_circle_look& lk = og_circle_looks[look - 1];
++	const s_og_info* info = og_info(sd->fd);
++	bool palette = info != nullptr && info->lgp_palette;
++	int32 n = 0;
++	for (int32 ring = 0; ring < 3; ring++) {
++		int32 radius = lk.radii[ring];
++		if (radius <= 0) continue;
++		for (int32 dy = -radius; dy <= radius; dy++) {
++			for (int32 dx = -radius; dx <= radius; dx++) {
++				if (std::max(abs(dx), abs(dy)) != radius) continue;
++				int16 cx = sd->x + dx, cy = sd->y + dy;
++				if (n >= OG_CIRCLE_IDS || cx < 0 || cy < 0 || cx >= map[sd->m].xs || cy >= map[sd->m].ys || map_getcell(sd->m, cx, cy, CELL_CHKWALL))
++					continue;
++				unsigned char buf[23];
++				WBUFW(buf, 0) = 0x09ca; // ZC_SKILL_ENTRY5
++				WBUFW(buf, 2) = sizeof(buf);
++				WBUFL(buf, 4) = OG_CIRCLE_BASE + n;
++				WBUFL(buf, 8) = palette ? (0x7C000000u | (uint32)lk.colours[ring]) : sd->id;
++				WBUFW(buf, 12) = cx;
++				WBUFW(buf, 14) = cy;
++				WBUFL(buf, 16) = 0xc8;
++				WBUFB(buf, 20) = 0;
++				WBUFB(buf, 21) = 1;
++				WBUFB(buf, 22) = 1;
++				clif_send(buf, sizeof(buf), sd, SELF);
++				n++;
++			}
++		}
++	}
++	st.count = n;
++	st.m = sd->m;
++	st.x = sd->x;
++	st.y = sd->y;
++	st.look = look;
++}
++
++TIMER_FUNC(og_circle_tick) {
++	if (!og_module_on("og_lgp_enable", true))
++		return 0;
++	map_foreachpc([](map_session_data* sd, va_list) -> int32 {
++		if (sd->fd <= 0 || !session_isActive(sd->fd) || !og_session_active(sd->fd) || !sd->state.active)
++			return 0;
++		int32 look = (int32)pc_readglobalreg(sd, add_str(OG_REG_CIRCLE));
++		auto it = og_circle_states.find(sd->id);
++		if (look < 1 || look > (int32)(sizeof(og_circle_looks) / sizeof(*og_circle_looks))) {
++			if (it != og_circle_states.end()) {
++				og_circle_clear(sd, it->second);
++				og_circle_states.erase(it);
++			}
++			return 0;
++		}
++		s_og_circle_state& st = og_circle_states[sd->id];
++		if (st.m == sd->m && st.x == sd->x && st.y == sd->y && st.look == look)
++			return 0;
++		og_circle_clear(sd, st);
++		og_circle_draw(sd, st, look);
++		return 0;
++	});
++	return 0;
++}
++
++// Enforced competitive visuals: og_dark_enforce lists the modes (bg, woe, pvp, all, none) for which a player must have
++// the competitive pack (odin-dark.grf, accepted version) loaded. Anyone without it is sent back to the save point with
++// a message. The client reports the pack in the hello and every heartbeat; nobody is judged before the first heartbeat.
++enum { OG_MODE_NONE = 0, OG_MODE_BG = 1, OG_MODE_WOE = 2, OG_MODE_PVP = 4 };
++
++static int32 og_dark_modes() {
++	char list[64];
++	safestrncpy(list, og_setting("og_dark_enforce", "none"), sizeof(list));
++	int32 modes = 0;
++	for (char* t = strtok(list, ", "); t != nullptr; t = strtok(nullptr, ", ")) {
++		if (!strcmpi(t, "all")) modes |= OG_MODE_BG | OG_MODE_WOE | OG_MODE_PVP;
++		else if (!strcmpi(t, "bg")) modes |= OG_MODE_BG;
++		else if (!strcmpi(t, "woe")) modes |= OG_MODE_WOE;
++		else if (!strcmpi(t, "pvp")) modes |= OG_MODE_PVP;
++	}
++	return modes;
++}
++
++static int32 og_map_mode(int16 m) {
++	map_data* md = map_getmapdata(m);
++	if (md == nullptr) return OG_MODE_NONE;
++	if (md->getMapFlag(MF_BATTLEGROUND)) return OG_MODE_BG;
++	if (md->getMapFlag(MF_GVG_CASTLE) || md->getMapFlag(MF_GVG_DUNGEON) || md->getMapFlag(MF_GVG) || md->getMapFlag(MF_GVG_TE) || md->getMapFlag(MF_GVG_TE_CASTLE)) return OG_MODE_WOE;
++	if (md->getMapFlag(MF_PVP)) return OG_MODE_PVP;
++	return OG_MODE_NONE;
++}
++
++static void og_dark_check(map_session_data* sd) {
++	int32 modes = og_dark_modes();
++	if (modes == 0 || sd->m < 0 || (og_map_mode(sd->m) & modes) == 0 || pc_get_group_level(sd) >= og_setting_int("og_dark_gm_level", 98))
++		return;
++	const s_og_info* info = og_info(sd->fd);
++	if (info == nullptr || !info->alive_seen || info->darkpack)
++		return;
++	og_report(sd->fd, "darkpack:required", map_getmapdata(sd->m)->name, OG_ACTION_LOG, 0);
++	clif_displaymessage(sd->fd, "This map needs the competitive pack (odin-dark.grf) of this server. Update your client (patcher) and try again.");
++	pc_setpos_savepoint(*sd);
++}
++
++TIMER_FUNC(og_dark_tick) {
++	if (og_dark_modes() == 0)
++		return 0;
++	map_foreachpc([](map_session_data* sd, va_list) -> int32 {
++		if (sd->fd > 0 && session_isActive(sd->fd) && og_session_active(sd->fd))
++			og_dark_check(sd);
++		return 0;
++	});
++	return 0;
++}
++
 +struct s_og_area { const block_list* src; const void* buf; int32 len; bool (*keep)(map_session_data*, const block_list&, void*); void* ctx; };
 +
 +void og_map_send_area(const block_list& src, const void* buf, int32 len, bool (*keep)(map_session_data* viewer, const block_list& src, void* ctx), void* ctx) {
@@ -7258,6 +7415,29 @@ index 0000000..fab3c29
 +			: on ? "Lite ground skill sounds on (the client's /sound switch still mutes them)." : "Lite ground skill sounds off.");
 +		return;
 +	}
++	if (kind == 2) {
++		int32 looks = (int32)(sizeof(og_circle_looks) / sizeof(*og_circle_looks)), cur = (int32)pc_readglobalreg(sd, add_str(OG_REG_CIRCLE)), look = cur;
++		if (!strcmpi(arg, "off")) look = 0;
++		else if (!strcmpi(arg, "on")) look = cur > 0 ? cur : 1;
++		else if (atoi(arg) > 0) look = atoi(arg);
++		else look = cur > 0 ? 0 : 1; // no argument: toggle
++		if (look > looks) {
++			char m[CHAT_SIZE_MAX];
++			safesnprintf(m, sizeof(m), "Circle looks: 1 = 9x9 ring, 2 = 7x7, 3 = 5x5, 4 = all three rings, 5 = 9 cells (sight); @circle off.");
++			clif_displaymessage(sd->fd, m);
++			return;
++		}
++		pc_setglobalreg(sd, add_str(OG_REG_CIRCLE), look);
++		if (look == 0)
++			clif_displaymessage(sd->fd, "Circle off.");
++		else {
++			char m[CHAT_SIZE_MAX];
++			static const char* names[] = { "", "9x9 ring", "7x7 ring", "5x5 ring", "5x5, 7x7 and 9x9 rings", "ring at 9 cells" };
++			safesnprintf(m, sizeof(m), "Circle %d on: %s around your character.", look, names[look]);
++			clif_displaymessage(sd->fd, m);
++		}
++		return;
++	}
 +	int32 flags = og_flags(sd), style = (int32)pc_readglobalreg(sd, add_str(OG_REG_LGP_STYLE));
 +	bool on = !(flags & OG_FLAG_LGP);
 +	if (!strcmpi(arg, "on")) on = true;
@@ -7275,7 +7455,6 @@ index 0000000..fab3c29
 +	} else if (kind != 0 && *arg == '\0')
 +		on = true;
 +	if (kind == 1 && atoi(arg) <= 0) style = 0;
-+	if (kind == 2) style = 1;
 +	if (kind == 3) flags = on ? (flags | OG_FLAG_LGP_AOES) : (flags & ~OG_FLAG_LGP_AOES);
 +	else if (kind != 0) flags &= ~OG_FLAG_LGP_AOES;
 +	flags = on ? (flags | OG_FLAG_LGP) : (flags & ~(OG_FLAG_LGP | OG_FLAG_LGP_AOES));
@@ -7286,7 +7465,7 @@ index 0000000..fab3c29
 +		safesnprintf(msg, sizeof(msg), "Lite ground skills off: normal skill effects.");
 +	else
 +		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat coloured cells.",
-+			style == 1 ? "circle" : style > 1 ? "colour set " : "square", style > 1 ? std::to_string(style).c_str() : "",
++			style > 1 ? "colour set " : "square", style > 1 ? std::to_string(style).c_str() : "",
 +			(flags & OG_FLAG_LGP_AOES) ? "Storm Gust, Lord of Vermilion and Meteor Storm" : "area skills");
 +	clif_displaymessage(sd->fd, msg);
 +}
@@ -7347,6 +7526,8 @@ index 0000000..fab3c29
 +}
 +
 +void og_map_on_load(map_session_data* sd, bool first) {
++	if (og_enabled())
++		og_dark_check(sd);
 +	if (!og_enabled())
 +		return;
 +	if (first) {
@@ -7371,6 +7552,7 @@ index 0000000..fab3c29
 +}
 +
 +void og_map_on_quit(map_session_data* sd) {
++	og_circle_states.erase(sd->id);
 +	og_map_guard_quit(sd);
 +	if (og_enabled() && og_namecolor(sd) >= 0)
 +		og_announce_name(sd, true);

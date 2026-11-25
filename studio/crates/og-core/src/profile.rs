@@ -138,6 +138,10 @@ pub struct Assets {
     /// selected categories (assets/competitive/recipe.toml); the Studio builds odin-dark.grf from them
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub competitive: Vec<String>,
+    /// modes whose maps REQUIRE the pack on the player's client: bg, woe, pvp or all (the server sends players without it
+    /// back to the save point). Empty = the pack is a player choice.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub competitive_enforce: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -206,6 +210,7 @@ impl Profile {
                 competitive_pack: String::new(),
                 competitive_source: String::new(),
                 competitive: vec![],
+                competitive_enforce: vec![],
             },
             grf: GrfPolicy::default(),
             rollout: Rollout { stage: 1, reviewed_rules: vec![] },
@@ -311,6 +316,14 @@ impl Profile {
             && (self.assets.competitive.is_empty() || self.assets.competitive_source.is_empty())
         {
             return bad("module competitive-pack needs assets.competitive_pack or assets.competitive + competitive_source".into());
+        }
+        for m in &self.assets.competitive_enforce {
+            if !["bg", "woe", "pvp", "all"].contains(&m.as_str()) {
+                return bad(format!("assets.competitive_enforce: bg, woe, pvp or all (got {m})"));
+            }
+        }
+        if !self.assets.competitive_enforce.is_empty() && !self.modules.iter().any(|m| m == "competitive-pack") {
+            return bad("assets.competitive_enforce needs the module competitive-pack".into());
         }
         for (g, a) in &self.signatures.groups {
             if g.is_empty() || !g.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit()) {

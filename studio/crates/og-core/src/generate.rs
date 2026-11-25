@@ -168,6 +168,10 @@ pub fn server_conf(p: &Profile, reg: &Registry, sigpack_key: &[u8; 32], built: &
     let _ = writeln!(s, "og_log_only: {}", if p.rollout.stage == 1 { "yes" } else { "no" });
     let required = p.rollout.stage >= 4 || p.param(reg, "core", "required").and_then(|v| v.as_bool()) == Some(true);
     let _ = writeln!(s, "og_required: {}", if required { "yes" } else { "no" });
+    if p.modules.iter().any(|m| m == "competitive-pack") && !p.assets.competitive_enforce.is_empty() {
+        let _ = writeln!(s, "\n// the competitive pack is required on these competitive maps (assets.competitive_enforce)");
+        let _ = writeln!(s, "og_dark_enforce: {}", p.assets.competitive_enforce.join(","));
+    }
     s.push_str("\n// modules\n");
     for m in &reg.modules {
         let on = p.modules.contains(&m.id);
@@ -316,6 +320,6 @@ mod tests {
         assert!(c.contains("og_cmd_lgp: no") && c.contains("og_cmdname_ping: latency"));
         assert!(c.contains("og_rate_limit: no"), "rate-limit is not in the default set");
         let md = commands_md(&p, &r, "de");
-        assert!(md.contains("`!latency`") && !md.contains("`@lgp"));
+        assert!(md.contains("`!latency`") && !md.contains("`@lgp`") && !md.contains("`@lgp ["));
     }
 }

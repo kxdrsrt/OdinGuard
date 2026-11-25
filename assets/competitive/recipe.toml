@@ -18,7 +18,8 @@ manifests = "assets/competitive/manifests"
 
 # Later folders overwrite earlier ones with the same path. floor-flat-* must come after flat-maps-*.
 copy_order = [
-  "flat-maps-all", "flat-maps-woe-bg-pvp", "floor", "floor-flat-all", "floor-flat-woe-bg-pvp",
+  "flat-maps-all", "flat-maps-woe-bg-pvp", "flat-maps-woe", "flat-maps-bg", "flat-maps-pvp",
+  "floor", "floor-flat-all", "floor-flat-woe-bg-pvp", "floor-flat-woe", "floor-flat-bg", "floor-flat-pvp",
   "trees", "barricades", "pneuma", "nodelay", "effects", "ui", "other",
 ]
 
@@ -80,6 +81,27 @@ with_flat_maps = "use floor-flat-<scope> instead of floor (tiles on the flat gro
   grf_bytes = 4933203
 
   [[category.variant]]
+  id = "flat-woe"
+  requires = "flat-maps-woe"
+  staging = "floor-flat-woe"
+  files = 49
+  unpacked_bytes = 99193198
+
+  [[category.variant]]
+  id = "flat-bg"
+  requires = "flat-maps-bg"
+  staging = "floor-flat-bg"
+  files = 9
+  unpacked_bytes = 10445598
+
+  [[category.variant]]
+  id = "flat-pvp"
+  requires = "flat-maps-pvp"
+  staging = "floor-flat-pvp"
+  files = 10
+  unpacked_bytes = 17938500
+
+  [[category.variant]]
   id = "flat-all"
   requires = "flat-maps-all"
   staging = "floor-flat-all"
@@ -103,6 +125,28 @@ source = "rustygrf flat_maps from client data"
   files = 215               # 79 .rsw + 68 .gnd + 68 .gat (some .rsw share a ground)
   unpacked_bytes = 184331123
   grf_bytes = 5154779
+
+  # one mode at a time (tools/pack/split_by_mode.py splits the woe-bg-pvp folder; pick any of them)
+  [[category.variant]]
+  id = "woe"
+  maps = "WoE castles (FE/SE/TE/novice), guild dungeons and agit maps only"
+  staging = "flat-maps-woe"
+  files = 147
+  unpacked_bytes = 142845939
+
+  [[category.variant]]
+  id = "bg"
+  maps = "battleground maps only: bat_*, guild_vs*, rush_cas* (incl. the grounds the rush maps use)"
+  staging = "flat-maps-bg"
+  files = 46
+  unpacked_bytes = 25436668
+
+  [[category.variant]]
+  id = "pvp"
+  maps = "PvP arenas only: pvp_*"
+  staging = "flat-maps-pvp"
+  files = 30
+  unpacked_bytes = 25179900
 
   [[category.variant]]
   id = "all"

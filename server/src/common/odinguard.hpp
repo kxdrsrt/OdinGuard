@@ -26,6 +26,8 @@ struct s_og_info {
 	std::string build;
 	uint8 flags = 0;
 	uint8 version = 0;
+	bool darkpack = false;    // odin-dark.grf is loaded and accepted (OG_ALIVE_DARKPACK)
+	bool alive_seen = false;  // the first heartbeat has arrived (darkpack is only known from then on)
 	bool lgp_palette = false; // the client draws the LGP colour units (OG_ALIVE_LGP_PALETTE)
 	std::vector<std::pair<std::string, std::string>> components; // name, hex hash
 };

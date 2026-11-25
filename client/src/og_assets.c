@@ -198,8 +198,13 @@ static DWORD WINAPI full_worker(LPVOID arg)
     return 0;
 }
 
+static volatile LONG g_darkpack; /* odin-dark.grf is in DATA.INI and is the accepted version */
+
+int og_darkpack_active(void) { return g_darkpack != 0; }
+
 static void check_manifest(void)
 {
+    int dark = 0;
     char ini[MAX_PATH], key[8], val[MAX_PATH], full[MAX_PATH];
     int seen_list[MAX_LIST];
     int i, k;
@@ -234,6 +239,7 @@ static void check_manifest(void)
             if (required) report_once(OG_KIND_GRF_MISSING, val);
             continue;
         }
+        if (match >= 0 && !_stricmp(val, "odin-dark.grf")) dark = 1;
         if (match >= 0) {
             if (e->full_state == 3 && e->full_bad) {
                 char t[160];
@@ -248,6 +254,7 @@ static void check_manifest(void)
     }
     for (i = 0; i < g_nlist; i++)
         if (g_list[i].required && !seen_list[i]) report_once(OG_KIND_GRF_MISSING, g_list[i].name);
+    InterlockedExchange(&g_darkpack, dark);
     if (!g_worker) g_worker = CreateThread(NULL, 0, full_worker, NULL, 0, NULL);
 }
 

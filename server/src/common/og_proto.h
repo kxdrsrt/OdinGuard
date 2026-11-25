@@ -44,6 +44,7 @@
 #define OG_FLAG_VM        0x01
 #define OG_FLAG_DEBUGGER  0x02
 #define OG_FLAG_LGP_PALETTE 0x04 /* the client draws LGP colours and shapes (og_lgp.c) */
+#define OG_FLAG_DARKPACK  0x08 /* odin-dark.grf (competitive pack) is loaded and is the accepted version (og_assets.c) */
 
 /* server hello status */
 #define OG_STATUS_OK       0
@@ -69,6 +70,7 @@
 #define OG_ALIVE_API_HOOKED     0x08 /* timing/input APIs patched by a foreign module (speed hacks, macro tools) */
 #define OG_ALIVE_HW_BREAKPOINT  0x10 /* debug registers set on the game thread */
 #define OG_ALIVE_LGP_PALETTE    0x20 /* capability, not a violation: the client draws the LGP colour units (og_lgp.c) */
+#define OG_ALIVE_DARKPACK       0x40 /* capability, not a violation: odin-dark.grf is loaded and accepted (og_assets.c) */
 
 /* control messages, server -> client */
 #define OG_S_POLICY    0x81 /* u8 block_vm, u8 max_windows, u16 alive_interval_s, u8 input_filter, u8 grf_strict,

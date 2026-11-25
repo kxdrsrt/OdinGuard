@@ -917,6 +917,8 @@ static void og_handle_control(int32 fd, s_og_state* o, const uint8* p, size_t n)
 		if (a.flags & OG_ALIVE_API_HOOKED) og_event(fd, "api-hook", "timing/input API patched", og_cfg.tamper_action);
 		if (a.flags & OG_ALIVE_GRF_VIOLATION) og_event(fd, "grf", "protected resource overridden", og_cfg.grf_action);
 		o->info.lgp_palette = (a.flags & OG_ALIVE_LGP_PALETTE) != 0 || o->info.lgp_palette;
+		o->info.darkpack = (a.flags & OG_ALIVE_DARKPACK) != 0;
+		o->info.alive_seen = true;
 		break;
 	}
 	case OG_C_DETECT: {
@@ -968,6 +970,7 @@ static bool og_handle_hello(int32 fd, s_og_state* o) {
 	o->info.version = h.version;
 	o->info.flags = h.flags;
 	o->info.lgp_palette = (h.flags & OG_FLAG_LGP_PALETTE) != 0;
+	o->info.darkpack = (h.flags & OG_FLAG_DARKPACK) != 0;
 	o->info.unique_id = to_hex(h.unique_id, 32);
 	o->info.exe_code = to_hex(h.exe_code, 32);
 	o->info.build.assign((const char*)h.build, strnlen((const char*)h.build, 16));

@@ -58,9 +58,9 @@ name = "square"
 module = "lgp"
 group = 0
 rate_ms = 1000
-params = "[on|off|1-13]"
-help_en = "Lite ground skills with square tiles; 1 = each skill in its colour, 2-13 = one colour for every skill."
-help_de = "LGP mit Quadrat-Kacheln; 1 = jeder Skill in seiner Farbe, 2-13 = eine Farbe für alle Skills"
+params = "[on|off|1-15]"
+help_en = "Lite ground skills with a colour set; 1 = each skill in its colour with symbol, 2-15 = one colour for every skill."
+help_de = "LGP mit Farbset; 1 = jeder Skill in seiner Farbe mit Symbol, 2-15 = eine Farbe für alle Skills"
 
 [[command]]
 id = "circle"
@@ -69,9 +69,9 @@ name = "circle"
 module = "lgp"
 group = 0
 rate_ms = 1000
-params = "[on|off]"
-help_en = "Lite ground skills with round bands for Storm Gust, Lord of Vermilion and Meteor Storm (WoE-RO look)."
-help_de = "LGP mit runden Bändern für Storm Gust, Lord of Vermilion und Meteor Storm (WoE-RO-Optik)"
+params = "[on|off|1-5]"
+help_en = "Rings of tiles around your own character (1 = 9x9, 2 = 7x7, 3 = 5x5, 4 = all three, 5 = 9 cells)."
+help_de = "Ringe aus Kacheln um den eigenen Charakter (1 = 9x9, 2 = 7x7, 3 = 5x5, 4 = alle drei, 5 = 9 Zellen)"
 
 [[command]]
 id = "aoes"
