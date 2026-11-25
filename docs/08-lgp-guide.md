@@ -38,11 +38,15 @@ Colour numbers for `@square 2..18`: 2 blue, 3 cyan, 4 yellow, 5 red, 6 orange, 7
 So Meteor Storm (red triangle) and Volcano (red square), or Storm Gust (blue triangle) and Deluge (blue square) can
 never be mixed up.
 
-Colours (colour set 1): blue = water/ice (Storm Gust, Deluge), cyan = holy/ice walls (Magnus, Basilica), yellow =
-lightning/wind (Lord of Vermilion, Thunderstorm), red = fire (Meteor Storm, Volcano, Fire Pillar), orange = Fire
-Wall, light green = Pneuma, green = Sanctuary, lime = Violent Gale, purple = poison/gravity, brown = earth (Heaven's Drive,
-Quagmire, Arrow Shower, Hammer Fall), pink = Safety Wall, white = Land Protector, light grey = Wall of Fog, gold =
-Bard songs, peach = Dancer dances and Moonlit, sky blue = ensemble songs, grey = traps and Fiber Lock.
+Colours (colour set 1) follow the **original effects**, measured in the real client (method and table:
+[analysis/lgp/original-colours.md](../analysis/lgp/original-colours.md)): blue = Storm Gust, Deluge, Thunderstorm,
+Suiton; sky blue = Ice Wall, Ring of Nibelungen; red = Meteor Storm, Volcano, Magnus Exorcismus; orange = Fire Wall,
+Demonstration, Kaensin; yellow = Lord of Vermilion (by request, the original flash is orange); green = Sanctuary,
+Don't Forget Me; light green = Pneuma, Basilica; lime = Violent Gale; purple = poison and gravity, Lullaby, Drum on the
+Battlefield, Rokisweil; pink = Safety Wall, Gospel, Service for You; peach = Grand Cross, Dissonance, Ugly Dance;
+brown = earth (Heaven's Drive, Quagmire, Arrow Shower, Hammer Fall); white = Land Protector; light grey = Wall of Fog;
+grey = traps and Fiber Lock. Songs and dances differ in the original (blue, violet, red, green, cyan), so they differ
+here too; the symbol in the middle tells them apart as well.
 
 Symbols in the middle of the tile (only in colour set 1; `@square 2..18` stays plain):
 

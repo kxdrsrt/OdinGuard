@@ -114,7 +114,7 @@ staged rollout).
 | `assets/` | own assets for `odin.grf` (LGP tiles) and the competitive-pack recipe |
 | `profiles/` | example profiles: `default`, `minimal`, `e2e` |
 | `tests/e2e/` | end-to-end suite (rAthena in Docker + Windows VM) |
-| `docs/` | integration guide, [LGP guide](docs/08-lgp-guide.md), [competitive pack](docs/09-competitive-pack.md) (English); architecture, tests, analyses (German) |
+| `docs/` | integration guide, [LGP guide](docs/08-lgp-guide.md), [competitive pack](docs/09-competitive-pack.md), [MCP server for AI assistants](docs/10-mcp.md) (English); architecture, tests, analyses (German) |
 
 ## Status
 

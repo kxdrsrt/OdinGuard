@@ -95,6 +95,7 @@ Vorerst nur Pre-Renewal; der Rest von OdinGuard läuft auch mit Renewal-Clients.
 - `docs/07-darkworld-lgp.md` – darkworld-Analyse, LGP-Kacheln, Competitive-Pack (Fairness-Befunde)
 - `docs/08-lgp-guide.md` – LGP-Anleitung (Befehle, Flags, Konfiguration; Englisch)
 - `docs/09-competitive-pack.md` – Competitive-Pack je Modus, Pflicht auf Maps, Map-Cache-Prüfung (Englisch)
+- `docs/10-mcp.md` – MCP-Server `og-mcp`: Profile konfigurieren und Releases bauen per KI-Assistent (Englisch)
 - `docs/01`, `docs/04` – Referenzanalyse und Reverse Engineering des eigenen Clients
 - `analysis/cheat-signatures/` – Inventar, Signaturen, Allowlist, Verhaltenssignaturen
 

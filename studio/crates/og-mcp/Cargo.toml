@@ -1,0 +1,21 @@
+[package]
+name = "og-mcp"
+description = "OdinGuard Anti Cheat MCP server (stdio): configure and build releases from an AI assistant"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "og-mcp"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+og-core = { path = "../og-core" }
+serde_json = "1"
+serde = "1"
+toml = "0.9"

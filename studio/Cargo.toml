@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/og-core", "crates/og-cli"]
+members = ["crates/og-core", "crates/og-cli", "crates/og-mcp"]
 exclude = ["apps/studio"]
 
 [workspace.package]
