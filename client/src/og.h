@@ -37,7 +37,19 @@ int  og_unhex(const char *hex, uint8_t *out, size_t n);
 void og_log_open(const char *dir);
 void og_log(const char *fmt, ...);
 const char *og_last_log(void);
-int  og_message(const char *text, UINT type);
+int  og_message(const char *text, UINT type); /* text in UTF-8 (or the ANSI code page when it is not valid UTF-8) */
+
+/* languages of the texts players see (og_lang.c) */
+enum {
+    OG_T_ON, OG_T_OFF, OG_T_DARK_STATUS, OG_T_DARK_MISSING, OG_T_DARK_ALREADY_ON, OG_T_DARK_ALREADY_OFF, OG_T_DARK_USAGE,
+    OG_T_DARK_CHANGED, OG_T_VSYNC_OFF, OG_T_VSYNC_ON, OG_T_CRASH_WRITTEN, OG_T_CRASH_TITLE, OG_T_CRASH_ASK, OG_T_MAX_WINDOWS,
+    OG_T_VM, OG_T_REFUSED, OG_T_TITLE_WAITING, OG_T_TITLE_FAILED, OG_T_TITLE_DARK, OG_T_LAUNCHER, OG_T_COUNT
+};
+void og_lang_init(const char *dir);
+const char *og_lang(void);   /* "de", "en", ... */
+const char *og_tr(int id);
+void og_trf(char *out, size_t cap, int id, const char *a1, const char *a2);
+int  og_message_titled(const char *text, const char *caption, UINT type);
 extern HINSTANCE og_instance;
 int  og_contains_i(const char *hay, const char *needle);
 /* third-party software that hooks every process (banking protection, overlays, drivers) plus the allowlist

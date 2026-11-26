@@ -34,6 +34,8 @@
 /* pseudo component in the client hello (1.0.3+): the guard release, hash bytes = u8 major, minor, patch, zeros.
  * Not hardware: servers do not store it with the machine components. Clients before 1.0.3 do not send it. */
 #define OG_RELEASE_COMPONENT "og-release"
+/* pseudo component (1.0.5+): the player's language for the server's messages, hash bytes = ASCII code ("de"), zeros */
+#define OG_LANG_COMPONENT "og-lang"
 #define OG_RECORD_MAX      60000  /* plaintext payload per record */
 #define OG_RECORD_OVERHEAD (2 + 16 + 1)
 #define OG_REKEY_RECORDS   4096

@@ -39,7 +39,7 @@ static void apply_window_limit(void)
     g_window_slot_done = 1;
     if (max > 0 && !og_window_slot_acquire(max)) {
         og_log("window limit %d reached", max);
-        og_message("The maximum number of game windows on this computer is reached.", MB_OK | MB_ICONSTOP);
+        og_message(og_tr(OG_T_MAX_WINDOWS), MB_OK | MB_ICONSTOP);
         TerminateProcess(GetCurrentProcess(), 1);
     }
 }

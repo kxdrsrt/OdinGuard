@@ -17,7 +17,7 @@ Umgebung: macOS (Cross-Compile mingw-w64), Docker (MariaDB + xAthena login/char/
 | Parser-Fuzzing | `make -C client fuzz` | Handshake, Records, Policy, Challenge, Sigs, Colors; ASan + UBSan | grün, 2 000 000 Iterationen |
 | Detection-Test | `dettest.exe <sigpack> positive <leerer Ordner>` (VM) | Prozess, Modul, Fensterklasse, Fenstertitel, Dateiname, Datei-Hash, GRF-Hash, Mutex, Registry (vorhanden/fehlend), Treiber (aktiver Systemtreiber), Einmal-Meldung, Allowlist | grün, 15/15 (Paket mit 300 Signaturen) |
 | Fehlalarm-Test | `dettest.exe <sigpack> clean <client-dev/ragnarok>` (VM) | 17 Client-DLLs gemappt (ROExt `ijl15r.dll`, dxwrapper, ddraw, …) + Ordner-, Fenster-, Prozess-, Treiber-, Mutex-, Registry-Scan | grün, 0 Signaturtreffer (300er-Paket) |
-| E2E | `sh tests/e2e/run.sh <xathena> dist/e2e dist/minimal` | 70 Prüfungen (Abschnitt 3) | siehe Abschnitt 3 (Lauf 2026-11-26) |
+| E2E | `sh tests/e2e/run.sh <xathena> dist/e2e dist/minimal` | 97 Prüfungen (Abschnitt 3) | grün, 97/97 (Lauf 2026-11-26, 1.0.5; davon 7 neue in 5c) |
 | Reproduzierbarkeit | `og build` zweimal je Profil | DLL-, GRF-, Manifest-Hashes | grün (default, minimal, Betreiber-Profil) |
 | Release-Signatur | `og verify-release <ordner>` | Manifest-Signatur + jede Datei | grün (default, minimal, e2e, cptest, Betreiber) |
 | Studio-Release | `tools/release_studio.sh beta https://…` + `og update-verify` | Build, Signatur Artefakt + Manifest | grün; Manipulation von Manifest bzw. Artefakt abgelehnt |
@@ -179,6 +179,15 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
   Visual Studio (CI); gelaufen ist ein MSVC-Server nicht.
 
 ## 8. Historie
+
+**2026-11-26 (1.0.5, Sprachen DE/EN):** Alle Spielertexte auf Englisch und Deutsch (Client: Meldungsfenster, Titel,
+`!`-Antworten; Server: Chat-Meldungen, Ablehnung beim Login), Sprache vom Guard im Hello (`og-lang`). E2E 97/97, neu 5c:
+deutsche Ablehnung (Client und Login-Log), deutsches Ratenlimit, deutsche `!dark`-Antwort, Umlaut als Windows-1252-Byte
+beim Client, Zusatzsprache aus der Konfiguration (`og_text_fr_…`), nicht übersetzte Texte bleiben Englisch. Die
+übrigen Prüfungen laufen mit `Language=en` (die VM ist deutsch). Dabei gefunden: ein Testfehler (`grep` mit `.` passt in
+UTF-8 nicht auf ein Einzelbyte), behoben. **Gemessen im echten Client (deutsches Windows, lokaler Testserver):** Titel
+„OdinGuard Anti Cheat 1.0.5 - wartet auf den Server“, Chat „Competitive-Pack ist beim nächsten Start AUS …“, „Paketfilter
+(WoE/BG-Karten): Chat AUS …“, „Du bist in keiner Gruppe.“, „Kreis 1 an …“, Umlaute korrekt (`docs/images/german-chat.png`).
 
 **2026-11-26 (1.0.4, Modul `launcher`, Sichttest in der VM mit OpenThor 0.4.0):** Profil mit `launcher`, BurningRO-Client.
 Gemessen: `alpha.exe` direkt gestartet → Meldung „Please start the game with the patcher (openthor.exe) …“ vor dem

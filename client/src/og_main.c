@@ -117,7 +117,7 @@ OG_API int OdinGuard_Start(void)
     og_crash_install();
     if (og_cfg.block_vm && og_is_vm(why, sizeof why)) {
         og_log("vm detected: %s", why);
-        og_message("Running in a virtual machine is not allowed on this server.", MB_OK | MB_ICONSTOP);
+        og_message(og_tr(OG_T_VM), MB_OK | MB_ICONSTOP);
         TerminateProcess(GetCurrentProcess(), 1);
     }
     og_guard_start();
@@ -140,6 +140,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res)
         if (s) *s = 0;
         og_config_load(og_client_dir);
         og_log_open(og_client_dir);
+        og_lang_init(og_client_dir);
         og_launcher_check();
         InitializeCriticalSection(&og_policy_lock);
         /* hooks must be in place before the game opens its first connection */

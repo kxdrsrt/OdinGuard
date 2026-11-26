@@ -433,6 +433,12 @@ static int handshake(og_sock *k)
         c[OG_COMPONENT_NAME + 2] = OG_VER_PATCH;
         hello[OG_CLIENT_HELLO_FIXED - 1] = (uint8_t)++ncomp;
     }
+    if (ncomp < OG_MAX_COMPONENTS) { /* the player's language: the server answers in it */
+        uint8_t *c = hello + OG_CLIENT_HELLO_FIXED + ncomp * (OG_COMPONENT_NAME + 32);
+        strncpy((char *)c, OG_LANG_COMPONENT, OG_COMPONENT_NAME);
+        strncpy((char *)c + OG_COMPONENT_NAME, og_lang(), 8);
+        hello[OG_CLIENT_HELLO_FIXED - 1] = (uint8_t)++ncomp;
+    }
     len = OG_CLIENT_HELLO_FIXED + ncomp * (OG_COMPONENT_NAME + 32);
     wr16(hello + 2, (uint16_t)len);
 
@@ -458,7 +464,7 @@ static int handshake(og_sock *k)
         memcpy(msg, sh + OG_SERVER_HELLO_FIXED, ml);
         msg[ml] = 0;
         og_log("handshake: refused (%d) %s", sh[5], msg);
-        og_message(ml ? msg : "The server refused the connection.", MB_OK | MB_ICONWARNING);
+        og_message(ml ? msg : og_tr(OG_T_REFUSED), MB_OK | MB_ICONWARNING);
         goto fail;
     }
 

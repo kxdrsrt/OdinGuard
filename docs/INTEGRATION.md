@@ -203,6 +203,31 @@ On players' machines the patcher does this (the OpenThor patch list's `remove` a
 uninstaller. If you let OpenThor Patcher manage `DATA.INI` (`data_ini` in
 its patch list), do not run this tool on the same client.
 
+### Languages (1.0.5)
+
+Everything a player reads from OdinGuard comes in the player's language: message boxes (launcher, outdated guard, window
+limit, virtual machine, crash reports), the window title, replies to `!dark`, `!vsync`, `!crash`, and the server's chat
+messages (`@lgp`, `@circle`, `@pf`, `@spb`, `!ping`, command limits). English and German are built in.
+
+* **Which language:** the Windows display language, or `Language=de` / `Language=en` in `odinguard.ini` (section
+  `[OdinGuard]`). The guard sends it to the server in the hello (`og-lang`), so the server answers in it too.
+* **More languages or other wording, client side:** in `odinguard.ini` (ship it with your patcher), UTF-8, `{1}` and `{2}`
+  are filled in:
+  ```ini
+  [text.fr]
+  dark.usage=Utilisation : !dark on | !dark off
+  launcher=Lancez le jeu avec le patcher (openthor.exe).
+  ```
+  Keys: `client/src/og_lang.c` (table `g_texts`).
+* **Server side:** `og_text_<lang>_<key>: <text>` in `conf/import/odinguard_conf.txt` (keys and the German texts:
+  `og_texts_de` in `src/common/odinguard.cpp`), and `og_outdated_message_<lang>` for the refusal of an old guard. Guards
+  before 1.0.5 report no language and get `og_outdated_message`; write it in both languages if your players need that.
+* **Launcher message:** module parameters `launcher.message` (English) and `launcher.message_de` (German).
+<img src="images/german-chat.png" width="560" alt="Chat replies in German: Competitive-Pack ist beim nächsten Start AUS, Paketfilter, Du bist in keiner Gruppe, Kreis 1 an, Ping">
+
+* **Umlauts:** the 2018 client shows chat in the Windows code page; the server converts its UTF-8 texts to Windows-1252
+  (`og_client_charset: cp1252`, default; `utf8` for a client that shows UTF-8). Message boxes are Unicode.
+
 ## 8. Roll out in stages
 
 | Stage | Server | Effect | Move on when |

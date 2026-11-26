@@ -22,4 +22,5 @@
 #define OG_PROFILE_SERVER_PUBKEY OG_SERVER_PUBKEY_INIT
 #define OG_PROFILE_LAUNCHER_EXE "openthor.exe"
 #define OG_PROFILE_LAUNCHER_MSG "Please start the game with the patcher (openthor.exe)."
+#define OG_PROFILE_LAUNCHER_MSG_DE "Bitte starte das Spiel mit dem Patcher (openthor.exe)."
 #endif

@@ -151,7 +151,6 @@ static volatile LONG g_title_state;   /* 0 = waiting for the server, 1 = protect
 static char g_title_note[100];
 
 #define TITLE_MARK " | OdinGuard Anti Cheat "
-#define TITLE_DARK " | Darkworld / Competitive Mode ON"
 
 /* The game reads DATA.INI once at start, so the competitive pack is what DATA.INI said at that moment (!dark changes it for
    the next start only). Read here before the game window exists; the pack file must be there too. */
@@ -175,7 +174,7 @@ static DWORD WINAPI title_thread(LPVOID unused)
     char tag[128], orig[160];
     (void)unused;
     orig[0] = 0;
-    snprintf(tag, sizeof tag, "%s%s%s", TITLE_MARK, OG_VERSION_STR, dark_loaded() ? TITLE_DARK : "");
+    snprintf(tag, sizeof tag, "%s%s%s", TITLE_MARK, OG_VERSION_STR, dark_loaded() ? og_tr(OG_T_TITLE_DARK) : "");
     /* For the life of the process: the client sets its own title again at times (window mode switch, map change), and the
        first window can appear long after the guard started. One enumeration every 1.5 s costs nothing.
        The title always says what the guard is doing, so a player (or you) can see at a glance whether it is active. */
@@ -195,8 +194,8 @@ static DWORD WINAPI title_thread(LPVOID unused)
             }
             if (!orig[0]) snprintf(orig, sizeof orig, "%s", OG_PROFILE_OPERATOR);
             if (st == 1) snprintf(want, sizeof want, "%s%s", orig, tag);
-            else if (st == 2) snprintf(want, sizeof want, "%s%s - NOT CONNECTED (%s)", orig, tag, g_title_note);
-            else snprintf(want, sizeof want, "%s%s - waiting for the server", orig, tag);
+            else if (st == 2) { char f[180]; og_trf(f, sizeof f, OG_T_TITLE_FAILED, g_title_note, NULL); snprintf(want, sizeof want, "%s%s%s", orig, tag, f); }
+            else snprintf(want, sizeof want, "%s%s%s", orig, tag, og_tr(OG_T_TITLE_WAITING));
             if (strcmp(cur, want)) SetWindowTextA(w, want);
         }
         Sleep(1500);

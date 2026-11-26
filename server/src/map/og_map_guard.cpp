@@ -297,12 +297,12 @@ bool og_map_command_allowed(map_session_data* sd, const char* id, int32 def_rate
 	char key[64];
 	safesnprintf(key, sizeof(key), "og_cmd_%s", id);
 	if (!config_switch(og_setting(key, "yes"))) {
-		clif_displaymessage(sd->fd, "This command is disabled on this server.");
+		clif_displaymessage(sd->fd, og_text(sd->fd, "cmd_disabled", "This command is disabled on this server.").c_str());
 		return false;
 	}
 	safesnprintf(key, sizeof(key), "og_cmdgroup_%s", id);
 	if (pc_get_group_level(sd) < og_setting_int(key, 0)) {
-		clif_displaymessage(sd->fd, "You are not allowed to use this command.");
+		clif_displaymessage(sd->fd, og_text(sd->fd, "cmd_denied", "You are not allowed to use this command.").c_str());
 		return false;
 	}
 	safesnprintf(key, sizeof(key), "og_cmdrate_%s", id);
@@ -312,7 +312,7 @@ bool og_map_command_allowed(map_session_data* sd, const char* id, int32 def_rate
 		t_tick now = gettick();
 		auto it = b.cmd_last.find(id);
 		if (it != b.cmd_last.end() && DIFF_TICK(now, it->second) < rate) {
-			clif_displaymessage(sd->fd, "Please wait a moment before using this command again.");
+			clif_displaymessage(sd->fd, og_text(sd->fd, "cmd_wait", "Please wait a moment before using this command again.").c_str());
 			return false;
 		}
 		b.cmd_last[id] = now;

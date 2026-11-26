@@ -128,6 +128,7 @@ pub fn profile_h(p: &Profile, reg: &Registry, d: &Derived) -> String {
 #define OG_PROFILE_SERVER_PUBKEY {pubkey}\n\
 #define OG_PROFILE_LAUNCHER_EXE \"{lexe}\"\n\
 #define OG_PROFILE_LAUNCHER_MSG \"{lmsg}\"\n\
+#define OG_PROFILE_LAUNCHER_MSG_DE \"{lmsg_de}\"\n\
 #endif\n",
         id = c_string(&p.general.id),
         op = c_string(&p.general.operator),
@@ -144,6 +145,7 @@ pub fn profile_h(p: &Profile, reg: &Registry, d: &Derived) -> String {
         pubkey = c_bytes(&d.server_pub),
         lexe = c_string(&lp("exe")),
         lmsg = lp("message").replace("{exe}", &lp("exe")).split('\n').map(c_string).collect::<Vec<_>>().join("\\n"),
+        lmsg_de = lp("message_de").replace("{exe}", &lp("exe")).split('\n').map(c_string).collect::<Vec<_>>().join("\\n"),
     )
 }
 
@@ -332,6 +334,7 @@ mod tests {
         let d = Derived::new(&p, [1u8; 32], [0xAB; 32]).unwrap();
         let h = profile_h(&p, &r, &d);
         assert!(h.contains("#define OG_PROFILE_LAUNCHER_EXE \"openthor.exe\""));
+        assert!(h.contains("Bitte starte das Spiel mit dem Patcher (openthor.exe)."), "German message with the exe");
         assert!(h.contains("with the patcher (openthor.exe). It keeps your client up to date.\\n\\nStart"), "message with the exe and C newlines");
         assert!(!h.contains(&c_bytes(&[0xAB; 32])), "build secret in clear");
         assert!(h.contains("X \\\"quoted\\\""));

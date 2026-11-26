@@ -4,6 +4,7 @@
 #ifndef ODINGUARD_HPP
 #define ODINGUARD_HPP
 
+#include <initializer_list>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,6 +28,7 @@ struct s_og_info {
 	uint8 flags = 0;
 	uint8 version = 0;
 	uint32 release = 0;       // guard release (major << 16 | minor << 8 | patch) from the og-release component; 0 = before 1.0.3
+	std::string lang;         // the player's language ("de") from the og-lang component; empty = guard before 1.0.5
 	bool darkpack = false;    // odin-dark.grf is loaded and accepted (OG_ALIVE_DARKPACK)
 	bool alive_seen = false;  // the first heartbeat has arrived (darkpack is only known from then on)
 	bool lgp_palette = false; // the client draws the LGP colour units (OG_ALIVE_LGP_PALETTE)
@@ -41,6 +43,14 @@ bool og_log_only();
 int32 og_ban_match();
 int32 og_max_per_machine();
 std::string og_release_str(uint32 release); // "1.0.3"; 0 = "older than 1.0.3"
+
+// Texts for a player, in the language the guard reported: built-in German, conf og_text_<lang>_<key> for more languages
+// or changes, else the English text given here. {1}, {2}, {3} are replaced by args. The result is in the client's
+// character set (og_client_charset), ready for clif_displaymessage.
+std::string og_text(int32 fd, const char* key, const char* en, std::initializer_list<std::string> args = {});
+std::string og_text_lang(const std::string& lang, const char* key, const char* en, std::initializer_list<std::string> args = {});
+// UTF-8 (our texts, texts of 1.0.5 guards, web panels) to the client's character set: cp1252 (default) or utf8 (as is)
+std::string og_client_charset(const std::string& utf8);
 uint32 og_sigpack_version();
 
 // values of conf/odinguard_athena.conf read by the server modules (og_rate_*, og_bh_*, og_banwave_*, og_cmd_* ...)

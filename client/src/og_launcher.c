@@ -45,7 +45,7 @@ void og_launcher_check(void)
         return;
     }
     og_log("launcher: started without the patcher, refused");
-    if (og_message(OG_PROFILE_LAUNCHER_MSG, MB_YESNO | MB_ICONINFORMATION) == IDYES) {
+    if (og_message(og_tr(OG_T_LAUNCHER), MB_YESNO | MB_ICONINFORMATION) == IDYES) {
         snprintf(exe, sizeof exe, "%s\\%s", og_client_dir, OG_PROFILE_LAUNCHER_EXE);
         ZeroMemory(&si, sizeof si);
         si.cb = sizeof si;

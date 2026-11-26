@@ -3564,10 +3564,10 @@ index ce4d0b18d..4e349ab05 100644
        can_trade: true
 diff --git a/conf/odinguard_athena.conf b/conf/odinguard_athena.conf
 new file mode 100644
-index 000000000..0fdbcc038
+index 000000000..17953b512
 --- /dev/null
 +++ b/conf/odinguard_athena.conf
-@@ -0,0 +1,379 @@
+@@ -0,0 +1,389 @@
 +// OdinGuard Anti Cheat settings. Local overrides: conf/import/odinguard_conf.txt (created at the first start).
 +// The OdinGuard Studio generates the profile values (key, proto salt, build secret, signature package, module
 +// switches, commands, auras) into conf/import/odinguard_conf.txt; the environment variables ODINGUARD_KEY,
@@ -3597,6 +3597,16 @@ index 000000000..0fdbcc038
 +og_min_release: 0
 +// {have} = release of the player's guard, {need} = og_min_release. At most 400 characters.
 +og_outdated_message: Your client is outdated (OdinGuard {have}). This server needs OdinGuard {need} or newer. Please start the patcher, then log in again.
++// Guards from 1.0.5 report the player's language (Windows, or odinguard.ini Language=). German is built in; a line
++// og_outdated_message_<lang> overrides it or adds a language. Guards before 1.0.5 get og_outdated_message.
++//og_outdated_message_de: Dein Client ist veraltet (OdinGuard {have}). Dieser Server braucht OdinGuard {need} oder neuer. Bitte starte den Patcher und logge dich dann erneut ein.
++
++// Texts for players (chat replies of @lgp, @pf, @spb, commands, ping ...) in the player's language: English and German
++// are built in; og_text_<lang>_<key>: <text> (UTF-8) adds a language or replaces one text. Keys and the German texts:
++// og_texts_de in src/common/odinguard.cpp. {1} {2} {3} are filled in. Example:
++//og_text_fr_cmd_wait: Patientez un instant avant de réutiliser cette commande.
++// Character set the game client shows: cp1252 (Western Windows, default; UTF-8 texts are converted) or utf8.
++og_client_charset: cp1252
 +
 +// Profile values of the client build (Studio): protocol salt (32 hex) and build secret (64 hex). A client built
 +// for another profile is refused with a message. Empty salt = the development profile.
@@ -4078,10 +4088,10 @@ index 62b42598f..d6b0cf785 100644
      </ClCompile>
 diff --git a/src/common/odinguard.cpp b/src/common/odinguard.cpp
 new file mode 100644
-index 000000000..29b2704a6
+index 000000000..ee0c05374
 --- /dev/null
 +++ b/src/common/odinguard.cpp
-@@ -0,0 +1,1388 @@
+@@ -0,0 +1,1505 @@
 +// OdinGuard Anti Cheat – server side. See odinguard.hpp, og_proto.h and og_wire.h.
 +
 +#include "odinguard.hpp"
@@ -4098,6 +4108,7 @@ index 000000000..29b2704a6
 +#include <cstring>
 +#include <memory>
 +#include <tuple>
++#include <unordered_map>
 +
 +#include "../../3rdparty/monocypher/monocypher.h"
 +
@@ -4296,6 +4307,107 @@ index 000000000..29b2704a6
 +	if (v == nullptr || sscanf(v, "%d.%d.%d", &a, &b, &c) < 1)
 +		return 0;
 +	return (uint32)(std::clamp(a, 0, 255) << 16 | std::clamp(b, 0, 255) << 8 | std::clamp(c, 0, 255));
++}
++
++// ---------------------------------------------------------------- texts for players
++// English is written where the text is used; German is built in here. A server adds languages or changes texts with
++// conf lines og_text_<lang>_<key>: <text> (UTF-8), e.g. og_text_fr_cmd_wait: Patientez un instant.
++static const std::unordered_map<std::string, std::string> og_texts_de = {
++	{ "proto_outdated", "Bitte aktualisiere deinen Client (der Anti-Cheat ist veraltet)." },
++	{ "wrong_profile", "Dieser Client wurde für einen anderen Server gebaut. Bitte nutze den Client dieses Servers." },
++	{ "outdated", "Dein Client ist veraltet (OdinGuard {have}). Dieser Server braucht OdinGuard {need} oder neuer. Bitte starte den Patcher und logge dich dann erneut ein." },
++	{ "not_active", "OdinGuard ist in diesem Client nicht aktiv." },
++	{ "ping", "Ping: {1} ms" },
++	{ "darkpack_required", "Diese Karte braucht das Competitive-Pack (odin-dark.grf) dieses Servers. Aktualisiere deinen Client (Patcher) und versuche es erneut." },
++	{ "lgpsound_disabled", "Skill-Sounds für Lite Ground Skills sind auf diesem Server ausgeschaltet." },
++	{ "lgpsound_on", "Sounds für Lite Ground Skills an (der /sound-Schalter des Clients schaltet sie weiter stumm)." },
++	{ "lgpsound_off", "Sounds für Lite Ground Skills aus." },
++	{ "circle_looks", "Kreise: 1 = Radius 4, 2 = Radius 3, 3 = Radius 2, 4 = alle drei, 5 = Radius 9 (Sicht); @circle off." },
++	{ "circle_off", "Kreis aus." },
++	{ "circle_on", "Kreis {1} an: {2} um deinen Charakter." },
++	{ "circle_1", "Kreis mit Radius 4" },
++	{ "circle_2", "Kreis mit Radius 3" },
++	{ "circle_3", "Kreis mit Radius 2" },
++	{ "circle_4", "Kreise mit Radius 2, 3 und 4" },
++	{ "circle_5", "Kreis mit Radius 9 (Sicht)" },
++	{ "lgp_sets", "Farbsätze: 1 = jeder Skill in seiner Farbe, 2-{1} = eine Farbe für alle Skills." },
++	{ "lgp_off", "Lite Ground Skills aus: normale Skill-Effekte." },
++	{ "lgp_on", "Lite Ground Skills an ({1}): {2} werden als flache farbige Felder gezeigt." },
++	{ "lgp_square", "Quadrat" },
++	{ "lgp_set", "Farbsatz {1}" },
++	{ "lgp_aoes", "Storm Gust, Lord of Vermilion und Meteor Storm" },
++	{ "lgp_area", "Flächen-Skills" },
++	{ "pf_usage", "Benutzung: @pf on|off|<c i g> (c = Chat, i = Item-Nutzung, g = Emotes anderer Spieler, auf WoE- und Battleground-Karten)" },
++	{ "pf_state", "Paketfilter (WoE/BG-Karten): Chat {1} | Items {2} | Emotes {3}" },
++	{ "on", "AN" },
++	{ "off", "AUS" },
++	{ "spb_noparty", "Du bist in keiner Gruppe." },
++	{ "spb_none", "keine Support-Buffs" },
++	{ "spb_othermap", "(andere Karte)" },
++	{ "cmd_disabled", "Dieser Befehl ist auf diesem Server ausgeschaltet." },
++	{ "cmd_denied", "Du darfst diesen Befehl nicht benutzen." },
++	{ "cmd_wait", "Bitte warte einen Moment, bevor du den Befehl erneut benutzt." },
++};
++
++std::string og_client_charset(const std::string& s) {
++	if (!strcmpi(og_setting("og_client_charset", "cp1252"), "utf8"))
++		return s;
++	// characters of Windows-1252 above 0x7f that are not Latin-1
++	static const std::pair<uint32, char> extra[] = { { 0x20AC, '\x80' }, { 0x201A, '\x82' }, { 0x201E, '\x84' }, { 0x2026, '\x85' },
++		{ 0x2018, '\x91' }, { 0x2019, '\x92' }, { 0x201C, '\x93' }, { 0x201D, '\x94' }, { 0x2022, '\x95' }, { 0x2013, '\x96' }, { 0x2014, '\x97' } };
++	std::string out;
++	out.reserve(s.size());
++	for (size_t i = 0; i < s.size();) {
++		uint8 b = (uint8)s[i];
++		uint32 cp;
++		size_t n;
++		if (b < 0x80) { cp = b; n = 1; }
++		else if ((b & 0xE0) == 0xC0) { cp = b & 0x1F; n = 2; }
++		else if ((b & 0xF0) == 0xE0) { cp = b & 0x0F; n = 3; }
++		else if ((b & 0xF8) == 0xF0) { cp = b & 0x07; n = 4; }
++		else return s; // not UTF-8 (already in the client's code page): unchanged
++		if (i + n > s.size())
++			return s;
++		for (size_t k = 1; k < n; k++) {
++			if (((uint8)s[i + k] & 0xC0) != 0x80)
++				return s;
++			cp = cp << 6 | ((uint8)s[i + k] & 0x3F);
++		}
++		i += n;
++		if (cp < 0x100) { out += (char)cp; continue; }
++		char c = '?';
++		for (const auto& e : extra)
++			if (e.first == cp) c = e.second;
++		out += c;
++	}
++	return out;
++}
++
++std::string og_text_lang(const std::string& lang, const char* key, const char* en, std::initializer_list<std::string> args) {
++	std::string t = en;
++	if (!lang.empty()) {
++		std::string k = "og_text_" + lang + "_" + key;
++		const char* own = og_setting(k.c_str(), nullptr);
++		if (own != nullptr)
++			t = own;
++		else if (lang == "de") {
++			auto it = og_texts_de.find(key);
++			if (it != og_texts_de.end())
++				t = it->second;
++		}
++	}
++	int32 n = 1;
++	for (const std::string& a : args) {
++		std::string ph = "{" + std::to_string(n++) + "}";
++		for (size_t at = 0; (at = t.find(ph, at)) != std::string::npos; at += a.size())
++			t.replace(at, ph.size(), a);
++	}
++	return og_client_charset(t);
++}
++
++std::string og_text(int32 fd, const char* key, const char* en, std::initializer_list<std::string> args) {
++	const s_og_info* info = og_info(fd);
++	return og_text_lang(info != nullptr ? info->lang : std::string(), key, en, args);
 +}
 +
 +std::string og_release_str(uint32 r) {
@@ -5129,19 +5241,34 @@ index 000000000..29b2704a6
 +			o->info.release = (uint32)c[OG_COMPONENT_NAME] << 16 | (uint32)c[OG_COMPONENT_NAME + 1] << 8 | c[OG_COMPONENT_NAME + 2];
 +			continue;
 +		}
++		if (name == OG_LANG_COMPONENT) { // not hardware: the player's language
++			std::string l;
++			for (int32 j = 0; j < 8 && c[OG_COMPONENT_NAME + j]; j++) {
++				char ch = (char)TOLOWER(c[OG_COMPONENT_NAME + j]);
++				if ((ch >= 'a' && ch <= 'z') || ch == '-')
++					l += ch;
++			}
++			o->info.lang = l;
++			continue;
++		}
 +		o->info.components.emplace_back(name, to_hex(c + OG_COMPONENT_NAME, 32));
 +	}
 +
 +	uint8 status = OG_STATUS_OK;
 +	std::string message;
-+	if (h.version < og_cfg.min_version) { status = OG_STATUS_OUTDATED; message = "Please update your client (the anti cheat is outdated)."; }
-+	else if (crypto_verify16(h.tag, og_cfg.tag) != 0) { status = OG_STATUS_PROFILE; message = "This client was built for another server. Please use this server's client."; }
++	const std::string& lang = o->info.lang;
++	if (h.version < og_cfg.min_version) { status = OG_STATUS_OUTDATED; message = og_text_lang(lang, "proto_outdated", "Please update your client (the anti cheat is outdated)."); }
++	else if (crypto_verify16(h.tag, og_cfg.tag) != 0) { status = OG_STATUS_PROFILE; message = og_text_lang(lang, "wrong_profile", "This client was built for another server. Please use this server's client."); }
 +	else if (o->info.release < og_cfg.min_release) {
 +		status = OG_STATUS_OUTDATED;
-+		message = og_cfg.outdated_message;
-+		for (auto [key, val] : { std::pair<std::string, std::string>{ "{have}", og_release_str(o->info.release) }, { "{need}", og_release_str(og_cfg.min_release) } })
-+			for (size_t at; (at = message.find(key)) != std::string::npos;)
-+				message.replace(at, key.size(), val);
++		// og_outdated_message is the text for guards that report no language (before 1.0.5) and for English;
++		// og_outdated_message_<lang> (German built in) for the others
++		std::string key = "og_outdated_message_" + lang;
++		const char* own = lang.empty() ? nullptr : og_setting(key.c_str(), nullptr);
++		message = own != nullptr ? og_client_charset(own) : lang == "de" ? og_text_lang(lang, "outdated", "") : og_client_charset(og_cfg.outdated_message);
++		for (auto [k, val] : { std::pair<std::string, std::string>{ "{have}", og_release_str(o->info.release) }, { "{need}", og_release_str(og_cfg.min_release) } })
++			for (size_t at; (at = message.find(k)) != std::string::npos;)
++				message.replace(at, k.size(), val);
 +		message.resize(std::min(message.size(), (size_t)400));
 +	}
 +
@@ -5472,16 +5599,17 @@ index 000000000..29b2704a6
 +}
 diff --git a/src/common/odinguard.hpp b/src/common/odinguard.hpp
 new file mode 100644
-index 000000000..09e03428f
+index 000000000..cae781210
 --- /dev/null
 +++ b/src/common/odinguard.hpp
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,106 @@
 +// OdinGuard server side: handshake, encrypted record layer and policy for client connections.
 +// Wire format: og_proto.h (shared with the OdinGuard client DLL).
 +
 +#ifndef ODINGUARD_HPP
 +#define ODINGUARD_HPP
 +
++#include <initializer_list>
 +#include <string>
 +#include <utility>
 +#include <vector>
@@ -5505,6 +5633,7 @@ index 000000000..09e03428f
 +	uint8 flags = 0;
 +	uint8 version = 0;
 +	uint32 release = 0;       // guard release (major << 16 | minor << 8 | patch) from the og-release component; 0 = before 1.0.3
++	std::string lang;         // the player's language ("de") from the og-lang component; empty = guard before 1.0.5
 +	bool darkpack = false;    // odin-dark.grf is loaded and accepted (OG_ALIVE_DARKPACK)
 +	bool alive_seen = false;  // the first heartbeat has arrived (darkpack is only known from then on)
 +	bool lgp_palette = false; // the client draws the LGP colour units (OG_ALIVE_LGP_PALETTE)
@@ -5519,6 +5648,14 @@ index 000000000..09e03428f
 +int32 og_ban_match();
 +int32 og_max_per_machine();
 +std::string og_release_str(uint32 release); // "1.0.3"; 0 = "older than 1.0.3"
++
++// Texts for a player, in the language the guard reported: built-in German, conf og_text_<lang>_<key> for more languages
++// or changes, else the English text given here. {1}, {2}, {3} are replaced by args. The result is in the client's
++// character set (og_client_charset), ready for clif_displaymessage.
++std::string og_text(int32 fd, const char* key, const char* en, std::initializer_list<std::string> args = {});
++std::string og_text_lang(const std::string& lang, const char* key, const char* en, std::initializer_list<std::string> args = {});
++// UTF-8 (our texts, texts of 1.0.5 guards, web panels) to the client's character set: cp1252 (default) or utf8 (as is)
++std::string og_client_charset(const std::string& utf8);
 +uint32 og_sigpack_version();
 +
 +// values of conf/odinguard_athena.conf read by the server modules (og_rate_*, og_bh_*, og_banwave_*, og_cmd_* ...)
@@ -5582,10 +5719,10 @@ index 000000000..6fd3e1559
 +#include "../../3rdparty/monocypher/monocypher.c"
 diff --git a/src/common/og_proto.h b/src/common/og_proto.h
 new file mode 100644
-index 000000000..f2d2395f1
+index 000000000..834590744
 --- /dev/null
 +++ b/src/common/og_proto.h
-@@ -0,0 +1,148 @@
+@@ -0,0 +1,150 @@
 +/* OdinGuard Anti Cheat – wire protocol v2. Shared by the client DLL (C) and the server module (C++).
 + * All integers little-endian. The parsers for every message live in og_wire.c (pure C, fuzzed natively).
 + *
@@ -5622,6 +5759,8 @@ index 000000000..f2d2395f1
 +/* pseudo component in the client hello (1.0.3+): the guard release, hash bytes = u8 major, minor, patch, zeros.
 + * Not hardware: servers do not store it with the machine components. Clients before 1.0.3 do not send it. */
 +#define OG_RELEASE_COMPONENT "og-release"
++/* pseudo component (1.0.5+): the player's language for the server's messages, hash bytes = ASCII code ("de"), zeros */
++#define OG_LANG_COMPONENT "og-lang"
 +#define OG_RECORD_MAX      60000  /* plaintext payload per record */
 +#define OG_RECORD_OVERHEAD (2 + 16 + 1)
 +#define OG_REKEY_RECORDS   4096
@@ -7203,10 +7342,10 @@ index 4130361aa..ae2e6779e 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 000000000..1a5e3cb9d
+index 000000000..0a48ec8f7
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,1000 @@
+@@ -0,0 +1,992 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
@@ -7308,15 +7447,13 @@ index 000000000..1a5e3cb9d
 +
 +static void og_map_text(int32 fd, const char* text) {
 +	if (og_sd(fd) != nullptr)
-+		clif_displaymessage(fd, text);
++		clif_displaymessage(fd, og_client_charset(text).c_str()); // replies of the guard: UTF-8 since 1.0.5
 +}
 +
 +static void og_map_pong(int32 fd, int64 rtt) {
 +	if (og_sd(fd) == nullptr)
 +		return;
-+	char msg[64];
-+	safesnprintf(msg, sizeof(msg), "Ping: %d ms", (int32)rtt);
-+	clif_displaymessage(fd, msg);
++	clif_displaymessage(fd, og_text(fd, "ping", "Ping: {1} ms", { std::to_string((int32)rtt) }).c_str());
 +}
 +
 +void og_map_init() {
@@ -7363,7 +7500,7 @@ index 000000000..1a5e3cb9d
 +	safestrncpy(cmd, id, sizeof(cmd));
 +	arg = argbuf; // cmd is reused for the id and held the argument
 +	if (!og_session_active(sd->fd)) {
-+		clif_displaymessage(sd->fd, "OdinGuard is not active on this client.");
++		clif_displaymessage(sd->fd, og_text(sd->fd, "not_active", "OdinGuard is not active on this client.").c_str());
 +		return true;
 +	}
 +	if (!strcmpi(cmd, "ping"))
@@ -7848,7 +7985,7 @@ index 000000000..1a5e3cb9d
 +	if (info == nullptr || !info->alive_seen || info->darkpack)
 +		return;
 +	og_report(sd->fd, "darkpack:required", map_getmapdata(sd->m)->name, OG_ACTION_LOG, 0);
-+	clif_displaymessage(sd->fd, "This map needs the competitive pack (odin-dark.grf) of this server. Update your client (patcher) and try again.");
++	clif_displaymessage(sd->fd, og_text(sd->fd, "darkpack_required", "This map needs the competitive pack (odin-dark.grf) of this server. Update your client (patcher) and try again.").c_str());
 +	pc_setpos_savepoint(*sd);
 +}
 +
@@ -7928,7 +8065,7 @@ index 000000000..1a5e3cb9d
 +				ShowStatus("OdinGuard: web command %" PRIu64 " kicks %s (account %u) for %s: %s\n", r.id, sd->status.name, sd->status.account_id, r.by.c_str(), r.arg.c_str());
 +				og_map_event(sd->fd, "web-kick", (r.by + ": " + r.arg).c_str(), OG_ACTION_KICK, 0);
 +			} else if (r.command == "message") {
-+				clif_displaymessage(sd->fd, r.arg.c_str());
++				clif_displaymessage(sd->fd, og_client_charset(r.arg).c_str());
 +			}
 +		}
 +	}
@@ -7957,8 +8094,8 @@ index 000000000..1a5e3cb9d
 +		if (!strcmpi(arg, "on")) on = true;
 +		else if (!strcmpi(arg, "off")) on = false;
 +		pc_setglobalreg(sd, add_str(OG_REG_FLAGS), on ? (f & ~OG_FLAG_LGP_NOSOUND) : (f | OG_FLAG_LGP_NOSOUND));
-+		clif_displaymessage(sd->fd, !og_module_on("og_lgp_sound", true) ? "Skill sounds for lite ground skills are switched off on this server."
-+			: on ? "Lite ground skill sounds on (the client's /sound switch still mutes them)." : "Lite ground skill sounds off.");
++		clif_displaymessage(sd->fd, (!og_module_on("og_lgp_sound", true) ? og_text(sd->fd, "lgpsound_disabled", "Skill sounds for lite ground skills are switched off on this server.")
++			: on ? og_text(sd->fd, "lgpsound_on", "Lite ground skill sounds on (the client's /sound switch still mutes them).") : og_text(sd->fd, "lgpsound_off", "Lite ground skill sounds off.")).c_str());
 +		return;
 +	}
 +	if (kind == 2) {
@@ -7968,19 +8105,17 @@ index 000000000..1a5e3cb9d
 +		else if (atoi(arg) > 0) look = atoi(arg);
 +		else look = cur > 0 ? 0 : 1; // no argument: toggle
 +		if (look > looks) {
-+			char m[CHAT_SIZE_MAX];
-+			safesnprintf(m, sizeof(m), "Circle looks: 1 = radius 4, 2 = radius 3, 3 = radius 2, 4 = all three, 5 = radius 9 (sight); @circle off.");
-+			clif_displaymessage(sd->fd, m);
++			clif_displaymessage(sd->fd, og_text(sd->fd, "circle_looks", "Circle looks: 1 = radius 4, 2 = radius 3, 3 = radius 2, 4 = all three, 5 = radius 9 (sight); @circle off.").c_str());
 +			return;
 +		}
 +		pc_setglobalreg(sd, add_str(OG_REG_CIRCLE), look);
 +		if (look == 0)
-+			clif_displaymessage(sd->fd, "Circle off.");
++			clif_displaymessage(sd->fd, og_text(sd->fd, "circle_off", "Circle off.").c_str());
 +		else {
-+			char m[CHAT_SIZE_MAX];
 +			static const char* names[] = { "", "radius 4 circle", "radius 3 circle", "radius 2 circle", "circles of radius 2, 3 and 4", "radius 9 circle (sight)" };
-+			safesnprintf(m, sizeof(m), "Circle %d on: %s around your character.", look, names[look]);
-+			clif_displaymessage(sd->fd, m);
++			std::string name = og_text(sd->fd, ("circle_" + std::to_string(look)).c_str(), names[look]);
++			std::string m = og_text(sd->fd, "circle_on", "Circle {1} on: {2} around your character.", { std::to_string(look), name });
++			clif_displaymessage(sd->fd, m.substr(0, CHAT_SIZE_MAX - 1).c_str());
 +		}
 +		return;
 +	}
@@ -7991,9 +8126,7 @@ index 000000000..1a5e3cb9d
 +	else if (kind == 1 && atoi(arg) > 0) {
 +		int32 set = atoi(arg), sets = 1 + og_lgp_color_count();
 +		if (set > sets) {
-+			char m[CHAT_SIZE_MAX];
-+			safesnprintf(m, sizeof(m), "Colour sets: 1 = every skill in its own colour, 2-%d = one colour for every skill.", sets);
-+			clif_displaymessage(sd->fd, m);
++			clif_displaymessage(sd->fd, og_text(sd->fd, "lgp_sets", "Colour sets: 1 = every skill in its own colour, 2-{1} = one colour for every skill.", { std::to_string(sets) }).c_str());
 +			return;
 +		}
 +		style = set == 1 ? 0 : set;
@@ -8006,14 +8139,14 @@ index 000000000..1a5e3cb9d
 +	flags = on ? (flags | OG_FLAG_LGP) : (flags & ~(OG_FLAG_LGP | OG_FLAG_LGP_AOES));
 +	pc_setglobalreg(sd, add_str(OG_REG_FLAGS), flags);
 +	pc_setglobalreg(sd, add_str(OG_REG_LGP_STYLE), style);
-+	char msg[CHAT_SIZE_MAX];
++	std::string msg;
 +	if (!on)
-+		safesnprintf(msg, sizeof(msg), "Lite ground skills off: normal skill effects.");
++		msg = og_text(sd->fd, "lgp_off", "Lite ground skills off: normal skill effects.");
 +	else
-+		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat coloured cells.",
-+			style > 1 ? "colour set " : "square", style > 1 ? std::to_string(style).c_str() : "",
-+			(flags & OG_FLAG_LGP_AOES) ? "Storm Gust, Lord of Vermilion and Meteor Storm" : "area skills");
-+	clif_displaymessage(sd->fd, msg);
++		msg = og_text(sd->fd, "lgp_on", "Lite ground skills on ({1}): {2} are shown as flat coloured cells.",
++			{ style > 1 ? og_text(sd->fd, "lgp_set", "colour set {1}", { std::to_string(style) }) : og_text(sd->fd, "lgp_square", "square"),
++			  (flags & OG_FLAG_LGP_AOES) ? og_text(sd->fd, "lgp_aoes", "Storm Gust, Lord of Vermilion and Meteor Storm") : og_text(sd->fd, "lgp_area", "area skills") });
++	clif_displaymessage(sd->fd, msg.substr(0, CHAT_SIZE_MAX - 1).c_str());
 +}
 +
 +typedef std::vector<std::pair<uint32, std::string>> og_color_list;
@@ -8154,7 +8287,7 @@ index 000000000..1a5e3cb9d
 +				case 'g': case 'e': n |= OG_PF_EMOTION; break;
 +				case ' ': break;
 +				default:
-+					clif_displaymessage(sd->fd, "Usage: @pf on|off|<c i g> (c = chat, i = item use, g = emotions of other players, on WoE and battleground maps)");
++					clif_displaymessage(sd->fd, og_text(sd->fd, "pf_usage", "Usage: @pf on|off|<c i g> (c = chat, i = item use, g = emotions of other players, on WoE and battleground maps)").c_str());
 +					return;
 +				}
 +			}
@@ -8162,10 +8295,8 @@ index 000000000..1a5e3cb9d
 +		}
 +		pc_setglobalreg(sd, add_str(OG_REG_PF), f);
 +	}
-+	char out[CHAT_SIZE_MAX];
-+	safesnprintf(out, sizeof(out), "Packet filter (WoE/BG maps): chat %s | items %s | emotions %s",
-+		(f & OG_PF_CHAT) ? "ON" : "OFF", (f & OG_PF_ITEM) ? "ON" : "OFF", (f & OG_PF_EMOTION) ? "ON" : "OFF");
-+	clif_displaymessage(sd->fd, out);
++	auto st = [&](int32 bit) { return (f & bit) ? og_text(sd->fd, "on", "ON") : og_text(sd->fd, "off", "OFF"); };
++	clif_displaymessage(sd->fd, og_text(sd->fd, "pf_state", "Packet filter (WoE/BG maps): chat {1} | items {2} | emotions {3}", { st(OG_PF_CHAT), st(OG_PF_ITEM), st(OG_PF_EMOTION) }).c_str());
 +}
 +
 +// ---------------------------------------------------------------- @spb party buffs
@@ -8182,7 +8313,7 @@ index 000000000..1a5e3cb9d
 +	};
 +	party_data* p = sd->status.party_id ? party_search(sd->status.party_id) : nullptr;
 +	if (p == nullptr) {
-+		clif_displaymessage(sd->fd, "You are not in a party.");
++		clif_displaymessage(sd->fd, og_text(sd->fd, "spb_noparty", "You are not in a party.").c_str());
 +		return;
 +	}
 +	t_tick now = gettick();
@@ -8201,9 +8332,9 @@ index 000000000..1a5e3cb9d
 +			line += (n++ ? ", " : " ") + std::string(b.name) + (left >= 0 ? " " + std::to_string(left) + "s" : "");
 +		}
 +		if (n == 0)
-+			line += " no support buffs";
++			line += " " + og_text(sd->fd, "spb_none", "no support buffs");
 +		if (m->m != sd->m)
-+			line += " (other map)";
++			line += " " + og_text(sd->fd, "spb_othermap", "(other map)");
 +		clif_displaymessage(sd->fd, line.substr(0, CHAT_SIZE_MAX - 1).c_str());
 +	}
 +}
@@ -8298,7 +8429,7 @@ index 000000000..4be02c4b1
 +#endif /* OG_MAP_HPP */
 diff --git a/src/map/og_map_guard.cpp b/src/map/og_map_guard.cpp
 new file mode 100644
-index 000000000..38ed88c68
+index 000000000..791f74244
 --- /dev/null
 +++ b/src/map/og_map_guard.cpp
 @@ -0,0 +1,333 @@
@@ -8601,12 +8732,12 @@ index 000000000..38ed88c68
 +	char key[64];
 +	safesnprintf(key, sizeof(key), "og_cmd_%s", id);
 +	if (!config_switch(og_setting(key, "yes"))) {
-+		clif_displaymessage(sd->fd, "This command is disabled on this server.");
++		clif_displaymessage(sd->fd, og_text(sd->fd, "cmd_disabled", "This command is disabled on this server.").c_str());
 +		return false;
 +	}
 +	safesnprintf(key, sizeof(key), "og_cmdgroup_%s", id);
 +	if (pc_get_group_level(sd) < og_setting_int(key, 0)) {
-+		clif_displaymessage(sd->fd, "You are not allowed to use this command.");
++		clif_displaymessage(sd->fd, og_text(sd->fd, "cmd_denied", "You are not allowed to use this command.").c_str());
 +		return false;
 +	}
 +	safesnprintf(key, sizeof(key), "og_cmdrate_%s", id);
@@ -8616,7 +8747,7 @@ index 000000000..38ed88c68
 +		t_tick now = gettick();
 +		auto it = b.cmd_last.find(id);
 +		if (it != b.cmd_last.end() && DIFF_TICK(now, it->second) < rate) {
-+			clif_displaymessage(sd->fd, "Please wait a moment before using this command again.");
++			clif_displaymessage(sd->fd, og_text(sd->fd, "cmd_wait", "Please wait a moment before using this command again.").c_str());
 +			return false;
 +		}
 +		b.cmd_last[id] = now;

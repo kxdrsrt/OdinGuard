@@ -14,6 +14,7 @@
 #include <cstring>
 #include <memory>
 #include <tuple>
+#include <unordered_map>
 
 #include "../../3rdparty/monocypher/monocypher.h"
 
@@ -212,6 +213,107 @@ static uint32 og_parse_release(const char* v) {
 	if (v == nullptr || sscanf(v, "%d.%d.%d", &a, &b, &c) < 1)
 		return 0;
 	return (uint32)(std::clamp(a, 0, 255) << 16 | std::clamp(b, 0, 255) << 8 | std::clamp(c, 0, 255));
+}
+
+// ---------------------------------------------------------------- texts for players
+// English is written where the text is used; German is built in here. A server adds languages or changes texts with
+// conf lines og_text_<lang>_<key>: <text> (UTF-8), e.g. og_text_fr_cmd_wait: Patientez un instant.
+static const std::unordered_map<std::string, std::string> og_texts_de = {
+	{ "proto_outdated", "Bitte aktualisiere deinen Client (der Anti-Cheat ist veraltet)." },
+	{ "wrong_profile", "Dieser Client wurde für einen anderen Server gebaut. Bitte nutze den Client dieses Servers." },
+	{ "outdated", "Dein Client ist veraltet (OdinGuard {have}). Dieser Server braucht OdinGuard {need} oder neuer. Bitte starte den Patcher und logge dich dann erneut ein." },
+	{ "not_active", "OdinGuard ist in diesem Client nicht aktiv." },
+	{ "ping", "Ping: {1} ms" },
+	{ "darkpack_required", "Diese Karte braucht das Competitive-Pack (odin-dark.grf) dieses Servers. Aktualisiere deinen Client (Patcher) und versuche es erneut." },
+	{ "lgpsound_disabled", "Skill-Sounds für Lite Ground Skills sind auf diesem Server ausgeschaltet." },
+	{ "lgpsound_on", "Sounds für Lite Ground Skills an (der /sound-Schalter des Clients schaltet sie weiter stumm)." },
+	{ "lgpsound_off", "Sounds für Lite Ground Skills aus." },
+	{ "circle_looks", "Kreise: 1 = Radius 4, 2 = Radius 3, 3 = Radius 2, 4 = alle drei, 5 = Radius 9 (Sicht); @circle off." },
+	{ "circle_off", "Kreis aus." },
+	{ "circle_on", "Kreis {1} an: {2} um deinen Charakter." },
+	{ "circle_1", "Kreis mit Radius 4" },
+	{ "circle_2", "Kreis mit Radius 3" },
+	{ "circle_3", "Kreis mit Radius 2" },
+	{ "circle_4", "Kreise mit Radius 2, 3 und 4" },
+	{ "circle_5", "Kreis mit Radius 9 (Sicht)" },
+	{ "lgp_sets", "Farbsätze: 1 = jeder Skill in seiner Farbe, 2-{1} = eine Farbe für alle Skills." },
+	{ "lgp_off", "Lite Ground Skills aus: normale Skill-Effekte." },
+	{ "lgp_on", "Lite Ground Skills an ({1}): {2} werden als flache farbige Felder gezeigt." },
+	{ "lgp_square", "Quadrat" },
+	{ "lgp_set", "Farbsatz {1}" },
+	{ "lgp_aoes", "Storm Gust, Lord of Vermilion und Meteor Storm" },
+	{ "lgp_area", "Flächen-Skills" },
+	{ "pf_usage", "Benutzung: @pf on|off|<c i g> (c = Chat, i = Item-Nutzung, g = Emotes anderer Spieler, auf WoE- und Battleground-Karten)" },
+	{ "pf_state", "Paketfilter (WoE/BG-Karten): Chat {1} | Items {2} | Emotes {3}" },
+	{ "on", "AN" },
+	{ "off", "AUS" },
+	{ "spb_noparty", "Du bist in keiner Gruppe." },
+	{ "spb_none", "keine Support-Buffs" },
+	{ "spb_othermap", "(andere Karte)" },
+	{ "cmd_disabled", "Dieser Befehl ist auf diesem Server ausgeschaltet." },
+	{ "cmd_denied", "Du darfst diesen Befehl nicht benutzen." },
+	{ "cmd_wait", "Bitte warte einen Moment, bevor du den Befehl erneut benutzt." },
+};
+
+std::string og_client_charset(const std::string& s) {
+	if (!strcmpi(og_setting("og_client_charset", "cp1252"), "utf8"))
+		return s;
+	// characters of Windows-1252 above 0x7f that are not Latin-1
+	static const std::pair<uint32, char> extra[] = { { 0x20AC, '\x80' }, { 0x201A, '\x82' }, { 0x201E, '\x84' }, { 0x2026, '\x85' },
+		{ 0x2018, '\x91' }, { 0x2019, '\x92' }, { 0x201C, '\x93' }, { 0x201D, '\x94' }, { 0x2022, '\x95' }, { 0x2013, '\x96' }, { 0x2014, '\x97' } };
+	std::string out;
+	out.reserve(s.size());
+	for (size_t i = 0; i < s.size();) {
+		uint8 b = (uint8)s[i];
+		uint32 cp;
+		size_t n;
+		if (b < 0x80) { cp = b; n = 1; }
+		else if ((b & 0xE0) == 0xC0) { cp = b & 0x1F; n = 2; }
+		else if ((b & 0xF0) == 0xE0) { cp = b & 0x0F; n = 3; }
+		else if ((b & 0xF8) == 0xF0) { cp = b & 0x07; n = 4; }
+		else return s; // not UTF-8 (already in the client's code page): unchanged
+		if (i + n > s.size())
+			return s;
+		for (size_t k = 1; k < n; k++) {
+			if (((uint8)s[i + k] & 0xC0) != 0x80)
+				return s;
+			cp = cp << 6 | ((uint8)s[i + k] & 0x3F);
+		}
+		i += n;
+		if (cp < 0x100) { out += (char)cp; continue; }
+		char c = '?';
+		for (const auto& e : extra)
+			if (e.first == cp) c = e.second;
+		out += c;
+	}
+	return out;
+}
+
+std::string og_text_lang(const std::string& lang, const char* key, const char* en, std::initializer_list<std::string> args) {
+	std::string t = en;
+	if (!lang.empty()) {
+		std::string k = "og_text_" + lang + "_" + key;
+		const char* own = og_setting(k.c_str(), nullptr);
+		if (own != nullptr)
+			t = own;
+		else if (lang == "de") {
+			auto it = og_texts_de.find(key);
+			if (it != og_texts_de.end())
+				t = it->second;
+		}
+	}
+	int32 n = 1;
+	for (const std::string& a : args) {
+		std::string ph = "{" + std::to_string(n++) + "}";
+		for (size_t at = 0; (at = t.find(ph, at)) != std::string::npos; at += a.size())
+			t.replace(at, ph.size(), a);
+	}
+	return og_client_charset(t);
+}
+
+std::string og_text(int32 fd, const char* key, const char* en, std::initializer_list<std::string> args) {
+	const s_og_info* info = og_info(fd);
+	return og_text_lang(info != nullptr ? info->lang : std::string(), key, en, args);
 }
 
 std::string og_release_str(uint32 r) {
@@ -1045,19 +1147,34 @@ static bool og_handle_hello(int32 fd, s_og_state* o) {
 			o->info.release = (uint32)c[OG_COMPONENT_NAME] << 16 | (uint32)c[OG_COMPONENT_NAME + 1] << 8 | c[OG_COMPONENT_NAME + 2];
 			continue;
 		}
+		if (name == OG_LANG_COMPONENT) { // not hardware: the player's language
+			std::string l;
+			for (int32 j = 0; j < 8 && c[OG_COMPONENT_NAME + j]; j++) {
+				char ch = (char)TOLOWER(c[OG_COMPONENT_NAME + j]);
+				if ((ch >= 'a' && ch <= 'z') || ch == '-')
+					l += ch;
+			}
+			o->info.lang = l;
+			continue;
+		}
 		o->info.components.emplace_back(name, to_hex(c + OG_COMPONENT_NAME, 32));
 	}
 
 	uint8 status = OG_STATUS_OK;
 	std::string message;
-	if (h.version < og_cfg.min_version) { status = OG_STATUS_OUTDATED; message = "Please update your client (the anti cheat is outdated)."; }
-	else if (crypto_verify16(h.tag, og_cfg.tag) != 0) { status = OG_STATUS_PROFILE; message = "This client was built for another server. Please use this server's client."; }
+	const std::string& lang = o->info.lang;
+	if (h.version < og_cfg.min_version) { status = OG_STATUS_OUTDATED; message = og_text_lang(lang, "proto_outdated", "Please update your client (the anti cheat is outdated)."); }
+	else if (crypto_verify16(h.tag, og_cfg.tag) != 0) { status = OG_STATUS_PROFILE; message = og_text_lang(lang, "wrong_profile", "This client was built for another server. Please use this server's client."); }
 	else if (o->info.release < og_cfg.min_release) {
 		status = OG_STATUS_OUTDATED;
-		message = og_cfg.outdated_message;
-		for (auto [key, val] : { std::pair<std::string, std::string>{ "{have}", og_release_str(o->info.release) }, { "{need}", og_release_str(og_cfg.min_release) } })
-			for (size_t at; (at = message.find(key)) != std::string::npos;)
-				message.replace(at, key.size(), val);
+		// og_outdated_message is the text for guards that report no language (before 1.0.5) and for English;
+		// og_outdated_message_<lang> (German built in) for the others
+		std::string key = "og_outdated_message_" + lang;
+		const char* own = lang.empty() ? nullptr : og_setting(key.c_str(), nullptr);
+		message = own != nullptr ? og_client_charset(own) : lang == "de" ? og_text_lang(lang, "outdated", "") : og_client_charset(og_cfg.outdated_message);
+		for (auto [k, val] : { std::pair<std::string, std::string>{ "{have}", og_release_str(o->info.release) }, { "{need}", og_release_str(og_cfg.min_release) } })
+			for (size_t at; (at = message.find(k)) != std::string::npos;)
+				message.replace(at, k.size(), val);
 		message.resize(std::min(message.size(), (size_t)400));
 	}
 

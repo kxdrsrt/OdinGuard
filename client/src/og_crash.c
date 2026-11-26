@@ -196,15 +196,10 @@ static DWORD WINAPI upload_thread(LPVOID unused)
     snprintf(ini, sizeof ini, "%s\\odinguard.ini", og_client_dir);
     GetPrivateProfileStringA("crash", "upload", "", answer, sizeof answer, ini);
     if (!answer[0]) {
-        char text[700];
-        snprintf(text, sizeof text,
-                 "OdinGuard found %d crash report(s) of this game.\n\n"
-                 "Send them to the server team to help fix the crash?\n%s\n\n"
-                 "A report holds the error address, the loaded modules with their file paths, DATA.INI and the "
-                 "headers of the last network packets. No passwords, no chat.\n\n"
-                 "Your answer is remembered (odinguard.ini, [crash] upload).", n, g_up_url);
-        snprintf(answer, sizeof answer, "%s",
-                 MessageBoxA(NULL, text, "OdinGuard: crash reports", MB_YESNO | MB_ICONQUESTION | MB_TOPMOST | MB_SETFOREGROUND) == IDYES ? "yes" : "no");
+        char text[1400], num[12];
+        snprintf(num, sizeof num, "%d", n);
+        og_trf(text, sizeof text, OG_T_CRASH_ASK, num, g_up_url);
+        snprintf(answer, sizeof answer, "%s", og_message_titled(text, og_tr(OG_T_CRASH_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES ? "yes" : "no");
         WritePrivateProfileStringA("crash", "upload", answer, ini);
     }
     if (_stricmp(answer, "yes")) { og_log("crash upload: %d report(s) not sent (player declined)", n); goto done; }

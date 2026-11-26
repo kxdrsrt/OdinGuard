@@ -99,15 +99,13 @@ static void og_map_event(int32 fd, const char* type, const char* detail, e_og_ac
 
 static void og_map_text(int32 fd, const char* text) {
 	if (og_sd(fd) != nullptr)
-		clif_displaymessage(fd, text);
+		clif_displaymessage(fd, og_client_charset(text).c_str()); // replies of the guard: UTF-8 since 1.0.5
 }
 
 static void og_map_pong(int32 fd, int64 rtt) {
 	if (og_sd(fd) == nullptr)
 		return;
-	char msg[64];
-	safesnprintf(msg, sizeof(msg), "Ping: %d ms", (int32)rtt);
-	clif_displaymessage(fd, msg);
+	clif_displaymessage(fd, og_text(fd, "ping", "Ping: {1} ms", { std::to_string((int32)rtt) }).c_str());
 }
 
 void og_map_init() {
@@ -154,7 +152,7 @@ bool og_map_chat_command(map_session_data* sd, const char* message) {
 	safestrncpy(cmd, id, sizeof(cmd));
 	arg = argbuf; // cmd is reused for the id and held the argument
 	if (!og_session_active(sd->fd)) {
-		clif_displaymessage(sd->fd, "OdinGuard is not active on this client.");
+		clif_displaymessage(sd->fd, og_text(sd->fd, "not_active", "OdinGuard is not active on this client.").c_str());
 		return true;
 	}
 	if (!strcmpi(cmd, "ping"))
@@ -639,7 +637,7 @@ static void og_dark_check(map_session_data* sd) {
 	if (info == nullptr || !info->alive_seen || info->darkpack)
 		return;
 	og_report(sd->fd, "darkpack:required", map_getmapdata(sd->m)->name, OG_ACTION_LOG, 0);
-	clif_displaymessage(sd->fd, "This map needs the competitive pack (odin-dark.grf) of this server. Update your client (patcher) and try again.");
+	clif_displaymessage(sd->fd, og_text(sd->fd, "darkpack_required", "This map needs the competitive pack (odin-dark.grf) of this server. Update your client (patcher) and try again.").c_str());
 	pc_setpos_savepoint(*sd);
 }
 
@@ -719,7 +717,7 @@ TIMER_FUNC(og_command_tick) {
 				ShowStatus("OdinGuard: web command %" PRIu64 " kicks %s (account %u) for %s: %s\n", r.id, sd->status.name, sd->status.account_id, r.by.c_str(), r.arg.c_str());
 				og_map_event(sd->fd, "web-kick", (r.by + ": " + r.arg).c_str(), OG_ACTION_KICK, 0);
 			} else if (r.command == "message") {
-				clif_displaymessage(sd->fd, r.arg.c_str());
+				clif_displaymessage(sd->fd, og_client_charset(r.arg).c_str());
 			}
 		}
 	}
@@ -748,8 +746,8 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 		if (!strcmpi(arg, "on")) on = true;
 		else if (!strcmpi(arg, "off")) on = false;
 		pc_setglobalreg(sd, add_str(OG_REG_FLAGS), on ? (f & ~OG_FLAG_LGP_NOSOUND) : (f | OG_FLAG_LGP_NOSOUND));
-		clif_displaymessage(sd->fd, !og_module_on("og_lgp_sound", true) ? "Skill sounds for lite ground skills are switched off on this server."
-			: on ? "Lite ground skill sounds on (the client's /sound switch still mutes them)." : "Lite ground skill sounds off.");
+		clif_displaymessage(sd->fd, (!og_module_on("og_lgp_sound", true) ? og_text(sd->fd, "lgpsound_disabled", "Skill sounds for lite ground skills are switched off on this server.")
+			: on ? og_text(sd->fd, "lgpsound_on", "Lite ground skill sounds on (the client's /sound switch still mutes them).") : og_text(sd->fd, "lgpsound_off", "Lite ground skill sounds off.")).c_str());
 		return;
 	}
 	if (kind == 2) {
@@ -759,19 +757,17 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 		else if (atoi(arg) > 0) look = atoi(arg);
 		else look = cur > 0 ? 0 : 1; // no argument: toggle
 		if (look > looks) {
-			char m[CHAT_SIZE_MAX];
-			safesnprintf(m, sizeof(m), "Circle looks: 1 = radius 4, 2 = radius 3, 3 = radius 2, 4 = all three, 5 = radius 9 (sight); @circle off.");
-			clif_displaymessage(sd->fd, m);
+			clif_displaymessage(sd->fd, og_text(sd->fd, "circle_looks", "Circle looks: 1 = radius 4, 2 = radius 3, 3 = radius 2, 4 = all three, 5 = radius 9 (sight); @circle off.").c_str());
 			return;
 		}
 		pc_setglobalreg(sd, add_str(OG_REG_CIRCLE), look);
 		if (look == 0)
-			clif_displaymessage(sd->fd, "Circle off.");
+			clif_displaymessage(sd->fd, og_text(sd->fd, "circle_off", "Circle off.").c_str());
 		else {
-			char m[CHAT_SIZE_MAX];
 			static const char* names[] = { "", "radius 4 circle", "radius 3 circle", "radius 2 circle", "circles of radius 2, 3 and 4", "radius 9 circle (sight)" };
-			safesnprintf(m, sizeof(m), "Circle %d on: %s around your character.", look, names[look]);
-			clif_displaymessage(sd->fd, m);
+			std::string name = og_text(sd->fd, ("circle_" + std::to_string(look)).c_str(), names[look]);
+			std::string m = og_text(sd->fd, "circle_on", "Circle {1} on: {2} around your character.", { std::to_string(look), name });
+			clif_displaymessage(sd->fd, m.substr(0, CHAT_SIZE_MAX - 1).c_str());
 		}
 		return;
 	}
@@ -782,9 +778,7 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 	else if (kind == 1 && atoi(arg) > 0) {
 		int32 set = atoi(arg), sets = 1 + og_lgp_color_count();
 		if (set > sets) {
-			char m[CHAT_SIZE_MAX];
-			safesnprintf(m, sizeof(m), "Colour sets: 1 = every skill in its own colour, 2-%d = one colour for every skill.", sets);
-			clif_displaymessage(sd->fd, m);
+			clif_displaymessage(sd->fd, og_text(sd->fd, "lgp_sets", "Colour sets: 1 = every skill in its own colour, 2-{1} = one colour for every skill.", { std::to_string(sets) }).c_str());
 			return;
 		}
 		style = set == 1 ? 0 : set;
@@ -797,14 +791,14 @@ void og_map_lgp_command(map_session_data* sd, int32 kind, const char* arg) {
 	flags = on ? (flags | OG_FLAG_LGP) : (flags & ~(OG_FLAG_LGP | OG_FLAG_LGP_AOES));
 	pc_setglobalreg(sd, add_str(OG_REG_FLAGS), flags);
 	pc_setglobalreg(sd, add_str(OG_REG_LGP_STYLE), style);
-	char msg[CHAT_SIZE_MAX];
+	std::string msg;
 	if (!on)
-		safesnprintf(msg, sizeof(msg), "Lite ground skills off: normal skill effects.");
+		msg = og_text(sd->fd, "lgp_off", "Lite ground skills off: normal skill effects.");
 	else
-		safesnprintf(msg, sizeof(msg), "Lite ground skills on (%s%s): %s are shown as flat coloured cells.",
-			style > 1 ? "colour set " : "square", style > 1 ? std::to_string(style).c_str() : "",
-			(flags & OG_FLAG_LGP_AOES) ? "Storm Gust, Lord of Vermilion and Meteor Storm" : "area skills");
-	clif_displaymessage(sd->fd, msg);
+		msg = og_text(sd->fd, "lgp_on", "Lite ground skills on ({1}): {2} are shown as flat coloured cells.",
+			{ style > 1 ? og_text(sd->fd, "lgp_set", "colour set {1}", { std::to_string(style) }) : og_text(sd->fd, "lgp_square", "square"),
+			  (flags & OG_FLAG_LGP_AOES) ? og_text(sd->fd, "lgp_aoes", "Storm Gust, Lord of Vermilion and Meteor Storm") : og_text(sd->fd, "lgp_area", "area skills") });
+	clif_displaymessage(sd->fd, msg.substr(0, CHAT_SIZE_MAX - 1).c_str());
 }
 
 typedef std::vector<std::pair<uint32, std::string>> og_color_list;
@@ -945,7 +939,7 @@ void og_map_pf_command(map_session_data* sd, const char* message) {
 				case 'g': case 'e': n |= OG_PF_EMOTION; break;
 				case ' ': break;
 				default:
-					clif_displaymessage(sd->fd, "Usage: @pf on|off|<c i g> (c = chat, i = item use, g = emotions of other players, on WoE and battleground maps)");
+					clif_displaymessage(sd->fd, og_text(sd->fd, "pf_usage", "Usage: @pf on|off|<c i g> (c = chat, i = item use, g = emotions of other players, on WoE and battleground maps)").c_str());
 					return;
 				}
 			}
@@ -953,10 +947,8 @@ void og_map_pf_command(map_session_data* sd, const char* message) {
 		}
 		pc_setglobalreg(sd, add_str(OG_REG_PF), f);
 	}
-	char out[CHAT_SIZE_MAX];
-	safesnprintf(out, sizeof(out), "Packet filter (WoE/BG maps): chat %s | items %s | emotions %s",
-		(f & OG_PF_CHAT) ? "ON" : "OFF", (f & OG_PF_ITEM) ? "ON" : "OFF", (f & OG_PF_EMOTION) ? "ON" : "OFF");
-	clif_displaymessage(sd->fd, out);
+	auto st = [&](int32 bit) { return (f & bit) ? og_text(sd->fd, "on", "ON") : og_text(sd->fd, "off", "OFF"); };
+	clif_displaymessage(sd->fd, og_text(sd->fd, "pf_state", "Packet filter (WoE/BG maps): chat {1} | items {2} | emotions {3}", { st(OG_PF_CHAT), st(OG_PF_ITEM), st(OG_PF_EMOTION) }).c_str());
 }
 
 // ---------------------------------------------------------------- @spb party buffs
@@ -973,7 +965,7 @@ void og_map_spb(map_session_data* sd) {
 	};
 	party_data* p = sd->status.party_id ? party_search(sd->status.party_id) : nullptr;
 	if (p == nullptr) {
-		clif_displaymessage(sd->fd, "You are not in a party.");
+		clif_displaymessage(sd->fd, og_text(sd->fd, "spb_noparty", "You are not in a party.").c_str());
 		return;
 	}
 	t_tick now = gettick();
@@ -992,9 +984,9 @@ void og_map_spb(map_session_data* sd) {
 			line += (n++ ? ", " : " ") + std::string(b.name) + (left >= 0 ? " " + std::to_string(left) + "s" : "");
 		}
 		if (n == 0)
-			line += " no support buffs";
+			line += " " + og_text(sd->fd, "spb_none", "no support buffs");
 		if (m->m != sd->m)
-			line += " (other map)";
+			line += " " + og_text(sd->fd, "spb_othermap", "(other map)");
 		clif_displaymessage(sd->fd, line.substr(0, CHAT_SIZE_MAX - 1).c_str());
 	}
 }

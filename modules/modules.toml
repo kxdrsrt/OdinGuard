@@ -19,7 +19,7 @@ version = "2.0.0"
 kind = "core"
 side = "both"
 requires = []
-client_src = ["og_main.c", "og_log.c", "og_net.c", "og_sha256.c", "og_challenge.c", "../../proto/og_wire.c"]
+client_src = ["og_main.c", "og_log.c", "og_lang.c", "og_net.c", "og_sha256.c", "og_challenge.c", "../../proto/og_wire.c"]
 define = "OG_MOD_CORE"
 server_key = "og_enable"
 assets = ["item-fallback"]
@@ -303,6 +303,11 @@ summary = "The game only starts through the patcher (OpenThor launch ticket: OPE
   type = "string"
   default = "Please start the game with the patcher ({exe}). It keeps your client up to date.\n\nStart the patcher now?"
   help = "Shown when the game was started directly; {exe} = the patcher program."
+  [[module.param]]
+  name = "message_de"
+  type = "string"
+  default = "Bitte starte das Spiel mit dem Patcher ({exe}). Er hält deinen Client aktuell.\n\nPatcher jetzt starten?"
+  help = "The same in German, shown when Windows (or odinguard.ini Language=) is German."
 
 [[module]]
 id = "lgp"

@@ -38,17 +38,39 @@ void og_log(const char *fmt, ...)
 }
 
 /* message box with the guard icon and the operator name as caption */
-int og_message(const char *text, UINT type)
+/* UTF-8 when the bytes are valid UTF-8 (our texts), else the ANSI code page (texts of older servers) */
+static wchar_t *widen(const char *s)
 {
-    MSGBOXPARAMSA p;
+    int n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, s, -1, NULL, 0);
+    UINT cp = n > 0 ? CP_UTF8 : CP_ACP;
+    wchar_t *w;
+    if (n <= 0) n = MultiByteToWideChar(CP_ACP, 0, s, -1, NULL, 0);
+    if (n <= 0 || !(w = (wchar_t *)HeapAlloc(GetProcessHeap(), 0, (size_t)n * sizeof(wchar_t)))) return NULL;
+    MultiByteToWideChar(cp, 0, s, -1, w, n);
+    return w;
+}
+
+int og_message_titled(const char *text, const char *caption, UINT type)
+{
+    MSGBOXPARAMSW p;
+    wchar_t *t = widen(text), *c = widen(caption);
+    int r;
     ZeroMemory(&p, sizeof p);
     p.cbSize = sizeof p;
     p.hInstance = og_instance;
-    p.lpszText = text;
-    p.lpszCaption = "OdinGuard Anti Cheat - " OG_PROFILE_OPERATOR;
+    p.lpszText = t ? t : L"";
+    p.lpszCaption = c ? c : L"OdinGuard Anti Cheat";
     p.dwStyle = (type & ~MB_ICONMASK) | MB_USERICON | MB_TOPMOST | MB_SETFOREGROUND;
-    p.lpszIcon = MAKEINTRESOURCEA(1);
-    return MessageBoxIndirectA(&p);
+    p.lpszIcon = MAKEINTRESOURCEW(1);
+    r = MessageBoxIndirectW(&p);
+    if (t) HeapFree(GetProcessHeap(), 0, t);
+    if (c) HeapFree(GetProcessHeap(), 0, c);
+    return r;
+}
+
+int og_message(const char *text, UINT type)
+{
+    return og_message_titled(text, "OdinGuard Anti Cheat - " OG_PROFILE_OPERATOR, type);
 }
 
 int og_contains_i(const char *hay, const char *needle)

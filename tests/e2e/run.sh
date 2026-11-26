@@ -56,8 +56,11 @@ stage_client() {
 	cp "$ROOT/client/build/nettest.exe" "$1/client/odinguard.dll" "$1/client/odin.grf" "$E2E/"
 	[ -f "$1/client/odin-dark.grf" ] && cp "$1/client/odin-dark.grf" "$E2E/"
 	data_ini "0=odin.grf" "1=odin-dark.grf"
+	lang_ini en
 	return 0
 }
+# language of the test guard (the VM's Windows is German; the checks expect English unless a section says otherwise)
+lang_ini() { printf '[OdinGuard]\r\nLanguage=%s\r\n' "$1" > "$E2E/odinguard.ini"; }
 
 # DATA.INI of the test client folder
 data_ini() { { printf '[Data]\r\n'; for l in "$@"; do printf '%s\r\n' "$l"; done; } > "$E2E/DATA.INI"; }
@@ -230,7 +233,7 @@ printf 'og_crash_upload_url: http://%s:8899/api/v1/integrations/odinguard/crash\
 restart_map
 rm -rf "$E2E/odinguard-crash"; mkdir -p "$E2E/odinguard-crash"
 printf 'OdinGuard test crash report\r\nreason: e2e\r\n' > "$E2E/odinguard-crash/crash-20260101-000000.txt"
-printf '[crash]\r\nupload=yes\r\n' > "$E2E/odinguard.ini"
+printf '[OdinGuard]\r\nLanguage=en\r\n[crash]\r\nupload=yes\r\n' > "$E2E/odinguard.ini"
 nettest ogtest2 OgPlayer '!ping' 12 >/dev/null
 check "agreed report is uploaded to the panel URL" 'grep -q "file=crash-20260101-000000.txt bytes=4[0-9] first=b.OdinGuard test crash" /tmp/og_crash_rx.log'
 tok=$(sed -n 's/.*token=\([0-9a-f]*\) .*/\1/p' /tmp/og_crash_rx.log | head -1)
@@ -239,11 +242,11 @@ check "sent reports are listed in sent.txt" 'grep -q "crash-20260101-000000.txt"
 nettest ogtest2 OgPlayer '!ping' 10 >/dev/null
 check "a sent report is not uploaded twice" '[ "$(grep -c "crash-20260101-000000.txt" /tmp/og_crash_rx.log)" = 1 ]'
 printf 'second\r\n' > "$E2E/odinguard-crash/crash-20260102-000000.txt"
-printf '[crash]\r\nupload=no\r\n' > "$E2E/odinguard.ini"
+printf '[OdinGuard]\r\nLanguage=en\r\n[crash]\r\nupload=no\r\n' > "$E2E/odinguard.ini"
 nettest ogtest2 OgPlayer '!ping' 10 >/dev/null
 check "declined: nothing is uploaded" '! grep -q "crash-20260102-000000.txt" /tmp/og_crash_rx.log'
 kill $CR 2>/dev/null
-rm -rf "$E2E/odinguard-crash" "$E2E/odinguard.ini"
+rm -rf "$E2E/odinguard-crash"; lang_ini en
 sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
 restart_map
 
@@ -433,6 +436,30 @@ restart_login
 out=$(nettest ogtest2 OgPlayer '!ping' 3)
 check "with the current release the login works again" 'printf "%s\n" "$out" | grep -q "Ping: [0-9]* ms"'
 check "the server reports min release at start" 'maplog | grep -q "min release: $(sed -n "s/.*OG_VERSION_STR \"\(.*\)\"/\1/p" "$ROOT/client/src/og_version.h")"'
+
+echo "== 5c the player's language (og-lang, 1.0.5): German, a language added in the conf, English for the rest"
+VER=$(sed -n "s/.*OG_VERSION_STR \"\(.*\)\"/\1/p" "$ROOT/client/src/og_version.h")
+lang_ini de
+echo "og_min_release: 9.9.9" >> "$X/conf/import/odinguard_conf.txt"
+restart_login
+out=$(vm "cd /d $WIN_E2E & del odinguard.log 2>nul & start \"\" /b nettest.exe $HOST_IP 6900 ogtest2 ogtest & ping -n 14 127.0.0.1 >nul & type odinguard.log & taskkill /f /im nettest.exe")
+check "a German guard gets the refusal in German" 'printf "%s\n" "$out" | grep -q "Dein Client ist veraltet (OdinGuard $VER). Dieser Server braucht OdinGuard 9.9.9 oder neuer"'
+check "the login server logs the German refusal" 'docker exec ogt-srv sh -c "grep -a -q \"handshake refused (Dein Client ist veraltet\" /tmp/login.log"'
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+restart_login
+printf 'og_cmdrate_ping: 10000\nog_text_fr_cmd_wait: Patientez un instant.\n' >> "$X/conf/import/odinguard_conf.txt"
+restart_map
+out=$(nettest ogtest2 OgPlayer '!ping;!ping;!dark' 4)
+check "German: the rate limit answers in German" 'printf "%s\n" "$out" | grep -q "Bitte warte einen Moment, bevor du den Befehl erneut benutzt"'
+check "German: the guard's own reply (!dark) is German" 'printf "%s\n" "$out" | LC_ALL=C grep -q "Competitive-Pack ist beim n.chsten Start"'
+check "German: umlauts reach the client as Windows-1252" 'printf "%s\n" "$out" | LC_ALL=C grep -q "n$(printf "\344")chsten"'
+lang_ini fr
+out=$(nettest ogtest2 OgPlayer '!ping;!ping;!dark' 4)
+check "a language from the conf (og_text_fr_cmd_wait)" 'printf "%s\n" "$out" | grep -q "Patientez un instant."'
+check "texts the conf does not translate stay English" 'printf "%s\n" "$out" | grep -q "Competitive pack is"'
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"; sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+restart_map
+lang_ini en
 
 echo "== $FAIL failure(s)"
 exit $FAIL

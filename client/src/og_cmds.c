@@ -44,29 +44,29 @@ static void dark_command(const char *arg, char *reply, size_t cap)
     }
     old_n = n;
     if (!arg[0]) {
-        snprintf(reply, cap, "Competitive pack is %s for the next start. !dark on / !dark off changes it (restart the game).", has >= 0 ? "ON" : "OFF");
+        og_trf(reply, cap, OG_T_DARK_STATUS, og_tr(has >= 0 ? OG_T_ON : OG_T_OFF), NULL);
         return;
     }
     if (!_stricmp(arg, "on")) {
         int at = 0;
         attr = GetFileAttributesA(pack);
-        if (attr == INVALID_FILE_ATTRIBUTES) { snprintf(reply, cap, "odin-dark.grf is not installed: run the patcher first."); return; }
-        if (has >= 0) { snprintf(reply, cap, "Competitive pack is already ON. Restart the game if you just changed it."); return; }
+        if (attr == INVALID_FILE_ATTRIBUTES) { og_trf(reply, cap, OG_T_DARK_MISSING, NULL, NULL); return; }
+        if (has >= 0) { og_trf(reply, cap, OG_T_DARK_ALREADY_ON, NULL, NULL); return; }
         for (i = 0; i < n; i++) if (!_stricmp(list[i], "odin.grf")) at = i + 1;
         for (i = n; i > at; i--) snprintf(list[i], MAX_PATH, "%s", list[i - 1]);
         snprintf(list[at], MAX_PATH, "odin-dark.grf");
         n++;
     } else if (!_stricmp(arg, "off")) {
-        if (has < 0) { snprintf(reply, cap, "Competitive pack is already OFF."); return; }
+        if (has < 0) { og_trf(reply, cap, OG_T_DARK_ALREADY_OFF, NULL, NULL); return; }
         for (i = has; i < n - 1; i++) snprintf(list[i], MAX_PATH, "%s", list[i + 1]);
         n--;
     } else {
-        snprintf(reply, cap, "Usage: !dark on | !dark off");
+        og_trf(reply, cap, OG_T_DARK_USAGE, NULL, NULL);
         return;
     }
     for (i = 0; i < n; i++) { snprintf(key, sizeof key, "%d", i); WritePrivateProfileStringA("Data", key, list[i], ini); }
     for (i = n; i < old_n; i++) { snprintf(key, sizeof key, "%d", i); WritePrivateProfileStringA("Data", key, NULL, ini); }
-    snprintf(reply, cap, "Competitive pack %s. Restart the game to apply it (some servers require it on battleground / WoE maps).", n > old_n ? "ON" : "OFF");
+    og_trf(reply, cap, OG_T_DARK_CHANGED, og_tr(n > old_n ? OG_T_ON : OG_T_OFF), NULL);
 }
 
 void og_cmd_handle(const char *cmd, char *reply, size_t cap)
@@ -81,12 +81,14 @@ void og_cmd_handle(const char *cmd, char *reply, size_t cap)
         LONG was = InterlockedExchange(&g_unlocked, want);
         if (want) {
             if (!was) InterlockedExchange(&g_skipped, 0);
-            snprintf(reply, cap, "FPS limit off (frame cap removed). !vsync on restores it.");
+            og_trf(reply, cap, OG_T_VSYNC_OFF, NULL, NULL);
         } else {
-            snprintf(reply, cap, "FPS limit on (default frame cap). %ld frame waits were skipped.", was ? (long)g_skipped : 0L);
+            char n[24];
+            snprintf(n, sizeof n, "%ld", was ? (long)g_skipped : 0L);
+            og_trf(reply, cap, OG_T_VSYNC_ON, n, NULL);
         }
     } else if (!_stricmp(cmd, "crash")) {
         og_crash_write(NULL, "on demand (!crash)");
-        snprintf(reply, cap, "Diagnostic report written: odinguard-crash\\%s", og_crash_last_file());
+        og_trf(reply, cap, OG_T_CRASH_WRITTEN, og_crash_last_file(), NULL);
     }
 }
