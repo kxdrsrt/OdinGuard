@@ -86,6 +86,12 @@ int  og_random(void *p, size_t n);
 void og_challenge_handle(const og_challenge_msg *c, uint8_t out[OG_RESPONSE_LEN]);
 
 /* module interfaces; a module that is not built in is replaced by a stub, so its code is not in the binary */
+#if OG_MOD_LAUNCHER
+void og_launcher_check(void);   /* ends the process when the game was not started by the patcher */
+#else
+static inline void og_launcher_check(void) {}
+#endif
+
 #if OG_MOD_HWID
 typedef struct { char name[24]; char hex[65]; } og_component;
 int  og_hwid_collect(og_component *c, int max, const char *salt);

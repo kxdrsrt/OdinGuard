@@ -285,6 +285,26 @@ define = "OG_MOD_SPLASH"
 summary = "Splash screen with the operator name from the profile."
 
 [[module]]
+id = "launcher"
+version = "1.0.0"
+kind = "client-feature"
+side = "client"
+requires = ["core"]
+client_src = ["og_launcher.c"]
+define = "OG_MOD_LAUNCHER"
+summary = "The game only starts through the patcher (OpenThor launch ticket: OPENTHOR_LAUNCH + _patch/launch-<token>.ticket), so players never skip updates; started directly, a message offers to open the patcher. Not a security boundary."
+  [[module.param]]
+  name = "exe"
+  type = "string"
+  default = "openthor.exe"
+  help = "The patcher program in the client folder; the message offers to start it."
+  [[module.param]]
+  name = "message"
+  type = "string"
+  default = "Please start the game with the patcher ({exe}). It keeps your client up to date.\n\nStart the patcher now?"
+  help = "Shown when the game was started directly; {exe} = the patcher program."
+
+[[module]]
 id = "lgp"
 version = "3.0.0"
 kind = "gameplay"

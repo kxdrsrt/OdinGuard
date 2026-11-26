@@ -15,6 +15,7 @@
 #define OG_MOD_COLORS 1
 #define OG_MOD_SPLASH 1
 #define OG_MOD_LGP 1
+#define OG_MOD_LAUNCHER 0
 #define OG_MODCH_CODE 1
 #define OG_MODCH_TIME 1
 #define OG_MODCH_FILE 1

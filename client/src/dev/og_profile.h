@@ -20,4 +20,6 @@
 #define OG_PROFILE_FILES {"odin.grf", "odin-dark.grf"}
 #define OG_PROFILE_NFILES 2
 #define OG_PROFILE_SERVER_PUBKEY OG_SERVER_PUBKEY_INIT
+#define OG_PROFILE_LAUNCHER_EXE "openthor.exe"
+#define OG_PROFILE_LAUNCHER_MSG "Please start the game with the patcher (openthor.exe)."
 #endif

@@ -147,6 +147,31 @@ step 5. Base commit, conflict resolution on newer rAthena and PACKETVER notes: [
 4. Add every file of `client/` plus `ijl15r.dll` and `DATA.INI` to your patcher's required list.
 5. Players never install or uninstall anything themselves; there is no player uninstaller.
 
+### Start only through the patcher (module `launcher`, optional, 1.0.4)
+
+With the module `launcher` the game only runs when the patcher started it, so nobody plays with an old client because
+they used a desktop shortcut to the exe. It reads the launch ticket that [OpenThor Patcher](https://github.com/kxdrsrt/OpenThorPatcher)
+0.4.0+ writes for every Play (`OPENTHOR_LAUNCH=<token>` in the environment and `_patch/launch-<token>.ticket` in the client
+folder, at most 300 s old; protocol in OpenThor's `docs/FORMATS.md`, section 6). The ticket is used once: the guard
+deletes it and clears the variable.
+
+Started without a ticket, the guard shows this before the game window opens and closes the game; *Yes* starts the patcher:
+
+<img src="images/launcher-start-message.png" width="420" alt="Please start the game with the patcher (openthor.exe). It keeps your client up to date. Start the patcher now?">
+
+```toml
+modules = [ …, "launcher" ]
+[params]
+"launcher.exe" = "openthor.exe"     # the patcher in the client folder
+"launcher.message" = "Please start the game with the patcher ({exe}). It keeps your client up to date.\n\nStart the patcher now?"
+```
+
+* **Off by default.** Turn it on only when every player has a patcher that writes tickets (OpenThor 0.4.0 or newer, or
+  your own patcher with the same protocol); otherwise nobody can start the game.
+* **Not a security boundary.** A player can write a ticket by hand. The module prevents accidental starts without an
+  update; the hard rules stay on the server (`og_min_release` refuses old guards, `og_max_windows` limits game windows).
+* OdinGuard does not need OpenThor and OpenThor does not need OdinGuard; they share only the documented ticket.
+
 ### Install into / remove from a client folder (operator tool)
 
 For your own master and test clients, `tools/client/og_client.py` does steps 1-3 and the way back, with no dependencies

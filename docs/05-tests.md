@@ -180,6 +180,14 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
 
 ## 8. Historie
 
+**2026-11-26 (1.0.4, Modul `launcher`, Sichttest in der VM mit OpenThor 0.4.0):** Profil mit `launcher`, BurningRO-Client.
+Gemessen: `alpha.exe` direkt gestartet → Meldung „Please start the game with the patcher (openthor.exe) …“ vor dem
+Spielfenster, Log `launcher: started without the patcher, refused`, kein `alpha.exe` danach
+(`docs/images/launcher-start-message.png`); *Ja* → `openthor.exe` läuft. Play im Patcher → Log `launcher: started by the
+patcher`, Spiel läuft, Ticket gelöscht. Drei schnelle Klicks auf Play → ein Spiel (Knopf gesperrt); noch ein Play bei
+laufendem Spiel und `max_instances: 1` → Hinweis im Patcher, weiter ein `alpha.exe`. Kein Bestandteil der E2E-Suite
+(braucht den echten Client); Studio-Test prüft die Profil-Defines.
+
 Die Ergebnisse von v0.1–v0.3 (Handshake, Hardware-Bans, Rechner-Limit, Alive-Timeout, Farb-Nicks, Auren-IDs,
 Release-Paket) gelten weiter für den unveränderten Code; Details im Git-Verlauf dieser Datei (Commit `4ad6498`).
 

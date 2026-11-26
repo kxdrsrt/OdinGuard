@@ -126,7 +126,7 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     let obj = work.join("client");
     generate::write(&gendir.join("og_modules.h"), &generate::modules_h(&p, &reg))?;
     generate::write(&gendir.join("og_modules.mk"), &generate::modules_mk(&p, &reg))?;
-    generate::write(&gendir.join("og_profile.h"), &generate::profile_h(&p, &d))?;
+    generate::write(&gendir.join("og_profile.h"), &generate::profile_h(&p, &reg, &d))?;
     generate::write(&gendir.join("res/odinguard.rc"), &generate::resource_rc(&p))?;
     copy(&root.join("client/res/odinguard.ico"), &gendir.join("res/odinguard.ico"))?;
     copy(&root.join("client/res/splash.bmp"), &gendir.join("res/splash.bmp"))?;

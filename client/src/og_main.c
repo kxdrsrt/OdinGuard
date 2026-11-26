@@ -140,6 +140,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID res)
         if (s) *s = 0;
         og_config_load(og_client_dir);
         og_log_open(og_client_dir);
+        og_launcher_check();
         InitializeCriticalSection(&og_policy_lock);
         /* hooks must be in place before the game opens its first connection */
         if (!og_net_init()) og_log("network layer failed to start");

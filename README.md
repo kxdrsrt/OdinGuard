@@ -6,7 +6,7 @@
 
 > _Open-source, modular anti-cheat for Ragnarok Online servers, with its own Studio to configure and build it._
 
-**Windows client (C11) · rAthena module (C++) · OdinGuard Studio (Rust + Tauri 2)** · **MIT or Apache-2.0** · **v1.0.3**
+**Windows client (C11) · rAthena module (C++) · OdinGuard Studio (Rust + Tauri 2)** · **MIT or Apache-2.0** · **v1.0.4**
 
 <p align="center">
   <a href="#licence"><img src="https://img.shields.io/badge/license-MIT%20%7C%20Apache--2.0-blue?style=flat-square" alt="License"></a>
@@ -74,7 +74,7 @@ tie every server to one vendor. OdinGuard is:
 | Detection | signed, updatable signature package (300 signatures: processes, modules, windows, files, drivers, mutexes, registry, GRF hashes), allowlist, per-group actions |
 | Server rules | packet rate limit (WPE/RPE loops), no-delay detection, autopot/macro timing, honeypot unit, captcha, multi-client limit, hardware bans (exact and fuzzy), account lock to machines, flags and ban waves (warn-mode flags never ban) |
 | Challenges | nonce (build secret), random code ranges, clock rate, random file ranges, captcha, honeypot |
-| Features | `!ping`, `!vsync`, `!crash` (crash reports with the last packets, optional upload to your web panel after the player agreed), `@pf` packet filter for mass WoE, `@spb` party buffs, colour names and items, **lite ground skills** (`@lgp`, `@square`, `@circle`, `@lgpsound`: every ground skill as a flat tile in its colour, shape and symbol, [guide](docs/08-lgp-guide.md)), **competitive pack** per mode (flat WoE / battleground / PvP maps, optionally required on those maps, [guide](docs/09-competitive-pack.md)) |
+| Features | `!ping`, `!vsync`, `!crash` (crash reports with the last packets, optional upload to your web panel after the player agreed), `@pf` packet filter for mass WoE, optional start only through the patcher (`launcher`, OpenThor launch ticket), `@spb` party buffs, colour names and items, **lite ground skills** (`@lgp`, `@square`, `@circle`, `@lgpsound`: every ground skill as a flat tile in its colour, shape and symbol, [guide](docs/08-lgp-guide.md)), **competitive pack** per mode (flat WoE / battleground / PvP maps, optionally required on those maps, [guide](docs/09-competitive-pack.md)) |
 | AI assistants | `og-mcp`, an [MCP server](docs/10-mcp.md) with 18 tools: ask your assistant to create a profile, enable modules, validate, scan a GRF and build the signed release |
 | Tooling | Studio GUI (Tauri 2) and `og` CLI: profiles, validation, reproducible signed releases, signature packages, GRF scan and public GRF manifest (used by OpenThor Patcher), rollout gate, signed self-update |
 
@@ -129,7 +129,7 @@ staged rollout).
 
 ## Status
 
-1.0.3. Tested end to end with a 2018-06-20 client and an rAthena fork (PACKETVER 20180620): see
+1.0.4. Tested end to end with a 2018-06-20 client and an rAthena fork (PACKETVER 20180620): see
 [docs/05-tests.md](docs/05-tests.md). Not yet tested on real hardware: input filter, RCX, Warsaw (Brazilian
 banking module), VM detection on VMware/VirtualBox/Hyper-V.
 
