@@ -6,7 +6,7 @@
 | | |
 |---|---|
 | Base commit | `4cd08b739035721b2cbffa0310dbbf0eac081d9d` (2026-11-23, "Removed duplicate header includes in clif.cpp and npc.cpp (#10186)") |
-| Content | 39 files, +7921 / −9 lines: module files, Monocypher, all hooks, build files, config |
+| Content | 39 files, +7933 / −9 lines: module files, Monocypher, all hooks, build files, config |
 
 ## What the patch contains
 

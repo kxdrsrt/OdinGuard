@@ -6447,7 +6447,7 @@ index 000000000..0b53fad07
 +
 +#endif /* OG_LOGIN_HPP */
 diff --git a/src/map/atcommand.cpp b/src/map/atcommand.cpp
-index f367e9b84..2d85a3805 100644
+index f367e9b84..f4ee34a91 100644
 --- a/src/map/atcommand.cpp
 +++ b/src/map/atcommand.cpp
 @@ -45,6 +45,7 @@
@@ -6656,7 +6656,7 @@ index f367e9b84..2d85a3805 100644
 +		clif_displaymessage(fd, l.c_str());
 +	char out[CHAT_SIZE_MAX];
 +	// warn mode turns every wave into a dry run
-+	safesnprintf(out, sizeof(out), dry || og_log_only() ? "%d account(s) would be banned." : "%d account(s) banned.", n);
++	safesnprintf(out, sizeof(out), dry || og_map_warn_mode() ? "%d account(s) would be banned." : "%d account(s) banned.", n);
 +	clif_displaymessage(fd, out);
 +	return 0;
 +}
@@ -7107,10 +7107,10 @@ index 4130361aa..ae2e6779e 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 000000000..8f530fe0d
+index 000000000..a95d6b0bf
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,996 @@
+@@ -0,0 +1,1000 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
@@ -7349,6 +7349,10 @@ index 000000000..8f530fe0d
 +	}
 +	Sql_FreeResult(mmysql_handle);
 +	return true;
++}
++
++bool og_map_warn_mode() {
++	return og_log_only();
 +}
 +
 +int32 og_map_unban_account(uint32 account_id) {
@@ -8109,10 +8113,10 @@ index 000000000..8f530fe0d
 +}
 diff --git a/src/map/og_map.hpp b/src/map/og_map.hpp
 new file mode 100644
-index 000000000..35d0db3dd
+index 000000000..4be02c4b1
 --- /dev/null
 +++ b/src/map/og_map.hpp
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,83 @@
 +// OdinGuard on the map-server: events, kicks and bans, chat commands (!ping, !vsync, !crash), machine limit.
 +#ifndef OG_MAP_HPP
 +#define OG_MAP_HPP
@@ -8134,6 +8138,8 @@ index 000000000..35d0db3dd
 +bool og_map_ban(map_session_data* target, const char* by, const char* reason);
 +/// @return number of lifted bans of the machines the account used
 +int32 og_map_unban_account(uint32 account_id);
++/// og_log_only: actions are only logged, ban waves are dry runs
++bool og_map_warn_mode();
 +/// account lock (og_account_lock) of the character's account: add/remove its machine, clear, list
 +bool og_map_lock(map_session_data* target, const char* op, const char* by, std::vector<std::string>& out);
 +/// @pf: true when the viewer filters this packet of another player (GvG/battleground maps only)

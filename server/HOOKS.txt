@@ -80,7 +80,7 @@ src/map/atcommand.cpp:8990:	safesnprintf(out, sizeof(out), "%d machine ban(s) li
 src/map/atcommand.cpp:9009:	og_map_flags_text(account_id, lines);
 src/map/atcommand.cpp:9033:	safesnprintf(out, sizeof(out), "%d open flag(s) of account %u cleared.", og_map_flags_clear(account_id, rule), account_id);
 src/map/atcommand.cpp:9044:	int32 n = og_map_banwave(dry, &lines);
-src/map/atcommand.cpp:9049:	safesnprintf(out, sizeof(out), dry || og_log_only() ? "%d account(s) would be banned." : "%d account(s) banned.", n);
+src/map/atcommand.cpp:9049:	safesnprintf(out, sizeof(out), dry || og_map_warn_mode() ? "%d account(s) would be banned." : "%d account(s) banned.", n);
 src/map/atcommand.cpp:9064:	og_map_info(pl, out, sizeof(out));
 src/map/script.cpp:19043:	og_map_gatdebug(sd, script_getnum(st, 2));
 src/map/skill.hpp:557:int32 skill_get_unit_layout_type( uint16 skill_id, uint16 skill_lv );

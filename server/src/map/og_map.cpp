@@ -238,6 +238,10 @@ bool og_map_lock(map_session_data* target, const char* op, const char* by, std::
 	return true;
 }
 
+bool og_map_warn_mode() {
+	return og_log_only();
+}
+
 int32 og_map_unban_account(uint32 account_id) {
 	std::string q = "DELETE FROM `og_ban` WHERE `unique_id` IN (SELECT `unique_id` FROM `og_client` WHERE `account_id` = " + std::to_string(account_id) + ")";
 	if (SQL_ERROR == Sql_QueryStr(mmysql_handle, q.c_str())) {

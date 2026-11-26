@@ -19,6 +19,8 @@ bool og_map_machine_limit(map_session_data* sd);
 bool og_map_ban(map_session_data* target, const char* by, const char* reason);
 /// @return number of lifted bans of the machines the account used
 int32 og_map_unban_account(uint32 account_id);
+/// og_log_only: actions are only logged, ban waves are dry runs
+bool og_map_warn_mode();
 /// account lock (og_account_lock) of the character's account: add/remove its machine, clear, list
 bool og_map_lock(map_session_data* target, const char* op, const char* by, std::vector<std::string>& out);
 /// @pf: true when the viewer filters this packet of another player (GvG/battleground maps only)
