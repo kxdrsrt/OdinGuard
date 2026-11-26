@@ -59,6 +59,8 @@ jobs:
   server-patch-msvc:
     runs-on: windows-latest
     steps:
+      # the patch must keep its LF line endings (Windows runners convert to CRLF on checkout by default)
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - name: upstream rAthena at the patch base
         shell: bash
