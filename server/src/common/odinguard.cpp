@@ -688,6 +688,21 @@ bool og_send_ping(int32 fd) {
 	return true;
 }
 
+/// tells the guard where to upload crash reports; token: 64 hex characters, one per session (the panel checks it)
+bool og_send_crash_endpoint(int32 fd, const std::string& url, std::string& token) {
+	s_og_state* o = og_state(fd);
+	if (o == nullptr || !o->active || url.empty() || url.size() > 400) return false;
+	uint8 r[32];
+	if (!og_random(r, sizeof(r))) return false;
+	token = to_hex(r, sizeof(r));
+	std::vector<uint8> m(1 + url.size() + 1 + token.size());
+	m[0] = OG_S_CRASH;
+	memcpy(&m[1], url.c_str(), url.size() + 1);
+	memcpy(&m[2 + url.size()], token.c_str(), token.size());
+	og_control(fd, o, m);
+	return true;
+}
+
 bool og_send_command(int32 fd, const char* command) {
 	s_og_state* o = og_state(fd);
 	if (o == nullptr || !o->active) return false;
@@ -1212,6 +1227,15 @@ const std::vector<const char*>& og_sql_ddl() {
 		" `command` ENUM('kick','message') NOT NULL, `arg` VARCHAR(255) NOT NULL DEFAULT '', `issued_by` VARCHAR(24) NOT NULL DEFAULT '',"
 		" `state` ENUM('open','done','expired') NOT NULL DEFAULT 'open', `done_at` DATETIME NULL,"
 		" PRIMARY KEY (`id`), KEY `state` (`state`, `id`)) ENGINE=InnoDB",
+		// account lock: an account with rows here logs in only from these machines (set by a web panel or @oglock)
+		"CREATE TABLE IF NOT EXISTS `og_account_lock` ("
+		" `account_id` INT UNSIGNED NOT NULL, `unique_id` CHAR(64) NOT NULL, `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+		" `note` VARCHAR(64) NOT NULL DEFAULT '', PRIMARY KEY (`account_id`, `unique_id`)) ENGINE=InnoDB",
+		// one token per session for the crash report upload (og_crash_upload_url); the panel checks it (account, machine) and marks it used
+		"CREATE TABLE IF NOT EXISTS `og_crash_token` ("
+		" `token` CHAR(64) NOT NULL, `account_id` INT UNSIGNED NOT NULL DEFAULT 0, `unique_id` CHAR(64) NOT NULL DEFAULT '',"
+		" `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, `used` DATETIME NULL,"
+		" PRIMARY KEY (`token`), KEY `created` (`created`)) ENGINE=InnoDB",
 	};
 	return ddl;
 }

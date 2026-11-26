@@ -33,6 +33,8 @@ enum Cmd {
     LgpSounds { #[arg(long)] client: PathBuf, #[arg(long)] out: PathBuf, #[arg(long)] table: Option<PathBuf> },
     /// Allow an extra GRF (skin, darkworld variant, ...) by its tail hash, under any name
     GrfAllow { profile: PathBuf, grf: PathBuf, #[arg(long, default_value = "")] note: String },
+    /// Write the public GRF manifest (accepted GRF versions, hashes only) for patchers and web panels
+    GrfManifest { profile: PathBuf, #[arg(short, long)] out: Option<PathBuf> },
     /// Tool groups of the profile's signature sources (switch off or change the action with signatures.groups)
     SigGroups { profile: PathBuf, #[arg(long)] json: bool },
     /// Selectable competitive-pack folders of assets/competitive/recipe.toml (JSON)
@@ -129,6 +131,17 @@ fn run(cli: Cli) -> Result<()> {
             r.unreadable.iter().for_each(|u| eprintln!("warning: archive skipped, {u}"));
             r.missing.iter().for_each(|(id, src)| eprintln!("missing in the client: {src} (skill {id})"));
             println!("done: {} sounds in {}", r.written.len(), out.display());
+        }
+        Cmd::GrfManifest { profile, out } => {
+            let p = Profile::load(&profile)?;
+            let text = serde_json::to_string_pretty(&og_core::grf::public_manifest(&p, &[])).unwrap_or_default() + "\n";
+            match out {
+                Some(o) => {
+                    std::fs::write(&o, text).map_err(|e| og_core::Error::Io(o.display().to_string(), e))?;
+                    println!("{} GRF version(s) written to {}", p.grf.files.len(), o.display());
+                }
+                None => print!("{text}"),
+            }
         }
         Cmd::GrfAllow { profile, grf, note } => {
             let mut p = Profile::load(&profile)?;

@@ -86,6 +86,12 @@ summary = "Salted hardware components (13), unique id, exact and fuzzy machine b
   max = 13
   conf = "og_ban_match"
   help = "Equal components needed to link a machine to a banned one."
+  [[module.param]]
+  name = "account_lock"
+  type = "bool"
+  default = true
+  conf = "og_account_lock"
+  help = "Accounts with rows in og_account_lock (web panel or @oglock) log in only from those machines."
 
 [[module]]
 id = "multi-client"
@@ -234,11 +240,17 @@ summary = "Rejects synthetic keyboard/mouse input (macro and autopot tools) whil
 id = "crash-report"
 version = "1.0.0"
 kind = "client-feature"
-side = "client"
+side = "both"
 requires = ["core"]
 client_src = ["og_crash.c"]
 define = "OG_MOD_CRASH"
-summary = "Crash log with registers, stack, modules, GRFs and the last 32 packets."
+summary = "Crash log with registers, stack, modules, GRFs and the last 32 packets; optional upload to a web panel after the player agreed."
+  [[module.param]]
+  name = "upload_url"
+  type = "string"
+  default = ""
+  conf = "og_crash_upload_url"
+  help = "POST endpoint of your web panel for crash reports (empty = no upload). The player is asked once; the panel checks the token in og_crash_token."
 
 [[module]]
 id = "client-commands"

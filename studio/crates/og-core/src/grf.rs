@@ -103,6 +103,28 @@ pub fn merge(list: &mut Vec<GrfFile>, scan: Vec<GrfFile>, keep_previous: bool) {
     }
 }
 
+/// Public GRF manifest (`grf-manifest.json`): the GRF versions the server accepts, for patchers and web panels.
+/// Hashes only, no keys; profile files plus the GRFs of the release itself.
+pub fn public_manifest(p: &crate::profile::Profile, release: &[GrfFile]) -> serde_json::Value {
+    let mut files: Vec<&GrfFile> = p.grf.files.iter().collect();
+    for f in release {
+        if !files.iter().any(|g| g.name.eq_ignore_ascii_case(&f.name) && g.size == f.size && g.tail == f.tail) {
+            files.push(f);
+        }
+    }
+    serde_json::json!({
+        "schema_version": 1,
+        "product": "OdinGuard Anti Cheat",
+        "profile": p.general.id,
+        "operator": p.general.operator,
+        "client_build": p.general.client_build,
+        "files": files.iter().map(|f| serde_json::json!({
+            "name": f.name, "size": f.size, "tail_sha256": f.tail, "sha256": f.full, "required": f.required
+        })).collect::<Vec<_>>(),
+        "mods": p.grf.mods.iter().map(|m| serde_json::json!({ "tail_sha256": m.tail, "note": m.note })).collect::<Vec<_>>(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -113,6 +135,17 @@ mod tests {
         h[30..34].copy_from_slice(&table_offset.to_le_bytes());
         h[42..46].copy_from_slice(&0x200u32.to_le_bytes());
         [h, body.to_vec(), table.to_vec()].concat()
+    }
+
+    #[test]
+    fn public_manifest_lists_profile_and_release_grfs_once() {
+        let mut p = crate::profile::Profile::load(&crate::repo_root().join("profiles/default.profile.toml")).unwrap();
+        let f = |n: &str, t: &str| GrfFile { name: n.into(), size: 10, tail: t.into(), full: String::new(), required: true };
+        p.grf.files = vec![f("cdata.grf", "aa"), f("cdata.grf", "bb")];
+        let m = public_manifest(&p, &[f("odin.grf", "cc"), f("CDATA.grf", "aa")]);
+        let names: Vec<_> = m["files"].as_array().unwrap().iter().map(|x| x["name"].as_str().unwrap().to_string()).collect();
+        assert_eq!(names, ["cdata.grf", "cdata.grf", "odin.grf"], "both rollout versions, the release GRF, no duplicate");
+        assert!(!m.to_string().contains("seed"), "no key material");
     }
 
     #[test]

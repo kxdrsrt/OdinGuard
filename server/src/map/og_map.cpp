@@ -23,7 +23,9 @@
 #include "itemdb.hpp"
 #include "map.hpp"
 #include "pc.hpp"
+#include "party.hpp"
 #include "pc_groups.hpp"
+#include "status.hpp"
 #include "script.hpp"
 #include "skill.hpp"
 #include "unit.hpp"
@@ -33,6 +35,7 @@
 #define OG_REG_LGP_STYLE "og_lgp_style" // 0 = square, 1 = circle, 2.. = one colour for every skill (og_lgp_color order)
 #define OG_REG_NAMECOLOR "og_namecolor" // 0x1RRGGBB (bit 24 marks "set")
 #define OG_REG_CIRCLE "og_circle"       // @circle look 1-5, 0 = off
+#define OG_REG_PF "og_pf"             // @pf packet filter: bit 0 chat, bit 1 item use, bit 2 emotions of others
 #define OG_FLAG_LGP 2
 #define OG_FLAG_LGP_AOES 8
 #define OG_FLAG_LGP_NOSOUND 16 // @lgpsound off: no skill sounds for the lite ground skills
@@ -200,6 +203,38 @@ bool og_map_ban(map_session_data* target, const char* by, const char* reason) {
 	og_insert_ban(info->unique_id, by, reason);
 	og_map_event(target->fd, "gm-ban", reason, OG_ACTION_LOG, 0);
 	clif_authfail_fd(target->fd, 15);
+	return true;
+}
+
+/// account lock (og_account_lock): op "add"/"remove" the machine the character plays on, "clear" all, "list"
+bool og_map_lock(map_session_data* target, const char* op, const char* by, std::vector<std::string>& out) {
+	const s_og_info* info = og_info(target->fd);
+	std::string acc = std::to_string(target->status.account_id);
+	std::string q;
+	if (!strcmpi(op, "add") || !strcmpi(op, "remove")) {
+		if (info == nullptr)
+			return false;
+		q = !strcmpi(op, "add")
+			? "INSERT IGNORE INTO `og_account_lock` (`account_id`,`unique_id`,`note`) VALUES (" + acc + ",'" + info->unique_id + "','" + og_esc(std::string("by ") + by) + "')"
+			: "DELETE FROM `og_account_lock` WHERE `account_id` = " + acc + " AND `unique_id` = '" + info->unique_id + "'";
+	} else if (!strcmpi(op, "clear"))
+		q = "DELETE FROM `og_account_lock` WHERE `account_id` = " + acc;
+	if (!q.empty() && SQL_ERROR == Sql_QueryStr(mmysql_handle, q.c_str())) {
+		Sql_ShowDebug(mmysql_handle);
+		return false;
+	}
+	q = "SELECT `unique_id`, `created`, `note` FROM `og_account_lock` WHERE `account_id` = " + acc + " ORDER BY `created`";
+	if (SQL_ERROR == Sql_QueryStr(mmysql_handle, q.c_str())) { Sql_ShowDebug(mmysql_handle); return false; }
+	while (SQL_SUCCESS == Sql_NextRow(mmysql_handle)) {
+		char *uid, *created, *note;
+		Sql_GetData(mmysql_handle, 0, &uid, nullptr);
+		Sql_GetData(mmysql_handle, 1, &created, nullptr);
+		Sql_GetData(mmysql_handle, 2, &note, nullptr);
+		std::string u = uid ? uid : "";
+		out.push_back(u.substr(0, 16) + "... " + (created ? created : "") + " " + (note ? note : "") +
+			(info != nullptr && u == info->unique_id ? " (this machine)" : ""));
+	}
+	Sql_FreeResult(mmysql_handle);
 	return true;
 }
 
@@ -844,6 +879,15 @@ void og_map_on_load(map_session_data* sd, bool first) {
 				return 0;
 			}, &names);
 			og_send_control(sd->fd, og_colors_msg(OG_COLOR_NAME, OG_COLOR_OP_REPLACE, names));
+			// crash report upload: endpoint and a session token (tokens older than a week are removed)
+			std::string url = og_setting("og_crash_upload_url", ""), token;
+			if (!url.empty() && og_send_crash_endpoint(sd->fd, url, token)) {
+				const s_og_info* info = og_info(sd->fd);
+				std::string q = "INSERT INTO `og_crash_token` (`token`,`account_id`,`unique_id`) VALUES ('" + token + "'," +
+					std::to_string(sd->status.account_id) + ",'" + (info ? info->unique_id : std::string()) + "')";
+				if (SQL_ERROR == Sql_QueryStr(mmysql_handle, q.c_str())) Sql_ShowDebug(mmysql_handle);
+				if (SQL_ERROR == Sql_QueryStr(mmysql_handle, "DELETE FROM `og_crash_token` WHERE `created` < NOW() - INTERVAL 7 DAY")) Sql_ShowDebug(mmysql_handle);
+			}
 		}
 		og_announce_name(sd, false);
 	}
@@ -855,4 +899,98 @@ void og_map_on_quit(map_session_data* sd) {
 	og_map_guard_quit(sd);
 	if (og_enabled() && og_namecolor(sd) >= 0)
 		og_announce_name(sd, true);
+}
+
+// ---------------------------------------------------------------- @pf packet filter (eAmod's @packetfilter)
+// On GvG and battleground maps a player can stop public chat (008d), item use (01c8) and emotions (00c0) of other
+// players from being sent to them: fewer packets and effects in a mass WoE. Own packets always arrive.
+
+#define OG_PF_CHAT 1
+#define OG_PF_ITEM 2
+#define OG_PF_EMOTION 4
+
+bool og_map_pf_filtered(map_session_data* sd, const block_list* src, const uint8* buf) {
+	uint16 cmd = (uint16)(buf[0] | (buf[1] << 8));
+	int32 bit = cmd == 0x008d ? OG_PF_CHAT : cmd == 0x01c8 ? OG_PF_ITEM : cmd == 0x00c0 ? OG_PF_EMOTION : 0;
+	if (bit == 0 || src == nullptr || src == sd || src->type != BL_PC)
+		return false;
+	if (!map_flag_gvg2(sd->m) && !map_getmapflag(sd->m, MF_BATTLEGROUND))
+		return false;
+	return ((int32)pc_readglobalreg(sd, add_str(OG_REG_PF)) & bit) != 0;
+}
+
+/// @pf on|off|<letters c i g> (chat, items, emotions); without a parameter the current setting
+void og_map_pf_command(map_session_data* sd, const char* message) {
+	int32 f = (int32)pc_readglobalreg(sd, add_str(OG_REG_PF));
+	char arg[32] = "";
+	if (message != nullptr)
+		safestrncpy(arg, message, sizeof(arg));
+	trim(arg);
+	message = arg;
+	if (*message) {
+		if (!strcmpi(message, "on"))
+			f = OG_PF_CHAT | OG_PF_ITEM | OG_PF_EMOTION;
+		else if (!strcmpi(message, "off"))
+			f = 0;
+		else {
+			int32 n = 0;
+			for (const char* c = message; *c; c++) {
+				switch (TOLOWER(*c)) {
+				case 'c': n |= OG_PF_CHAT; break;
+				case 'i': n |= OG_PF_ITEM; break;
+				case 'g': case 'e': n |= OG_PF_EMOTION; break;
+				case ' ': break;
+				default:
+					clif_displaymessage(sd->fd, "Usage: @pf on|off|<c i g> (c = chat, i = item use, g = emotions of other players, on WoE and battleground maps)");
+					return;
+				}
+			}
+			f = n;
+		}
+		pc_setglobalreg(sd, add_str(OG_REG_PF), f);
+	}
+	char out[CHAT_SIZE_MAX];
+	safesnprintf(out, sizeof(out), "Packet filter (WoE/BG maps): chat %s | items %s | emotions %s",
+		(f & OG_PF_CHAT) ? "ON" : "OFF", (f & OG_PF_ITEM) ? "ON" : "OFF", (f & OG_PF_EMOTION) ? "ON" : "OFF");
+	clif_displaymessage(sd->fd, out);
+}
+
+// ---------------------------------------------------------------- @spb party buffs
+// The 2018 client has no buff icons in the party window; @spb lists the support buffs of every party member on this
+// map server with the seconds left, so a supporter sees who needs what.
+
+void og_map_spb(map_session_data* sd) {
+	static const struct { sc_type sc; const char* name; } buffs[] = {
+		{ SC_BLESSING, "Bless" }, { SC_INCREASEAGI, "AGI" }, { SC_ASSUMPTIO, "Assu" }, { SC_KYRIE, "Kyrie" },
+		{ SC_IMPOSITIO, "Impo" }, { SC_SUFFRAGIUM, "Suffra" }, { SC_GLORIA, "Gloria" }, { SC_MAGNIFICAT, "Magni" },
+		{ SC_ANGELUS, "Angelus" }, { SC_PROVIDENCE, "Provi" }, { SC_ADRENALINE, "AR" }, { SC_ADRENALINE2, "FAR" },
+		{ SC_WEAPONPERFECTION, "WP" }, { SC_OVERTHRUST, "OT" }, { SC_WINDWALK, "WW" }, { SC_POEMBRAGI, "Bragi" },
+		{ SC_APPLEIDUN, "Idun" }, { SC_ASSNCROS, "ACross" }, { SC_SERVICE4U, "Serv4U" }, { SC_FORTUNE, "Fortune" },
+	};
+	party_data* p = sd->status.party_id ? party_search(sd->status.party_id) : nullptr;
+	if (p == nullptr) {
+		clif_displaymessage(sd->fd, "You are not in a party.");
+		return;
+	}
+	t_tick now = gettick();
+	for (int32 i = 0; i < MAX_PARTY; i++) {
+		map_session_data* m = p->data[i].sd;
+		if (m == nullptr)
+			continue;
+		std::string line = std::string(m->status.name) + ":";
+		int32 n = 0;
+		for (const auto& b : buffs) {
+			status_change_entry* e = m->sc.getSCE(b.sc);
+			if (e == nullptr)
+				continue;
+			const TimerData* t = e->timer != INVALID_TIMER ? get_timer(e->timer) : nullptr;
+			int32 left = t != nullptr ? (int32)std::max<t_tick>(0, DIFF_TICK(t->tick, now) / 1000) : -1;
+			line += (n++ ? ", " : " ") + std::string(b.name) + (left >= 0 ? " " + std::to_string(left) + "s" : "");
+		}
+		if (n == 0)
+			line += " no support buffs";
+		if (m->m != sd->m)
+			line += " (other map)";
+		clif_displaymessage(sd->fd, line.substr(0, CHAT_SIZE_MAX - 1).c_str());
+	}
 }

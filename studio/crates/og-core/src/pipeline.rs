@@ -266,6 +266,7 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     generate::write(&out.join("docs/commands-en.md"), &generate::commands_md(&p, &reg, "en"))?;
     generate::write(&out.join("docs/handbook.md"), &handbook(&p, &reg, &rep, &d))?;
     generate::write(&out.join("docs/build-report.json"), &serde_json::to_string_pretty(&rep).unwrap_or_default())?;
+    generate::write(&out.join("grf-manifest.json"), &serde_json::to_string_pretty(&crate::grf::public_manifest(&p, &rep.grf_manifest)).unwrap_or_default())?;
     io(std::fs::remove_dir_all(out.join("build")), &out)?;
     let m = crate::manifest::Manifest {
         product: "OdinGuard Anti Cheat".into(),

@@ -81,6 +81,8 @@
                                n x { u8 r, u8 g, u8 b, u8 len, char text[len] } – names/items drawn in that colour */
 #define OG_S_CHALLENGE 0x85 /* u32 challenge_id, u8 type (OG_CH_*), u8 nonce[16], u8 target, u32 a, u32 b */
 #define OG_S_SIGS      0x86 /* u8 op (OG_SIGS_*), u16 n, n x { u16 id, u8 kind, u8 len, char pattern[len] } */
+#define OG_S_CRASH     0x87 /* char url[] NUL, char token[64]: endpoint for crash reports; the client asks the player before it
+                                * uploads (og_crash.c), the panel checks the token in og_crash_token */
 
 #define OG_POLICY_LEN    9
 #define OG_CHALLENGE_LEN (1 + 4 + 1 + 16 + 1 + 4 + 4)

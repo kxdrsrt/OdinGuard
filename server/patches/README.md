@@ -6,7 +6,7 @@
 | | |
 |---|---|
 | Base commit | `4cd08b739035721b2cbffa0310dbbf0eac081d9d` (2026-11-23, "Removed duplicate header includes in clif.cpp and npc.cpp (#10186)") |
-| Content | 39 files, +7620 / −6 lines: module files, Monocypher, all hooks, build files, config |
+| Content | 39 files, +7921 / −9 lines: module files, Monocypher, all hooks, build files, config |
 
 ## What the patch contains
 
@@ -15,8 +15,9 @@
   `conf/odinguard_athena.conf`.
 - `3rdparty/monocypher/` (`monocypher.c/.h`, `LICENCE.md`) – upstream rAthena does not ship Monocypher.
 - Hooks (see `../HOOKS.txt` and `../README.md`): `socket.cpp/.hpp`, `login.cpp`, `loginclif.cpp`, `char_clif.cpp`,
-  `clif.cpp/.hpp`, `skill.hpp` (declaration of `skill_get_unit_layout_type`), `map.cpp`, `pc.cpp`, `atcommand.cpp` (`@ogban @ogunban @oginfo @ogflags @ogbanwave @namecolor
-  @lgp @square @circle @aoes`), `conf/groups.yml` (player group: `lgp`, `square`, `circle`, `aoes`).
+  `clif.cpp/.hpp`, `skill.hpp` (declaration of `skill_get_unit_layout_type`), `map.cpp`, `pc.cpp`, `atcommand.cpp` (`@ogban @ogunban @oginfo @ogflags @ogflagclear @oglock @ogbanwave @namecolor
+  @lgp @square @circle @aoes @pf`/`@packetfilter` `@spb`), `clif.cpp` `clif_send_sub` (`og_map_pf_filtered`),
+  `conf/groups.yml` (player group: `lgp`, `square`, `circle`, `aoes`, `pf`, `packetfilter`, `spb`).
 - Build files: `src/common/Makefile.in` (`odinguard.o og_crypto.o og_wire.o`; `og_proto.h og_wire.h og_wire.c` as
   header dependencies so `og_wire.o` is rebuilt), `src/common/CMakeLists.txt`, and the Visual Studio projects and
   filters of common, login-server, map-server and map-server-generator (`og_wire.c` is listed as a header because
@@ -42,7 +43,7 @@ Without git: `patch -p1 < rathena-4cd08b7.patch`.
 
 Then continue with [docs/INTEGRATION.md](../../docs/INTEGRATION.md) section 6, steps 5–6 (secrets, first start). The
 servers create `conf/import/odinguard_conf.txt` and the tables `og_client`, `og_component`, `og_ban`, `og_event`,
-`og_flag` on the first start.
+`og_flag`, `og_command`, `og_account_lock` and `og_crash_token` on the first start.
 
 ## Newer rAthena: resolving conflicts
 
@@ -62,6 +63,10 @@ The module files never conflict (they are new). Conflicts can only appear in the
 5. Rebuild and check the map-server log for `OdinGuard Anti Cheat: enabled`.
 
 ## Smoke test (base 4cd08b7)
+
+- 2026-11-26 (account lock, crash upload, `@ogflagclear`, `@oglock`, `@pf`, `@spb`, `og_command`): `make server -j2` in
+  `alpine:3.23` built login, char and map server without errors. CI builds the patch on every push: GCC (Ubuntu) and
+  Visual Studio (MSBuild, Windows, pre-renewal, warnings as errors like upstream's own CI).
 
 - `make server -j3` in `alpine:3.23` (`./configure --enable-packetver=20180620`): login, char and map server built
   without errors; the only new warning is `-Wshadow` inside `monocypher.c`.

@@ -62,6 +62,9 @@ static std::string og_esc(const std::string& s) {
 // ---------------------------------------------------------------- flags and ban waves
 
 void og_map_flag(map_session_data* sd, const char* uid, const char* rule, int32 score, bool ban, const char* detail) {
+	// a flag raised in warn mode never counts for a later ban wave: the rules were not trusted yet
+	if (og_log_only())
+		ban = false;
 	std::string q = "INSERT INTO `og_flag` (`unique_id`,`account_id`,`char_name`,`rule`,`score`,`ban`,`detail`) VALUES ('" +
 		og_esc(uid ? uid : "") + "'," + std::to_string(sd ? sd->status.account_id : 0) + ",'" + og_esc(sd ? sd->status.name : "") + "','" +
 		og_esc(std::string(rule).substr(0, 64)) + "'," + std::to_string(score) + "," + (ban ? "1" : "0") + ",'" +
@@ -138,6 +141,15 @@ void og_map_flags_text(uint32 account_id, std::vector<std::string>& out) {
 			(d[3] && atoi(d[3]) ? " ban" : "") + " [" + (d[4] ? d[4] : "") + "] " + std::string(d[5] ? d[5] : "").substr(0, 60));
 	}
 	Sql_FreeResult(mmysql_handle);
+}
+
+/// sets the open flags of an account (optionally of one rule) to 'cleared'; @return number of flags
+int32 og_map_flags_clear(uint32 account_id, const char* rule) {
+	std::string q = "UPDATE `og_flag` SET `state` = 'cleared' WHERE `state` = 'open' AND `account_id` = " + std::to_string(account_id);
+	if (rule != nullptr && *rule)
+		q += " AND `rule` = '" + og_esc(std::string(rule).substr(0, 64)) + "'";
+	if (SQL_ERROR == Sql_QueryStr(mmysql_handle, q.c_str())) { Sql_ShowDebug(mmysql_handle); return 0; }
+	return (int32)Sql_NumRowsAffected(mmysql_handle);
 }
 
 // ---------------------------------------------------------------- rate limit

@@ -1,6 +1,6 @@
 # 05 – Tests und Testmatrix (OdinGuard Anti Cheat 1.0)
 
-Stand 2026-11-24. Ergebnis-Spalte: **grün** = automatisch getestet und bestanden (mit Beleg), **v0.3** = in v0.3
+Stand 2026-11-26. Ergebnis-Spalte: **grün** = automatisch getestet und bestanden (mit Beleg), **v0.3** = in v0.3
 getestet, Code unverändert übernommen, **Abnahme** = nur im echten Client/auf echter Hardware prüfbar (Abschnitt 6),
 **offen** = noch kein Test. Ein Command, eine Challenge oder Detection gilt erst als fertig, wenn ihr Test grün ist
 und die Doku generiert wurde (`og docs`).
@@ -12,18 +12,19 @@ Umgebung: macOS (Cross-Compile mingw-w64), Docker (MariaDB + xAthena login/char/
 
 | Suite | Befehl | Umfang | Ergebnis |
 |---|---|---|---|
-| Rust Unit-Tests | `cd studio && cargo test --workspace` | 23 Tests (Liste unten) | grün, 23/23 (`rgrf-core` liegt als Kopie in `studio/vendor/rgrf-core`, kein Netz und kein RustyGRF nötig) |
+| Rust Unit-Tests | `cd studio && cargo test --workspace` | 24 Tests (Liste unten) | grün, 24/24 (`rgrf-core` liegt als Kopie in `studio/vendor/rgrf-core`, kein Netz und kein RustyGRF nötig) |
 | Rust Lints | `cargo clippy --workspace --all-targets` (+ `apps/studio/src-tauri`) | alle Lints deny | grün, 0 Warnungen |
 | Parser-Fuzzing | `make -C client fuzz` | Handshake, Records, Policy, Challenge, Sigs, Colors; ASan + UBSan | grün, 2 000 000 Iterationen |
 | Detection-Test | `dettest.exe <sigpack> positive <leerer Ordner>` (VM) | Prozess, Modul, Fensterklasse, Fenstertitel, Dateiname, Datei-Hash, GRF-Hash, Mutex, Registry (vorhanden/fehlend), Treiber (aktiver Systemtreiber), Einmal-Meldung, Allowlist | grün, 15/15 (Paket mit 300 Signaturen) |
 | Fehlalarm-Test | `dettest.exe <sigpack> clean <client-dev/ragnarok>` (VM) | 17 Client-DLLs gemappt (ROExt `ijl15r.dll`, dxwrapper, ddraw, …) + Ordner-, Fenster-, Prozess-, Treiber-, Mutex-, Registry-Scan | grün, 0 Signaturtreffer (300er-Paket) |
-| E2E | `sh tests/e2e/run.sh <xathena> dist/e2e dist/minimal` | 42 Prüfungen (Abschnitt 3) | grün, 42/42 (Lauf 2026-11-24) |
+| E2E | `sh tests/e2e/run.sh <xathena> dist/e2e dist/minimal` | 70 Prüfungen (Abschnitt 3) | siehe Abschnitt 3 (Lauf 2026-11-26) |
 | Reproduzierbarkeit | `og build` zweimal je Profil | DLL-, GRF-, Manifest-Hashes | grün (default, minimal, Betreiber-Profil) |
 | Release-Signatur | `og verify-release <ordner>` | Manifest-Signatur + jede Datei | grün (default, minimal, e2e, cptest, Betreiber) |
 | Studio-Release | `tools/release_studio.sh beta https://…` + `og update-verify` | Build, Signatur Artefakt + Manifest | grün; Manipulation von Manifest bzw. Artefakt abgelehnt |
 | GUI-Smoke | Tauri-App startet; UI im Browser-Mock mit echten Daten (Betreiber-Profil): Profil, Module, Commands, Signaturen (22 Gruppen), GRF & Mods, Competitive-Pack (12 Ordner) | sichtbar und bedienbar | grün |
 | CFG-Build | `make TOOLCHAIN=llvm` / `OG_TOOLCHAIN=llvm og build` | GuardFlags (REA), Laufzeit in der VM: Handshake, `!ping`, `!crash`, Selbstintegrität gegen die llvm-Referenz | grün: `guard_cf` + `cfg_instrumented` gesetzt, keine Ereignisse |
 | rAthena-Upstream | `server/patches/rathena-4cd08b7.patch` | `git apply --check`, Make- und CMake-Build, Start aller Server mit `og_enable`, Tabellen angelegt | grün (Docker) |
+| rAthena-Upstream in der CI | Jobs `server-patch-gcc` (Ubuntu, `./configure --enable-prere`) und `server-patch-msvc` (Windows, MSBuild Debug, `PRERE`, `/warnaserror` wie die Upstream-CI) auf sauberem rAthena `4cd08b7` | Patch anwenden, alle Server bauen | grün (2026-11-26). Der erste MSVC-Lauf fand einen echten Fehler: C4838 (verengende Umwandlung `int32` → `uint32` in der Initialisierungsliste des LGP-Hooks in `clif.cpp`), GCC hatte nur gewarnt; behoben |
 
 Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pulls_in_dependencies`,
 `profile::new_profile_validates_and_round_trips`, `profile::validation_catches_errors`,
@@ -60,10 +61,10 @@ Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pu
 | 8 | ehrlicher Client: kein guard-code/exe-code/challenge-Fehlschlag | grün |
 | 9 | Challenges werden gesendet (Map-Log) | grün |
 | 10–16 | Auren: gesperrt → Fehlermeldung; GM-Freischaltung; doppelt → Hinweis; unbekannt → abgelehnt; nach Relog tragbar; einmal gespeichert (Account-Scope); Spieler dürfen `@auraunlock` nicht | grün |
-| 17 | Honeypot-Treffer → Flag (flagban) | grün |
+| 17 | Honeypot-Treffer im Warnmodus → Flag ohne Bann-Markierung; außerhalb des Warnmodus → `flagban` | grün |
 | 18 | Skill-Anfragen innerhalb des Delays → Flag `bh:nodelay` | grün |
 | 19 | Paket-Flut → `rate-limit` (Warnmodus = Log) | grün |
-| 20 | `@ogbanwave dry` listet den Honeypot-Account | grün |
+| 20 | Warnmodus-Flags zählen nicht für die Ban-Welle (`0 account(s) would be banned`); `@ogbanwave dry` listet den Honeypot-Account nach dem Umschalten | grün |
 | 21 | Warnmodus bannt nie | grün |
 | 22–24 | Ban-Welle bannt den geflaggten Rechner, Flags geschlossen, gebannter Rechner → Login-Code 4 | grün |
 | 25 | manipuliertes Signaturpaket wird beim Start abgelehnt | grün |
@@ -83,10 +84,16 @@ Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pu
 | 39 | Speedhack-Stub: Zeit-Challenge schlägt fehl (`client clock +200%` nach > 120 s) | grün |
 | 40 | Guard-Code im Speicher gepatcht → `guard-code` | grün |
 | 41 | unveränderte Exe passt zum erlaubten Exe-Hash; Exe-Code im Speicher gepatcht → `exe-code` | grün |
+| 42–44 | `@ogflagclear <account id>` schließt offene Flags, `@ogflagclear <id> <regel>` nur diese Regel, ohne Namen → Usage | grün |
+| 45–47 | **wiedergespielter Record:** `tests/e2e/replay_proxy.py` zwischen VM und Map-Server schickt einen mitgeschnittenen verschlüsselten Client-Record noch einmal → `record-mac` (Zähler/Tag passt nicht), außerhalb des Warnmodus `kick` | grün |
+| 48–52 | **Ratenlimit pro Command:** `og_cmdrate_ping: 10000` → zweites `!ping` abgewiesen; `og_cmd_vsync: no` → abgeschaltet; `og_cmdgroup_crash: 10` → Spieler abgewiesen; GMs nicht begrenzt | grün |
+| 53–58 | **Account-Lock:** `@oglock <char>, add` trägt den Rechner ein; Login vom eigenen Rechner ok; anderer Rechner → Login-Code 3 + Ereignis `account-lock`; ohne Einträge wieder frei | grün |
+| 59–61 | **`@pf`** auf `prtg_cas01` (GM holt den Spieler per `@recall`, `nettest` bestätigt den Kartenwechsel): `@pf c` → 0 Chat-Pakete des anderen Spielers, `@pf off` → 2; Statusmeldung | grün |
+| 62–63 | **`@spb`:** ohne Party → Hinweis; mit Party und Blessing → `OgTester: Bless <n>s` | grün |
+| 64–68 | **Crash-Upload:** Bericht mit Zustimmung (`odinguard.ini`) per POST an die Panel-URL, Token steht in `og_crash_token` für den Account, `sent.txt`, kein zweiter Upload, abgelehnt → nichts gesendet | grün |
 
-Replay-Schutz: Records mit falschem Zähler und Antworten auf unbekannte Challenge-IDs werden verworfen
-(`challenge:replay`); abgedeckt durch Fuzzing (Parser) und Server-Logik, ein eigener E2E-Fall mit
-wiedergespieltem Record fehlt noch (**offen**, siehe 7).
+Replay-Schutz: Records mit falschem Zähler werden verworfen (`record-mac`, E2E 45–47), Antworten auf unbekannte
+Challenge-IDs ebenfalls (`challenge:replay`, Server-Logik und Fuzzing).
 
 ## 4. Commands
 
@@ -110,10 +117,14 @@ V = Verbindungsabbruch (Command ohne Wirkung, kein Absturz).
 | `@ogban` / `@ogunban` | Rechner-Sperre setzen/aufheben | v0.3 | v0.3 | – | Unit | v0.3 |
 | `@oginfo` | Version/Build/Rechner/Exe-Hash | – | – | – | Unit | grün (E2E 6) |
 | `@ogflags` | offene Flags | – | – | – | Unit | E2E 1 ruft ihn auf, ohne eigene Prüfung (**offen**) |
+| `@ogflagclear <char\|id> [regel]` | offene Flags schließen | Gruppe 60 | E2E | – | Unit | grün (E2E 42–44) |
+| `@oglock <char>[, add\|remove\|clear\|list]` | Account an Rechner binden | Gruppe 60 | E2E | – | Unit | grün (E2E 53–58) |
+| `@pf on\|off\|<c i g>` | Paketfilter WoE/BG | – | E2E | Konfig | Unit | grün (E2E 59–61); Item-Nutzung und Emotes nur im Code, nicht eigens gemessen |
+| `@spb` | Party-Buffs im Chat | – | E2E | Konfig | Unit | grün (E2E 62–63) |
 | `@ogbanwave [dry]` | Ban-Welle | Gruppe 99 | E2E | – | Unit | grün (E2E 20–24) |
 
 „Unit“ in Spalte M: `generate::server_conf_follows_rollout_stage_and_commands` (abgewählte Commands → `og_cmd_<id>: no`).
-Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht eigens E2E-getestet (**offen**).
+Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og_cmdgroup_*`): grün (E2E 48–52).
 
 ## 5. Challenges und Signaturklassen
 
@@ -156,14 +167,13 @@ Ratenlimit pro Command (`og_cmdrate_*`) ist im Server implementiert, aber nicht 
 
 ## 7. Offene Testlücken (ehrlich)
 
-- Wiedergespielter Record als eigener E2E-Fall; Ratenlimit pro Command.
 - Echte Cheat-Programme wurden nicht ausgeführt (nur statische Analyse und harmlose Stubs); Treffer echter Tools
   bestätigt erst die Abnahme auf einem Testrechner.
 - Input-Filter: Parallels verwirft synthetische Eingaben schon vor dem Gast (v0.3-Befund), daher nur auf echter
   Hardware.
-- Questlog-Texte, Captcha-Fenster: nur im echten Client. LGP-Look: in der VM im echten Client gemessen; offen sind der Fallback ohne Palette (anderer Client-Build) und zwei Betrachter gleichzeitig.
-- CFG nur mit llvm-mingw (`TOOLCHAIN=llvm`); der Standard-Build (mingw-gcc) hat es nicht. Visual-Studio-Builds des
-  Server-Patches sind ungetestet.
+- Questlog-Texte, Captcha-Fenster: nur im echten Client. LGP-Look: in der VM im echten Client gemessen. **Fallback ohne Palette (2026-11-26, gemessen):** Kopie des Clients mit einem geänderten Byte an der Hook-Stelle (`push 3` → `push 2` bei 0x93065b, wie ein anderer Build): Guard-Log `lgp palette: client code not recognised (other build), blue tiles only`, `@oginfo` meldet `flags 1` (keine Paletten-Fähigkeit), der Server schickt die normalen Units, Storm Gust erscheint als blaue Standard-Dreiecke (`docs/images/lgp-fallback-other-build.png`), kein Absturz. Offen: zwei Betrachter gleichzeitig.
+- CFG nur mit llvm-mingw (`TOOLCHAIN=llvm`); der Standard-Build (mingw-gcc) hat es nicht. Der Server-Patch baut mit
+  Visual Studio (CI); gelaufen ist ein MSVC-Server nicht.
 
 ## 8. Historie
 

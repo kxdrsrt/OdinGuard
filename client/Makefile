@@ -36,7 +36,7 @@ LDFLAGS  = $(CFG_FLAGS) -s -static -static-libgcc -Wl,--kill-at -Wl,--no-insert-
 MH_SRC   = ../third_party/minhook/src/hook.c ../third_party/minhook/src/buffer.c ../third_party/minhook/src/trampoline.c \
            ../third_party/minhook/src/hde/hde32.c
 LIB_SRC  = ../third_party/monocypher.c $(MH_SRC)
-LIBS     = -lws2_32 -liphlpapi -ladvapi32 -luser32 -lgdi32 -lmsimg32 $(RTLIBS)
+LIBS     = -lws2_32 -lwinhttp -liphlpapi -ladvapi32 -luser32 -lgdi32 -lmsimg32 $(RTLIBS)
 KEYS     = ../keys
 RC_DIR  ?= res
 

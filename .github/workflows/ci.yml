@@ -54,3 +54,33 @@ jobs:
             $OG build profiles/$p.profile.toml > /tmp/$p-2.json
             cmp /tmp/$p-1.manifest dist/$p/manifest.json
           done
+
+  # the server patch on clean upstream rAthena: Visual Studio (MSBuild, as upstream's own CI) and GCC
+  server-patch-msvc:
+    runs-on: windows-latest
+    steps:
+      # the patch must keep its LF line endings (Windows runners convert to CRLF on checkout by default)
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - name: upstream rAthena at the patch base
+        shell: bash
+        run: |
+          base=$(sed -n 's/.*Base commit | `\([0-9a-f]*\)`.*/\1/p' server/patches/README.md)
+          git clone -q -c core.autocrlf=false https://github.com/rathena/rathena.git ra && git -C ra checkout -q "$base"
+          git -C ra apply --whitespace=nowarn ../server/patches/rathena-4cd08b7.patch
+      - uses: microsoft/setup-msbuild@v2
+      - name: build (Debug, pre-renewal, warnings are errors like upstream)
+        working-directory: ra
+        run: msbuild rAthena.sln -t:rebuild -property:Configuration=Debug /p:DefineConstants="BUILDBOT%3BPRERE" /warnaserror /m
+
+  server-patch-gcc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: upstream rAthena at the patch base, patched, built
+        run: |
+          sudo apt-get update && sudo apt-get install -y libmariadb-dev libmariadb-dev-compat zlib1g-dev
+          base=$(sed -n 's/.*Base commit | `\([0-9a-f]*\)`.*/\1/p' server/patches/README.md)
+          git clone -q -c core.autocrlf=false https://github.com/rathena/rathena.git ra && git -C ra checkout -q "$base"
+          git -C ra apply --whitespace=nowarn ../server/patches/rathena-4cd08b7.patch
+          cd ra && ./configure --enable-prere=yes --enable-buildbot=yes && make -j"$(nproc)" server
