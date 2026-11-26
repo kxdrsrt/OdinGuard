@@ -103,6 +103,13 @@ const TOOLS: &[Tool] = &[
         writes: true,
         params: &[P, ("client", "string", "Client folder", true), ("full", "boolean", "Also hash the whole file", false), ("keep_previous", "boolean", "Keep previously approved versions (default true)", false), C],
     },
+    Tool {
+        name: "og_keep_previous",
+        title: "Keep the current release accepted",
+        description: "Before building a new release: copies the guard, odin.grf and odin-dark.grf of the current release (or of a client folder) into previous-releases/ and lists them in [rollout] previous_releases, so the next server build still accepts players who have not patched yet. Remove the entry once everyone has patched.",
+        writes: true,
+        params: &[P, ("from", "string", "Folder with the players' current odinguard.dll and odin.grf (default: the profile's release client folder)", false), C],
+    },
     Tool { name: "og_preview", title: "Preview a release", description: "What a build would produce: modules, files, signature counts, warnings. Writes nothing.", writes: false, params: &[P] },
     Tool { name: "og_build", title: "Build a release", description: "Builds the release (client DLL, odin.grf, competitive pack, server package, signed manifest) into the profile's output folder.", writes: true, params: &[P, C] },
     Tool { name: "og_verify_release", title: "Verify a release", description: "Checks the manifest signature and file hashes of a built release folder.", writes: false, params: &[("dir", "string", "Release folder", true)] },
@@ -317,6 +324,13 @@ fn call(name: &str, a: &Value) -> Res<Value> {
             let full = a.get("full").and_then(Value::as_bool).unwrap_or(false);
             let s = grf::scan_client(Path::new(&need(a, "client")?), full).map_err(e)?;
             Ok(json!({"grfs": s}))
+        }
+        "og_keep_previous" => {
+            confirmed(a)?;
+            let path = PathBuf::from(need(a, "profile")?);
+            let from = a.get("from").and_then(Value::as_str).filter(|s| !s.is_empty()).map(PathBuf::from);
+            let k = pipeline::keep_previous(&path, from.as_deref()).map_err(e)?;
+            Ok(json!(k))
         }
         "og_grf_approve" => {
             confirmed(a)?;

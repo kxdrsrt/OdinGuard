@@ -2477,7 +2477,7 @@ dependencies = [
 
 [[package]]
 name = "odinguard-studio"
-version = "1.0.0"
+version = "1.0.2"
 dependencies = [
  "og-core",
  "serde",
@@ -2491,7 +2491,7 @@ dependencies = [
 
 [[package]]
 name = "og-core"
-version = "1.0.0"
+version = "1.0.2"
 dependencies = [
  "cc",
  "encoding_rs",

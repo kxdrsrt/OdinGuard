@@ -27,6 +27,7 @@ Transport: stdio, newline-delimited JSON-RPC 2.0, tools only. `OG_MCP_READONLY=1
 | `og_signature_groups`, `og_signature_group_set` | – / yes | Cheat signature groups and the reaction per group |
 | `og_grf_scan` | – | Reads the GRFs of a client folder |
 | `og_grf_approve` | yes | Adds a client's GRF versions to the approved list (keeps previous versions by default) |
+| `og_keep_previous` | yes | Keeps the current release (guard, `odin.grf`, `odin-dark.grf`) accepted by the next server build, so unpatched players are not kicked (INTEGRATION 8a) |
 | `og_preview` | – | What a build would contain |
 | `og_build` | yes | Builds the release (DLL, `odin.grf`, competitive pack, server package, signed manifest) |
 | `og_verify_release` | – | Checks manifest signature and file hashes |

@@ -59,6 +59,15 @@ pub fn protected_files(p: &Profile) -> Vec<(&'static str, bool)> {
     v
 }
 
+/// Folder names (last path component) of the kept previous releases, as they are copied to `<ref_dir>/previous/`.
+pub fn previous_names(p: &Profile) -> Vec<String> {
+    p.rollout
+        .previous_releases
+        .iter()
+        .filter_map(|r| std::path::Path::new(r.trim_end_matches('/')).file_name().map(|n| n.to_string_lossy().into_owned()))
+        .collect()
+}
+
 /// Client sources of the selected modules in a profile-specific order (build variation: different code layout).
 pub fn client_sources(p: &Profile, reg: &Registry) -> Vec<String> {
     let seed = hex::decode(&p.general.variation_seed).unwrap_or_default();
@@ -196,9 +205,15 @@ pub fn server_conf(p: &Profile, reg: &Registry, sigpack_key: &[u8; 32], built: &
     s.push_str("\n// references (copied by the server package)\n");
     if p.modules.iter().any(|m| m == "integrity") {
         let _ = writeln!(s, "og_guard_file: {ref_dir}/odinguard.dll");
+        for r in previous_names(p) {
+            let _ = writeln!(s, "og_guard_previous_file: {ref_dir}/previous/{r}/odinguard.dll");
+        }
     }
     for (i, (f, req)) in protected_files(p).iter().enumerate() {
         let _ = writeln!(s, "og_protected_file: {i},{ref_dir}/{f},{}", if *req { "yes" } else { "no" });
+        for r in previous_names(p) {
+            let _ = writeln!(s, "og_protected_previous: {i},{ref_dir}/previous/{r}/{f}");
+        }
     }
     if p.modules.iter().any(|m| m == "cheat-signatures") {
         let _ = writeln!(s, "og_sigpack: {ref_dir}/odinguard.sigpack\nog_sigpack_key: {}\nog_sigpack_min_version: {}", hex::encode(sigpack_key), p.signatures.version);
@@ -313,7 +328,10 @@ mod tests {
         p.commands.insert("ping".into(), crate::profile::CommandSetting { enabled: true, name: Some("latency".into()), ..Default::default() });
         p.grf.files.push(crate::profile::GrfFile { name: "data.grf".into(), size: 9, tail: "a".repeat(64), full: String::new(), required: true });
         p.grf.mods.push(crate::profile::GrfMod { tail: "b".repeat(64), note: "darkworld".into() });
+        p.rollout.previous_releases.push("previous-releases/0123456789ab".into());
         let c = server_conf(&p, &r, &[0; 32], &[], "conf/odinguard");
+        assert!(c.contains("og_guard_previous_file: conf/odinguard/previous/0123456789ab/odinguard.dll"), "the old guard stays accepted during a rollout");
+        assert!(c.contains("og_protected_previous: 0,conf/odinguard/previous/0123456789ab/odin.grf"), "so does the old odin.grf");
         assert!(c.contains(&format!("og_grf_file: data.grf,9,{},-,yes", "a".repeat(64))));
         assert!(c.contains(&format!("og_grf_mod: {},darkworld", "b".repeat(64))));
         assert!(c.contains("og_log_only: no") && c.contains("og_required: yes"));

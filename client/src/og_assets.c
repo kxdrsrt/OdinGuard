@@ -186,6 +186,12 @@ static DWORD WINAPI full_worker(LPVOID arg)
             snprintf(name, sizeof name, "%s", base ? base + 1 : path);
             int bad = og_sha256_file(path, got) && _stricmp(got, want);
             EnterCriticalSection(&g_lock);
+            /* several accepted versions can share size and file table (only file contents changed): any of them is fine */
+            if (bad && !_stricmp(g_cache[job].path, path)) {
+                for (i = 0; i < g_nlist; i++)
+                    if (!_stricmp(g_list[i].name, name) && g_list[i].size == g_cache[job].size && !_stricmp(g_list[i].tail, g_cache[job].tail) &&
+                        (!g_list[i].full[0] || !_stricmp(g_list[i].full, got))) { bad = 0; break; }
+            }
             if (!_stricmp(g_cache[job].path, path)) { g_cache[job].full_state = 3; g_cache[job].full_bad = bad; }
             LeaveCriticalSection(&g_lock);
             if (bad) {

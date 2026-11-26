@@ -36,11 +36,11 @@ English: [README.md](README.md) · Einbau-Anleitung: [docs/INTEGRATION.md](docs/
 
 Universelles, modulares Anti-Cheat-Toolkit für Ragnarok-Online-Server auf rAthena-Basis (getestet mit xAthena,
 Client 2018-06-20). Betreiber konfigurieren es im **OdinGuard Studio** (oder headless mit `og`) und bauen daraus
-ein signiertes Release für Client und Server. Version 1.0.1.
+ein signiertes Release für Client und Server. Version 1.0.2.
 
 - Client: 32-Bit-Windows-DLL `odinguard.dll` + Loader `ijl15.dll` (Proxy, kein Exe-Patch), C11.
 - Server: Modul für rAthena/xAthena (`src/common/odinguard.*`, `src/login/og_login.*`, `src/map/og_map*.cpp`), C++.
-- Studio: Rust-Workspace (`studio/`) mit `og-core`, `og-cli`, `og-mcp` (MCP-Server mit 17 Tools: Profil, Module, Validierung, GRF-Scan und Release-Build per KI-Assistent) und Tauri-2-GUI.
+- Studio: Rust-Workspace (`studio/`) mit `og-core`, `og-cli`, `og-mcp` (MCP-Server mit 18 Tools: Profil, Module, Validierung, GRF-Scan und Release-Build per KI-Assistent) und Tauri-2-GUI.
 
 ## Schnellstart (Betreiber)
 

@@ -197,11 +197,12 @@ check "without lock rows the account logs in again" 'printf "%s\n" "$out" | grep
 echo "== 3e @pf packet filter (GvG/BG maps) and @spb"
 # castles have nosave (a logout there starts the next login at the save point), so both are on the castle in the same
 # session: the player waits (OG_DELAY), the GM goes there and recalls them, nettest confirms the map change, then the
-# player talks
+# player talks. An unowned castle has monsters (a Raydric Archer killed the GM after the 10 s castle invincibility and
+# the chat was then counted in Prontera), so the GM clears the castle first
 pf_round() { # $1 = @pf setting of the watcher; prints the number of chat packets of OgPlayer the watcher received
 	( nettest ogtest2 OgPlayer 'hello from the castle;hello again' 3 'OG_DELAY=40' >/dev/null ) &
 	sleep 9
-	nettest Mave OgTester "+mapmove prtg_cas01 111 184;+recall OgPlayer;+pf $1" 40 'OG_WATCH=008d' > /tmp/og_pf.out
+	nettest Mave OgTester "+mapmove prtg_cas01 111 184;+killmonster2;+heal;+recall OgPlayer;+pf $1" 40 'OG_WATCH=008d' > /tmp/og_pf.out
 	wait
 	sed -n 's/^WATCH 0 \([0-9]*\).*/\1/p' /tmp/og_pf.out | tail -1
 }
@@ -291,6 +292,52 @@ sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"; sed -i '' '$d' "$X/conf/impo
 cp "$R/client/odin-dark.grf" "$E2E/odin-dark.grf"
 restart_map
 
+if [ -n "$OTHER" ]; then
+	echo "== 4d guard rollout: an older guard stays accepted (og_guard_previous_file)"
+	# the server's current guard becomes another build (the minimal release); the client keeps the e2e guard, which
+	# the server only knows as a previous release
+	cp "$X/conf/odinguard/odinguard.dll" /tmp/og_guard_e2e.dll
+	mkdir -p "$X/conf/odinguard/previous"
+	cp /tmp/og_guard_e2e.dll "$X/conf/odinguard/previous/odinguard-old.dll"
+	cp "$OTHER/client/odinguard.dll" "$X/conf/odinguard/odinguard.dll"
+	printf 'og_guard_previous_file: conf/odinguard/previous/odinguard-old.dll\n' >> "$X/conf/import/odinguard_conf.txt"
+	restart_map
+	sql "DELETE FROM og_event"
+	nettest ogtest2 OgPlayer '!ping' 45 >/dev/null
+	check "previous guard is loaded at start" 'maplog | grep -q "previous guard conf/odinguard/previous/odinguard-old.dll accepted"'
+	check "client with the previous guard: no guard-code, no code challenge failure" '[ "$(events "type=\"guard-code\" OR type=\"challenge:code\"")" = 0 ]'
+	sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+	restart_map
+	sql "DELETE FROM og_event"
+	nettest ogtest2 OgPlayer '!ping' 20 >/dev/null
+	check "without the previous entry the old guard is reported (guard-code)" '[ "$(events "type=\"guard-code\"")" -ge 1 ]'
+	cp /tmp/og_guard_e2e.dll "$X/conf/odinguard/odinguard.dll"
+	# odin.grf: the server's official copy changes (a byte every 4000 bytes, so every challenge range differs), the
+	# client keeps the old one, which the server knows as a previous version
+	cp "$X/conf/odinguard/odin.grf" "$X/conf/odinguard/previous/odin-old.grf"
+	python3 - "$X/conf/odinguard/odin.grf" <<'PY'
+import sys
+with open(sys.argv[1], "r+b") as f:
+    f.seek(0, 2)
+    for off in range(100, f.tell(), 4000):
+        f.seek(off)
+        f.write(b"Y")
+PY
+	printf 'og_protected_previous: 0,conf/odinguard/previous/odin-old.grf\n' >> "$X/conf/import/odinguard_conf.txt"
+	restart_map
+	sql "DELETE FROM og_event"
+	nettest ogtest2 OgPlayer '!ping' 45 >/dev/null
+	check "previous odin.grf is loaded at start" 'maplog | grep -q "protected file 0 also accepts conf/odinguard/previous/odin-old.grf"'
+	check "client with the previous odin.grf: no file challenge failure" '[ "$(events "type=\"challenge:file\"")" = 0 ]'
+	sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+	restart_map
+	sql "DELETE FROM og_event"
+	check "without the previous entry the old odin.grf fails the file challenge" 'file_challenge_fails'
+	cp "$R/server/conf/odinguard/odin.grf" "$X/conf/odinguard/odin.grf"
+	rm -rf "$X/conf/odinguard/previous"
+	restart_map
+fi
+
 echo "== 6 GRF manifest (Gepard-like start-up check, patcher friendly)"
 sql "DELETE FROM og_event"
 cp "$E2E/odin-dark.grf" "$E2E/extra.grf"
@@ -317,6 +364,16 @@ sql "DELETE FROM og_event"
 printf 'X' | dd of="$E2E/odin.grf" bs=1 seek=60 conv=notrunc 2>/dev/null
 check "same table, changed content: background full hash (grf:modified content)" 'event_after_session "type=\"grf:modified\" AND detail LIKE \"odin.grf (content)%\"" ogtest2 OgPlayer "!ping" 30'
 cp "$R/client/odin.grf" "$E2E/odin.grf"
+# two accepted versions with the same size and file table (only file contents differ): the client's version is not
+# the last one listed, it must still be accepted (the 1.0.0 guard compared with the last matching entry only)
+set -- $("$ROOT/studio/target/debug/og" grf-hash "$E2E/odin.grf")
+printf 'og_grf_file: odin.grf,%s,%s,%064d,yes\n' "$1" "$2" 7 >> "$X/conf/import/odinguard_conf.txt"
+restart_map
+sql "DELETE FROM og_event"
+nettest ogtest2 OgPlayer '!ping' 30 >/dev/null
+check "two versions with the same file table: the client's (not the last listed) is accepted" '[ "$(events "type LIKE \"grf:%\"")" = 0 ]'
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+restart_map
 sql "DELETE FROM og_event"
 data_ini "0=odin-dark.grf"
 nettest ogtest2 OgPlayer '!ping' 25 >/dev/null

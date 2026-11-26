@@ -57,6 +57,7 @@ struct s_og_file {
 	uint8 index;
 	bool required;
 	std::string path;
+	std::vector<std::string> previous; // older official versions still accepted while players patch
 };
 
 struct s_og_lgp_color { std::string name; int32 index; }; // index: colour number in the client patch (og_lgp.c)
@@ -107,6 +108,8 @@ static struct {
 	uint8 tag[OG_TAG_LEN] = {};
 	uint8 secret[32] = {};
 	std::string guard_code; // hex BLAKE2b of the canonical guard image
+	std::vector<std::string> guard_previous_files; // older guard releases still accepted while players patch
+	std::vector<std::string> guard_previous_codes;
 	std::vector<uint8> guard_image, exe_image;
 } og_cfg;
 
@@ -311,6 +314,7 @@ static bool og_config_read(const char* file) {
 		else if (!strcmpi(w1, "og_sigpack_key")) og_cfg.sigpack_key = w2;
 		else if (!strcmpi(w1, "og_sigpack_min_version")) og_cfg.sigpack_min_version = (uint32)strtoul(w2, nullptr, 10);
 		else if (!strcmpi(w1, "og_guard_file")) og_cfg.guard_file = w2;
+		else if (!strcmpi(w1, "og_guard_previous_file")) og_cfg.guard_previous_files.push_back(w2);
 		else if (!strcmpi(w1, "og_exe_reference")) og_cfg.exe_reference = w2;
 		else if (!strcmpi(w1, "og_ch_time_drift")) og_cfg.time_drift = std::max(2, atoi(w2));
 		else if (!strcmpi(w1, "og_allowed_exe")) og_cfg.allowed_exe.push_back(w2);
@@ -345,7 +349,17 @@ static bool og_config_read(const char* file) {
 			char path[512], req[16] = "yes";
 			if (sscanf(w2, "%d , %511[^,] , %15s", &idx, path, req) >= 2 && idx >= 0 && idx < 255) {
 				trim(path);
-				og_cfg.files.push_back({ (uint8)idx, config_switch(req) != 0, path });
+				og_cfg.files.push_back({ (uint8)idx, config_switch(req) != 0, path, {} });
+			}
+		}
+		else if (!strcmpi(w1, "og_protected_previous")) {
+			// index,path: an older official version of a protected file (og_protected_file comes first)
+			int32 idx;
+			char path[512];
+			if (sscanf(w2, "%d , %511[^\r\n]", &idx, path) == 2) {
+				trim(path);
+				for (s_og_file& f : og_cfg.files)
+					if (f.index == idx) f.previous.push_back(path);
 			}
 		}
 		else if (!strcmpi(w1, "og_item_color") || !strcmpi(w1, "og_group_namecolor")) {
@@ -759,8 +773,8 @@ static const s_og_file* og_file_by_index(uint8 index) {
 	return nullptr;
 }
 
-static bool og_file_digest(const s_og_file& f, uint32 off, uint32 len, const uint8 nonce[16], uint8 out[32], bool* range_ok) {
-	FILE* fp = fopen(f.path.c_str(), "rb");
+static bool og_file_digest(const std::string& path, uint32 off, uint32 len, const uint8 nonce[16], uint8 out[32], bool* range_ok) {
+	FILE* fp = fopen(path.c_str(), "rb");
 	*range_ok = false;
 	if (fp == nullptr) return false;
 	std::vector<uint8> buf(len);
@@ -801,7 +815,12 @@ static void og_send_challenge(int32 fd, s_og_state* o, uint8 type) {
 	p.sent = gettick();
 	og_random(p.nonce, 16);
 	if (type == OG_CH_CODE_RANGE) {
-		bool guard = og_cfg.exe_image.size() < OG_CODE_RANGE_MIN || (!og_cfg.guard_image.empty() && (og_random32() & 1));
+		// a client with an accepted older guard (og_guard_previous_file) is only asked about the exe: the server has
+		// the code image of the current guard only
+		bool old_guard = !o->info.guard_code.empty() && o->info.guard_code != og_cfg.guard_code;
+		if (old_guard && og_cfg.exe_image.size() < OG_CODE_RANGE_MIN)
+			return;
+		bool guard = !old_guard && (og_cfg.exe_image.size() < OG_CODE_RANGE_MIN || (!og_cfg.guard_image.empty() && (og_random32() & 1)));
 		const std::vector<uint8>& img = guard ? og_cfg.guard_image : og_cfg.exe_image;
 		p.target = guard ? 1 : 0;
 		p.b = OG_CODE_RANGE_MIN + og_random32() % (OG_CODE_RANGE_MAX - OG_CODE_RANGE_MIN);
@@ -810,6 +829,11 @@ static void og_send_challenge(int32 fd, s_og_state* o, uint8 type) {
 	} else if (type == OG_CH_FILE_RANGE) {
 		const s_og_file& f = og_cfg.files[og_random32() % og_cfg.files.size()];
 		long size = og_file_size(f.path);
+		// the range must exist in every accepted version
+		for (const std::string& prev : f.previous) {
+			long n = og_file_size(prev);
+			if (n > 0) size = std::min(size, n);
+		}
 		if (size < 1) return;
 		p.target = f.index;
 		p.b = std::min<uint32>((uint32)size, 4096 + og_random32() % (256 * 1024));
@@ -879,7 +903,10 @@ static void og_handle_response(int32 fd, s_og_state* o, const og_response_msg& r
 		}
 		bool range_ok = false;
 		if (r.status != OG_CH_ST_OK || r.a != p.a || r.b != p.b) { og_challenge_failed(fd, p.type, "file range not answered"); break; }
-		if (og_file_digest(*f, p.a, p.b, p.nonce, want, &range_ok) && crypto_verify32(want, r.digest) != 0) {
+		bool match = !og_file_digest(f->path, p.a, p.b, p.nonce, want, &range_ok) || crypto_verify32(want, r.digest) == 0;
+		for (size_t i = 0; !match && i < f->previous.size(); i++)
+			match = og_file_digest(f->previous[i], p.a, p.b, p.nonce, want, &range_ok) && crypto_verify32(want, r.digest) == 0;
+		if (!match) {
 			safesnprintf(detail, sizeof(detail), "file %u differs from the official one", p.target);
 			og_challenge_failed(fd, p.type, detail);
 		}
@@ -925,7 +952,8 @@ static void og_handle_control(int32 fd, s_og_state* o, const uint8* p, size_t n)
 			o->exe_reported = true;
 			og_event(fd, "exe-code", o->info.exe_code.c_str(), og_cfg.integrity_action);
 		}
-		if (!og_cfg.guard_code.empty() && !o->guard_reported && o->info.guard_code != og_cfg.guard_code) {
+		if (!og_cfg.guard_code.empty() && !o->guard_reported && o->info.guard_code != og_cfg.guard_code &&
+			std::find(og_cfg.guard_previous_codes.begin(), og_cfg.guard_previous_codes.end(), o->info.guard_code) == og_cfg.guard_previous_codes.end()) {
 			o->guard_reported = true;
 			og_event(fd, "guard-code", o->info.guard_code.c_str(), og_cfg.integrity_action);
 		}
@@ -1255,10 +1283,28 @@ static void og_load_references() {
 			ShowError("OdinGuard: og_guard_file '%s' is not a usable guard DLL.\n", og_cfg.guard_file.c_str());
 		free(img);
 	}
+	og_cfg.guard_previous_codes.clear();
+	for (const std::string& path : og_cfg.guard_previous_files) {
+		std::vector<uint8> f;
+		uint8* img = nullptr;
+		size_t n = og_read_file(path, f) ? og_pe_canonical(f.data(), f.size(), OG_CANON_CODE | OG_CANON_RDATA, &img) : 0;
+		if (n) {
+			uint8 h[32];
+			crypto_blake2b(h, 32, img, n);
+			og_cfg.guard_previous_codes.push_back(to_hex(h, 32));
+			ShowStatus("OdinGuard: previous guard %s accepted (code %.16s).\n", path.c_str(), og_cfg.guard_previous_codes.back().c_str());
+		} else
+			ShowError("OdinGuard: og_guard_previous_file '%s' is not a usable guard DLL.\n", path.c_str());
+		free(img);
+	}
 	if (!og_cfg.exe_reference.empty() && !og_read_file(og_cfg.exe_reference, og_cfg.exe_image))
 		ShowError("OdinGuard: og_exe_reference '%s' not found.\n", og_cfg.exe_reference.c_str());
-	for (const s_og_file& f : og_cfg.files)
+	for (const s_og_file& f : og_cfg.files) {
 		if (og_file_size(f.path) < 0) ShowError("OdinGuard: protected file %d '%s' not found on the server.\n", f.index, f.path.c_str());
+		for (const std::string& prev : f.previous)
+			if (og_file_size(prev) < 0) ShowError("OdinGuard: previous version '%s' of protected file %d not found.\n", prev.c_str(), f.index);
+			else ShowStatus("OdinGuard: protected file %d also accepts %s.\n", f.index, prev.c_str());
+	}
 }
 
 void og_init() {

@@ -91,6 +91,8 @@ Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pu
 | 59–61 | **`@pf`** auf `prtg_cas01` (GM holt den Spieler per `@recall`, `nettest` bestätigt den Kartenwechsel): `@pf c` → 0 Chat-Pakete des anderen Spielers, `@pf off` → 2; Statusmeldung | grün |
 | 62–63 | **`@spb`:** ohne Party → Hinweis; mit Party und Blessing → `OgTester: Bless <n>s` | grün |
 | 64–68 | **Crash-Upload:** Bericht mit Zustimmung (`odinguard.ini`) per POST an die Panel-URL, Token steht in `og_crash_token` für den Account, `sent.txt`, kein zweiter Upload, abgelehnt → nichts gesendet | grün |
+| 69–74 | **Rollout eines neuen Release** (`og_guard_previous_file`, `og_protected_previous`): beide werden beim Start geladen; Client mit dem vorigen Guard → kein `guard-code`, kein Code-Challenge-Fehlschlag; mit der vorigen `odin.grf` → keine File-Challenge-Fehlschläge; ohne die Einträge → `guard-code` bzw. File-Challenge schlägt fehl | grün |
+| 75 | zwei erlaubte Versionen einer GRF mit gleicher Größe und Dateitabelle (nur Inhalt anders): die Version des Clients steht nicht als letzte in der Liste und wird trotzdem akzeptiert | grün |
 
 Replay-Schutz: Records mit falschem Zähler werden verworfen (`record-mac`, E2E 45–47), Antworten auf unbekannte
 Challenge-IDs ebenfalls (`challenge:replay`, Server-Logik und Fuzzing).
@@ -179,6 +181,15 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
 
 Die Ergebnisse von v0.1–v0.3 (Handshake, Hardware-Bans, Rechner-Limit, Alive-Timeout, Farb-Nicks, Auren-IDs,
 Release-Paket) gelten weiter für den unveränderten Code; Details im Git-Verlauf dieser Datei (Commit `4ad6498`).
+
+**2026-11-26 (Rollout 1.0.0 → 1.0.2, Sichttest in der VM):** Ein neuer Guard ändert den Guard-Code, eine neue
+`odin.grf` den Inhalt (Versions-String in `data\odinguard\profile.txt`). Ohne Vorkehrung wären alle Spieler mit 1.0.0
+nach dem Server-Update gekickt worden (`guard-code`, File-Challenge, `grf:modified (content)`). Neu:
+`og keep-previous`, `og_guard_previous_file`, `og_protected_previous` (E2E 69–74). Dabei gefunden: Der 1.0.1-Guard
+verglich den Hintergrund-Hash nur mit dem **letzten** passenden `og_grf_file`-Eintrag; haben zwei Versionen dieselbe
+Dateitabelle, wurde die neuere gekickt. Behoben in 1.0.2 (jeder passende Eintrag zählt, E2E 75); der Generator
+schreibt die vorige Version nach der aktuellen, damit 1.0.0-Clients (alte Logik) passen. Gemessen gegen den neuen
+Server je 2,5 min im Spiel: 1.0.0- und 1.0.2-Client ohne Ereignis, kein Kick. v1.0.1 ging nie an Spieler.
 
 **2026-11-24 (LGP-Palette, Sichttest in der VM):** Beim ersten Login mit dem echten Client meldete der Heartbeat
 `api-hook` (`kernel32!GetTickCount -> dxwrapper.dll`): DxWrapper hängt sich in `GetTickCount`, die Prüfung kannte nur

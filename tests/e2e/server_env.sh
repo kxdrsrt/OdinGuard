@@ -12,7 +12,7 @@ docker rm -f ogt-db ogt-srv >/dev/null 2>&1 || true
 . "$R/secrets/odinguard.env"
 mkdir -p "$X/conf/import" "$X/conf/odinguard"
 cp "$R/server/conf/odinguard_athena.conf" "$X/conf/odinguard_athena.conf"
-cp "$R/server/conf/odinguard/"* "$X/conf/odinguard/"
+cp -R "$R/server/conf/odinguard/"* "$X/conf/odinguard/"
 {
 	cat "$R/server/conf/import/odinguard_conf.txt"
 	printf 'og_key: %s\nog_proto_salt: %s\nog_build_secret: %s\nog_alive_interval: 5\nog_alive_timeout: 20\n' "$ODINGUARD_KEY" "$ODINGUARD_PROTO_SALT" "$ODINGUARD_BUILD_SECRET"

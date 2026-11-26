@@ -151,6 +151,10 @@ pub struct Rollout {
     /// rules an operator has checked by hand: not counted as false-alarm candidates
     #[serde(default)]
     pub reviewed_rules: Vec<String>,
+    /// folders (relative to the profile) with an older client release (odinguard.dll, odin.grf, [odin-dark.grf]) the
+    /// server still accepts while players patch (`og keep-previous`); remove an entry once everyone has patched
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub previous_releases: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -213,7 +217,7 @@ impl Profile {
                 competitive_enforce: vec![],
             },
             grf: GrfPolicy::default(),
-            rollout: Rollout { stage: 1, reviewed_rules: vec![] },
+            rollout: Rollout { stage: 1, reviewed_rules: vec![], previous_releases: vec![] },
             output: format!("dist/{id}"),
         })
     }

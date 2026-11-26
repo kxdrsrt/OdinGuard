@@ -227,6 +227,14 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
     copy(&root.join("server/conf/odinguard_athena.conf"), &server.join("conf/odinguard_athena.conf"))?;
     let refdir = server.join("conf/odinguard");
     copy(&client.join("odinguard.dll"), &refdir.join("odinguard.dll"))?;
+    for (rel, name) in p.rollout.previous_releases.iter().zip(generate::previous_names(&p)) {
+        let src = p.resolve(&base, rel);
+        for f in std::iter::once("odinguard.dll").chain(generate::protected_files(&p).iter().map(|x| x.0)) {
+            if src.join(f).exists() {
+                copy(&src.join(f), &refdir.join("previous").join(&name).join(f))?;
+            }
+        }
+    }
     copy(&grf, &refdir.join("odin.grf"))?;
     if client.join("odin-dark.grf").exists() {
         copy(&client.join("odin-dark.grf"), &refdir.join("odin-dark.grf"))?;
@@ -246,12 +254,20 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
         io(std::fs::write(refdir.join("odinguard.sigpack"), pack), &refdir)?;
         rep.sigpack = Some(sr);
     }
-    // GRFs of this release enter the GRF manifest automatically
-    for (name, required) in generate::protected_files(&p) {
-        let f = client.join(name);
-        if f.exists() {
-            let (size, tail) = crate::grf::tail_hash(&f)?;
-            rep.grf_manifest.push(crate::profile::GrfFile { name: name.into(), size, tail, full: sha(&f)?, required });
+    // GRFs of this release enter the GRF manifest automatically, and so do those of the kept previous releases
+    // (players who have not patched yet still have them)
+    let mut grf_dirs = vec![client.clone()];
+    grf_dirs.extend(p.rollout.previous_releases.iter().map(|r| p.resolve(&base, r)));
+    for dir in &grf_dirs {
+        for (name, required) in generate::protected_files(&p) {
+            let f = dir.join(name);
+            if f.exists() {
+                let (size, tail) = crate::grf::tail_hash(&f)?;
+                let full = sha(&f)?;
+                if !rep.grf_manifest.iter().any(|g| g.name == name && g.size == size && g.tail == tail && g.full == full) {
+                    rep.grf_manifest.push(crate::profile::GrfFile { name: name.into(), size, tail, full, required });
+                }
+            }
         }
     }
     let signing_pub = crate::crypto::public_key(&signing_seed);
@@ -282,6 +298,40 @@ pub fn build(profile_path: &Path, root: &Path) -> Result<BuildReport> {
 }
 
 /// Module objects named in the linker map (client/Makefile writes obj/<source>.o per module source).
+/// Result of [`keep_previous`].
+#[derive(Debug, Serialize)]
+pub struct KeptRelease {
+    /// Folder relative to the profile (`previous-releases/<sha12>`), now listed in `[rollout] previous_releases`
+    pub folder: String,
+    pub files: Vec<String>,
+    pub previous_releases: usize,
+}
+
+/// Copies the guard, `odin.grf` and `odin-dark.grf` of a release (default: the profile's current output) into
+/// `previous-releases/<sha12>/` and lists the folder in `[rollout] previous_releases`. The next build accepts that
+/// release on the server, so players who have not patched yet pass the guard and file checks.
+pub fn keep_previous(profile_path: &Path, from: Option<&Path>) -> Result<KeptRelease> {
+    let mut p = Profile::load(profile_path)?;
+    let base = profile_path.parent().unwrap_or(Path::new(".")).to_path_buf();
+    let src = from.map(Path::to_path_buf).unwrap_or_else(|| p.resolve(&base, &p.output).join("client"));
+    let sha = crate::manifest::sha256_file(&src.join("odinguard.dll"))?.0;
+    let folder = format!("previous-releases/{}", &sha[..12]);
+    let dst = base.join(&folder);
+    std::fs::create_dir_all(&dst).map_err(|e| Error::Io(dst.display().to_string(), e))?;
+    let mut files = vec![];
+    for f in ["odinguard.dll", "odin.grf", "odin-dark.grf"] {
+        if src.join(f).exists() {
+            std::fs::copy(src.join(f), dst.join(f)).map_err(|e| Error::Io(src.join(f).display().to_string(), e))?;
+            files.push(f.to_string());
+        }
+    }
+    if !p.rollout.previous_releases.contains(&folder) {
+        p.rollout.previous_releases.push(folder.clone());
+    }
+    p.save(profile_path)?;
+    Ok(KeptRelease { folder, files, previous_releases: p.rollout.previous_releases.len() })
+}
+
 pub fn linked_objects(map: &Path) -> Result<Vec<String>> {
     let text = io(std::fs::read_to_string(map), map)?;
     let mut v: Vec<String> = text

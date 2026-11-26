@@ -193,6 +193,24 @@ The stage is a profile setting (`[rollout] stage`). Export `og_event` and `og_cl
 and run `og rollout myserver.profile.toml --events og_event.tsv --clients og_client.tsv --advance`, then rebuild
 and deploy the server config. The Studio tab *Rollout* does the same.
 
+## 8a. Roll out a new release without kicking players
+
+Every new guard build has a new guard code, and a new `odin.grf` has new contents (the version string in
+`data\odinguard\profile.txt`). If the server only knows the new release, every player who has not patched yet is
+kicked (`guard-code`, failed file challenges, `grf:modified (content)`). So the server accepts the previous release
+until everyone has patched:
+
+1. Before building the new release, keep the current one: `og keep-previous myserver.profile.toml` (or
+   `--from <client dir>` with the files the players have). It copies `odinguard.dll`, `odin.grf` and `odin-dark.grf`
+   into `previous-releases/<sha12>/` and adds the folder to `[rollout] previous_releases`.
+2. `og build myserver.profile.toml`. The server config gets `og_guard_previous_file` (the old guard passes the
+   guard-code check; the code challenge only asks about the client exe) and `og_protected_previous` (the file challenge
+   accepts the old GRFs); the old GRFs are listed in the GRF manifest after the current ones. The server package
+   carries them in `conf/odinguard/previous/`.
+3. Deploy the server, then publish the client files with the patcher.
+4. When the old version no longer shows up in `og_client`, remove the entry from `previous_releases`, rebuild and
+   deploy the server again.
+
 ## 9. Day-to-day
 
 - In game: `@oginfo <name>` (guard version, machine, exe hash), `@ogflags [name]` (open flags), `@ogflagclear
@@ -206,8 +224,7 @@ and deploy the server config. The Studio tab *Rollout* does the same.
   stopped reporting (killed or suspended guard); battleground AFK is rAthena's `bg_idle_autokick`.
 - New signatures: edit your signature TOML, raise `signatures.version`, rebuild, replace
   `conf/odinguard/odinguard.sigpack`, restart the map-server. No client update needed.
-- New OdinGuard version: rebuild with the same profile and keys, deploy server and client together (the Studio
-  warns about protocol changes).
+- New OdinGuard version: see 8a. Rebuild with the same profile and keys (the Studio warns about protocol changes).
 
 ## 9a. Web panel (MidgardCP, optional)
 
