@@ -64,7 +64,7 @@ jobs:
         shell: bash
         run: |
           base=$(sed -n 's/.*Base commit | `\([0-9a-f]*\)`.*/\1/p' server/patches/README.md)
-          git clone -q https://github.com/rathena/rathena.git ra && git -C ra checkout -q "$base"
+          git clone -q -c core.autocrlf=false https://github.com/rathena/rathena.git ra && git -C ra checkout -q "$base"
           git -C ra apply --whitespace=nowarn ../server/patches/rathena-4cd08b7.patch
       - uses: microsoft/setup-msbuild@v2
       - name: build (Debug, pre-renewal, warnings are errors like upstream)
@@ -77,8 +77,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: upstream rAthena at the patch base, patched, built
         run: |
-          sudo apt-get update && sudo apt-get install -y libmariadb-dev zlib1g-dev libpcre3-dev
+          sudo apt-get update && sudo apt-get install -y libmariadb-dev libmariadb-dev-compat zlib1g-dev
           base=$(sed -n 's/.*Base commit | `\([0-9a-f]*\)`.*/\1/p' server/patches/README.md)
-          git clone -q https://github.com/rathena/rathena.git ra && git -C ra checkout -q "$base"
+          git clone -q -c core.autocrlf=false https://github.com/rathena/rathena.git ra && git -C ra checkout -q "$base"
           git -C ra apply --whitespace=nowarn ../server/patches/rathena-4cd08b7.patch
           cd ra && ./configure --enable-prere=yes --enable-buildbot=yes && make -j"$(nproc)" server
