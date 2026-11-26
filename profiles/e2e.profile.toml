@@ -34,6 +34,7 @@ ports = [
     6900,
     6121,
     5121,
+    5199, # tests/e2e/replay_proxy.py in front of the map-server
 ]
 splash_ms = 1800
 variation_seed = "514d8a558d6d4fd7d1b4f80a4ada9826"

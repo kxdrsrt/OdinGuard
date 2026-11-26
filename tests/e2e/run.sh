@@ -126,23 +126,118 @@ check "players cannot use @auraunlock" '! printf '%s\n' "$out" | grep -q "Aura u
 
 echo "== 3 server-side detections (honeypot, no-delay, rate limit) and the ban wave"
 nettest ogtest3 OgThird '!ping' 4 'OG_ATTACK=1' >/dev/null
-check "honeypot hit is flagged (flagban)" '[ "$(sql "SELECT COUNT(*) FROM og_flag WHERE account_id=2000002 AND rule=\"challenge:honeypot\" AND ban=1")" = 1 ]'
+check "honeypot hit is flagged in warn mode, without the ban mark" '[ "$(sql "SELECT COUNT(*) FROM og_flag WHERE account_id=2000002 AND rule=\"challenge:honeypot\" AND ban=0")" = 1 ]'
 nettest ogtest2 OgPlayer '!ping' 4 'OG_SKILLSPAM=60' >/dev/null
 check "skill requests inside the delay are flagged (bh:nodelay)" '[ "$(sql "SELECT COUNT(*) FROM og_flag WHERE account_id=2000001 AND rule=\"bh:nodelay\"")" -ge 1 ]'
 sleep 6
 out=$(nettest ogtest3 OgThird '!ping' 3 'OG_FLOOD=900'); printf '%s\n' "$out" | sed 's/^/   /' | tail -3
 check "packet flood is reported (rate-limit, warn mode = log)" '[ "$(sql "SELECT COUNT(*) FROM og_event WHERE account_id=2000002 AND type=\"rate-limit\"")" -ge 1 ]'
-out=$(nettest Mave OgTester '+ogbanwave dry;+ogflags' 3)
-check "@ogbanwave dry lists the honeypot account" 'printf '%s\n' "$out" | grep -q "account 2000002"'
+out=$(nettest Mave OgTester '+ogbanwave dry' 3)
+check "warn-mode flags do not count for the ban wave" 'printf '%s\n' "$out" | grep -q "0 account(s) would be banned"'
 check "warn mode never bans" '[ "$(sql "SELECT COUNT(*) FROM og_ban")" = 0 ]'
+out=$(nettest Mave OgTester '+ogflagclear 2000002;+ogflagclear 2000001 bh:nodelay;+ogflagclear' 3)
+check "@ogflagclear clears the open flags of a character" 'printf '%s\n' "$out" | grep -q "open flag(s) of account 2000002 cleared"'
+check "@ogflagclear with a rule clears only that rule" '[ "$(sql "SELECT COUNT(*) FROM og_flag WHERE account_id=2000001 AND rule=\"bh:nodelay\" AND state=\"open\"")" = 0 ]'
+check "@ogflagclear without a name shows the usage" 'printf '%s\n' "$out" | grep -q "Usage: @ogflagclear"'
 printf 'og_log_only: no\n' >> "$X/conf/import/odinguard_conf.txt"
 restart_map
+nettest ogtest3 OgThird '!ping' 4 'OG_ATTACK=1' >/dev/null
+check "honeypot hit outside warn mode carries the ban mark (flagban)" '[ "$(sql "SELECT COUNT(*) FROM og_flag WHERE account_id=2000002 AND rule=\"challenge:honeypot\" AND ban=1 AND state=\"open\"")" = 1 ]'
+out=$(nettest Mave OgTester '+ogbanwave dry' 3)
+check "@ogbanwave dry lists the honeypot account" 'printf '%s\n' "$out" | grep -q "account 2000002"'
 out=$(nettest Mave OgTester '+ogbanwave' 3)
 check "ban wave bans the flagged machine" '[ "$(sql "SELECT COUNT(*) FROM og_ban WHERE reason LIKE \"ban wave%\"")" -ge 1 ]'
 check "flags are closed after the ban" '[ "$(sql "SELECT COUNT(*) FROM og_flag WHERE account_id=2000002 AND state=\"banned\"")" -ge 1 ]'
 out=$(vm "cd /d $WIN_E2E & nettest.exe $HOST_IP 6900 ogtest3 ogtest")
 check "banned machine cannot log in (code 4)" 'printf '%s\n' "$out" | grep -q "refused, code 4"'
 sql "DELETE FROM og_ban; DELETE FROM og_flag"
+
+echo "== 3b replayed record (captured encrypted bytes sent again)"
+sql "DELETE FROM og_event"
+python3 "$ROOT/tests/e2e/replay_proxy.py" 5199 127.0.0.1 5121 8 > /tmp/og_replay.log 2>&1 &
+RP=$!
+sleep 1
+out=$(vm "cd /d $WIN_E2E & set OG_CHAT=!ping & set OG_HOLD=20 & nettest.exe $HOST_IP 6900 ogtest2 ogtest 6121 5199 OgPlayer")
+kill $RP 2>/dev/null; wait $RP 2>/dev/null
+check "proxy replayed a client record" 'grep -q "replayed [0-9]* bytes" /tmp/og_replay.log'
+check "replayed record is detected (record-mac)" '[ "$(events "type=\"record-mac\" AND account_id=2000001")" -ge 1 ]'
+check "replayed record kicks outside warn mode" '[ "$(events "type=\"record-mac\" AND account_id=2000001 AND action=\"kick\"")" -ge 1 ]'
+
+echo "== 3c command registry: rate limit, switch, group (players only)"
+printf 'og_cmdrate_ping: 10000\nog_cmd_vsync: no\nog_cmdgroup_crash: 10\n' >> "$X/conf/import/odinguard_conf.txt"
+restart_map
+out=$(nettest ogtest2 OgPlayer '!ping;!ping;!vsync off;!crash' 4)
+check "first !ping is answered" 'printf "%s\n" "$out" | grep -q "Ping: [0-9]* ms"'
+check "second !ping inside og_cmdrate_ping is refused" 'printf "%s\n" "$out" | grep -q "Please wait a moment before using this command again"'
+check "og_cmd_vsync: no disables !vsync" 'printf "%s\n" "$out" | grep -q "This command is disabled on this server"'
+check "og_cmdgroup_crash: 10 refuses players" 'printf "%s\n" "$out" | grep -q "You are not allowed to use this command"'
+out=$(nettest Mave OgTester '!ping;!ping' 4)
+check "GMs are not rate limited" '[ "$(printf "%s\n" "$out" | grep -c "Ping: [0-9]* ms")" = 2 ]'
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"; sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"; sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+restart_map
+
+echo "== 3d account lock (og_account_lock, @oglock)"
+sql "DELETE FROM og_event; DELETE FROM og_account_lock"
+( nettest ogtest2 OgPlayer '!ping' 20 >/dev/null ) &
+sleep 12
+out=$(nettest Mave OgTester '+oglock OgPlayer, add;+oglock OgPlayer' 3)
+wait
+check "@oglock add locks the account to the machine it plays on" '[ "$(sql "SELECT COUNT(*) FROM og_account_lock WHERE account_id=2000001")" = 1 ]'
+check "@oglock lists the machine" 'printf "%s\n" "$out" | grep -q "Account lock of OgPlayer: 1 machine"'
+out=$(nettest ogtest2 OgPlayer '!ping' 3)
+check "locked account logs in from its machine" 'printf "%s\n" "$out" | grep -q "Ping: [0-9]* ms"'
+sql "UPDATE og_account_lock SET unique_id=REPEAT('0',64) WHERE account_id=2000001"
+out=$(vm "cd /d $WIN_E2E & nettest.exe $HOST_IP 6900 ogtest2 ogtest")
+check "locked account is refused on another machine (code 3)" 'printf "%s\n" "$out" | grep -q "refused, code 3"'
+check "the refusal is logged (account-lock)" '[ "$(events "type=\"account-lock\" AND account_id=2000001")" -ge 1 ]'
+sql "DELETE FROM og_account_lock"
+out=$(nettest ogtest2 OgPlayer '!ping' 3)
+check "without lock rows the account logs in again" 'printf "%s\n" "$out" | grep -q "Ping: [0-9]* ms"'
+
+echo "== 3e @pf packet filter (GvG/BG maps) and @spb"
+# castles have nosave (a logout there starts the next login at the save point), so both are on the castle in the same
+# session: the player waits (OG_DELAY), the GM goes there and recalls them, nettest confirms the map change, then the
+# player talks
+pf_round() { # $1 = @pf setting of the watcher; prints the number of chat packets of OgPlayer the watcher received
+	( nettest ogtest2 OgPlayer 'hello from the castle;hello again' 3 'OG_DELAY=40' >/dev/null ) &
+	sleep 9
+	nettest Mave OgTester "+mapmove prtg_cas01 111 184;+recall OgPlayer;+pf $1" 40 'OG_WATCH=008d' > /tmp/og_pf.out
+	wait
+	sed -n 's/^WATCH 0 \([0-9]*\).*/\1/p' /tmp/og_pf.out | tail -1
+}
+n_on=$(pf_round c); n_off=$(pf_round off)
+echo "   chat packets with @pf c: $n_on, with @pf off: $n_off"
+check "@pf c: no public chat of other players on a castle map" '[ "${n_on:-x}" = 0 ]'
+check "@pf off: the chat arrives again" '[ "${n_off:-0}" -ge 2 ]'
+check "@pf prints the filter state" 'grep -q "Packet filter (WoE/BG maps): chat OFF | items OFF | emotions OFF" /tmp/og_pf.out'
+out=$(nettest Mave OgTester '+spb;+party SpbTest;+useskill 34 10 OgTester;+spb' 4)
+check "@spb outside a party says so" 'printf "%s\n" "$out" | grep -q "You are not in a party"'
+check "@spb lists the party member with Blessing and seconds left" 'printf "%s\n" "$out" | grep -q "OgTester: Bless [0-9]*s"'
+
+echo "== 3f crash report upload (og_crash_upload_url, consent in odinguard.ini)"
+rm -f /tmp/og_crash_rx.log
+python3 "$ROOT/tests/e2e/crash_receiver.py" 8899 /tmp/og_crash_rx.log > /dev/null 2>&1 &
+CR=$!
+printf 'og_crash_upload_url: http://%s:8899/api/v1/integrations/odinguard/crash\n' "$HOST_IP" >> "$X/conf/import/odinguard_conf.txt"
+restart_map
+rm -rf "$E2E/odinguard-crash"; mkdir -p "$E2E/odinguard-crash"
+printf 'OdinGuard test crash report\r\nreason: e2e\r\n' > "$E2E/odinguard-crash/crash-20260101-000000.txt"
+printf '[crash]\r\nupload=yes\r\n' > "$E2E/odinguard.ini"
+nettest ogtest2 OgPlayer '!ping' 12 >/dev/null
+check "agreed report is uploaded to the panel URL" 'grep -q "file=crash-20260101-000000.txt bytes=4[0-9] first=b.OdinGuard test crash" /tmp/og_crash_rx.log'
+tok=$(sed -n 's/.*token=\([0-9a-f]*\) .*/\1/p' /tmp/og_crash_rx.log | head -1)
+check "the upload carries the session token stored for the account" '[ -n "$tok" ] && [ "$(sql "SELECT COUNT(*) FROM og_crash_token WHERE token=\"$tok\" AND account_id=2000001")" = 1 ]'
+check "sent reports are listed in sent.txt" 'grep -q "crash-20260101-000000.txt" "$E2E/odinguard-crash/sent.txt"'
+nettest ogtest2 OgPlayer '!ping' 10 >/dev/null
+check "a sent report is not uploaded twice" '[ "$(grep -c "crash-20260101-000000.txt" /tmp/og_crash_rx.log)" = 1 ]'
+printf 'second\r\n' > "$E2E/odinguard-crash/crash-20260102-000000.txt"
+printf '[crash]\r\nupload=no\r\n' > "$E2E/odinguard.ini"
+nettest ogtest2 OgPlayer '!ping' 10 >/dev/null
+check "declined: nothing is uploaded" '! grep -q "crash-20260102-000000.txt" /tmp/og_crash_rx.log'
+kill $CR 2>/dev/null
+rm -rf "$E2E/odinguard-crash" "$E2E/odinguard.ini"
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+restart_map
 
 echo "== 4 tampering: signature package, build secret, guard file"
 cp "$X/conf/odinguard/odinguard.sigpack" /tmp/og_sigpack.bak

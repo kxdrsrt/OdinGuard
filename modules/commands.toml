@@ -171,3 +171,47 @@ rate_ms = 0
 params = "[dry]"
 help_en = "Runs the ban wave now (dry = only list who would be banned)."
 help_de = "führt die Ban-Welle jetzt aus (dry = nur auflisten)"
+
+[[command]]
+id = "ogflagclear"
+kind = "server"
+name = "ogflagclear"
+module = "ban-system"
+group = 60
+rate_ms = 0
+params = "<character|account id> [rule]"
+help_en = "Clears the open flags of an account (false alarms), optionally only one rule."
+help_de = "setzt die offenen Flags eines Accounts zurück (Fehlalarme), optional nur eine Regel"
+
+[[command]]
+id = "oglock"
+kind = "server"
+name = "oglock"
+module = "hwid"
+group = 60
+rate_ms = 0
+params = "<character>[, add|remove|clear|list]"
+help_en = "Locks an account to machines: add/remove the machine the character plays on, clear, list."
+help_de = "bindet einen Account an Rechner: den Rechner des Charakters hinzufügen/entfernen, alles löschen, anzeigen"
+
+[[command]]
+id = "pf"
+kind = "server"
+name = "pf"
+module = "lgp"
+group = 0
+rate_ms = 1000
+params = "on|off|<c i g>"
+help_en = "Packet filter on WoE and battleground maps: no public chat (c), item use (i) or emotions (g) of other players."
+help_de = "Paketfilter auf WoE- und BG-Maps: kein öffentlicher Chat (c), keine Item-Nutzung (i) und keine Emotes (g) anderer Spieler"
+
+[[command]]
+id = "spb"
+kind = "server"
+name = "spb"
+module = "lgp"
+group = 0
+rate_ms = 2000
+params = ""
+help_en = "Support buffs of every party member with the seconds left."
+help_de = "Support-Buffs aller Party-Mitglieder mit Restzeit"

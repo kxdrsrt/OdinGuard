@@ -36,7 +36,7 @@ English: [README.md](README.md) · Einbau-Anleitung: [docs/INTEGRATION.md](docs/
 
 Universelles, modulares Anti-Cheat-Toolkit für Ragnarok-Online-Server auf rAthena-Basis (getestet mit xAthena,
 Client 2018-06-20). Betreiber konfigurieren es im **OdinGuard Studio** (oder headless mit `og`) und bauen daraus
-ein signiertes Release für Client und Server. Version 1.0.0, **nur lokales Repository**.
+ein signiertes Release für Client und Server. Version 1.0.1.
 
 - Client: 32-Bit-Windows-DLL `odinguard.dll` + Loader `ijl15.dll` (Proxy, kein Exe-Patch), C11.
 - Server: Modul für rAthena/xAthena (`src/common/odinguard.*`, `src/login/og_login.*`, `src/map/og_map*.cpp`), C++.
@@ -70,6 +70,8 @@ flache, farbige Kacheln: **Quadrat = schützend, Dreieck = schädlich**, ein kle
 | `@circle 1-5` | Ringe um den eigenen Charakter. |
 | `@lgpsound` | Skill-Sounds bei Kacheln behalten oder stumm. |
 | `!dark [on\|off]` | Competitive-Pack (flache Maps, dunkler Boden) an/aus; Neustart nötig. |
+| `@pf on\|off\|c i g` | Paketfilter auf WoE-/BG-Maps: kein Chat (c), keine Item-Nutzung (i), keine Emotes (g) anderer Spieler. |
+| `@spb` | Support-Buffs aller Party-Mitglieder mit Restzeit (im Chat). |
 
 Vollständiger Leitfaden mit allen Optionen, Flags und `!`-Befehlen: [docs/08-lgp-guide.md](docs/08-lgp-guide.md).
 Vorerst nur Pre-Renewal; der Rest von OdinGuard läuft auch mit Renewal-Clients.
@@ -78,7 +80,7 @@ Vorerst nur Pre-Renewal; der Rest von OdinGuard läuft auch mit Renewal-Clients.
 
 | Pfad | Inhalt |
 |---|---|
-| `modules/` | Registry: `modules.toml` (23 Module), `commands.toml` (13 Commands) |
+| `modules/` | Registry: `modules.toml` (23 Module), `commands.toml` (19 Commands) |
 | `profiles/` | `default` (Funktionsumfang v0.3), `minimal` (core + rate-limit), `e2e` (Testprofil) |
 | `signatures/` | Cheat-Signaturen und Allowlist (Quelle für das signierte Signaturpaket) |
 | `assets/odin-grf/` | Eigene Assets für `odin.grf` (LGP-Kacheln) |

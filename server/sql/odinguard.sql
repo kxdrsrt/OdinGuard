@@ -83,3 +83,24 @@ CREATE TABLE IF NOT EXISTS `og_command` (
   PRIMARY KEY (`id`),
   KEY `state` (`state`, `id`)
 ) ENGINE=InnoDB;
+
+-- account lock: an account with rows here logs in only from these machines (web panel or @oglock; og_account_lock)
+CREATE TABLE IF NOT EXISTS `og_account_lock` (
+  `account_id` INT UNSIGNED NOT NULL,
+  `unique_id`  CHAR(64)     NOT NULL,
+  `created`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `note`       VARCHAR(64)  NOT NULL DEFAULT '',
+  PRIMARY KEY (`account_id`, `unique_id`)
+) ENGINE=InnoDB;
+
+-- one token per map login for the crash report upload (og_crash_upload_url); the panel checks the token
+-- (account, machine) and sets `used`. Tokens older than 7 days are removed by the map-server.
+CREATE TABLE IF NOT EXISTS `og_crash_token` (
+  `token`      CHAR(64)     NOT NULL,
+  `account_id` INT UNSIGNED NOT NULL DEFAULT 0,
+  `unique_id`  CHAR(64)     NOT NULL DEFAULT '',
+  `created`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `used`       DATETIME     NULL,
+  PRIMARY KEY (`token`),
+  KEY `created` (`created`)
+) ENGINE=InnoDB;

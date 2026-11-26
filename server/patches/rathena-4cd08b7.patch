@@ -6447,7 +6447,7 @@ index 000000000..0b53fad07
 +
 +#endif /* OG_LOGIN_HPP */
 diff --git a/src/map/atcommand.cpp b/src/map/atcommand.cpp
-index f367e9b84..a647a4ed4 100644
+index f367e9b84..2d85a3805 100644
 --- a/src/map/atcommand.cpp
 +++ b/src/map/atcommand.cpp
 @@ -45,6 +45,7 @@
@@ -6458,7 +6458,7 @@ index f367e9b84..a647a4ed4 100644
  #include "party.hpp"
  #include "pc.hpp"
  #include "pc_groups.hpp"
-@@ -8746,6 +8747,220 @@ ACMD_FUNC(whodrops)
+@@ -8746,6 +8747,221 @@ ACMD_FUNC(whodrops)
  	return 0;
  }
  
@@ -6655,7 +6655,8 @@ index f367e9b84..a647a4ed4 100644
 +	for (const std::string& l : lines)
 +		clif_displaymessage(fd, l.c_str());
 +	char out[CHAT_SIZE_MAX];
-+	safesnprintf(out, sizeof(out), dry ? "%d account(s) would be banned." : "%d account(s) banned.", n);
++	// warn mode turns every wave into a dry run
++	safesnprintf(out, sizeof(out), dry || og_log_only() ? "%d account(s) would be banned." : "%d account(s) banned.", n);
 +	clif_displaymessage(fd, out);
 +	return 0;
 +}
@@ -6679,7 +6680,7 @@ index f367e9b84..a647a4ed4 100644
  ACMD_FUNC(whereis)
  {
  	uint16 mob_ids[MAX_SEARCH] = {0}, count;
-@@ -11718,6 +11933,22 @@ void atcommand_basecommands(void) {
+@@ -11718,6 +11934,22 @@ void atcommand_basecommands(void) {
  		ACMD_DEF(rates),
  		ACMD_DEF(iteminfo),
  		ACMD_DEF(whodrops),
@@ -7106,10 +7107,10 @@ index 4130361aa..ae2e6779e 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 000000000..195001a05
+index 000000000..8f530fe0d
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,991 @@
+@@ -0,0 +1,996 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
@@ -8034,7 +8035,12 @@ index 000000000..195001a05
 +/// @pf on|off|<letters c i g> (chat, items, emotions); without a parameter the current setting
 +void og_map_pf_command(map_session_data* sd, const char* message) {
 +	int32 f = (int32)pc_readglobalreg(sd, add_str(OG_REG_PF));
-+	if (message != nullptr && *message) {
++	char arg[32] = "";
++	if (message != nullptr)
++		safestrncpy(arg, message, sizeof(arg));
++	trim(arg);
++	message = arg;
++	if (*message) {
 +		if (!strcmpi(message, "on"))
 +			f = OG_PF_CHAT | OG_PF_ITEM | OG_PF_EMOTION;
 +		else if (!strcmpi(message, "off"))

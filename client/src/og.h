@@ -125,7 +125,9 @@ void og_crash_install(void);
 void og_crash_write(EXCEPTION_POINTERS *ep, const char *reason);
 void og_crash_note_packet(int outbound, uint16_t id, uint16_t len);
 const char *og_crash_last_file(void);
+void og_crash_endpoint(const char *url, const char *token);
 #else
+static inline void og_crash_endpoint(const char *url, const char *token) { (void)url; (void)token; }
 static inline void og_crash_install(void) {}
 static inline void og_crash_note_packet(int o, uint16_t i, uint16_t l) { (void)o; (void)i; (void)l; }
 #endif

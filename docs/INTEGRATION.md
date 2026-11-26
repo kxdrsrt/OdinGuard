@@ -186,14 +186,24 @@ its patch list), do not run this tool on the same client.
 | 3 patcher | as 2 | the guard reaches every player | most active accounts log in with the guard |
 | 4 required | `og_required: yes` | no login without a valid guard of your build | – |
 
+Flags raised in warn mode never carry the ban mark, so switching to stage 2 does not turn old false alarms into bans
+at the next ban wave. Before switching, still look at `@ogflags` and clear false alarms with `@ogflagclear`.
+
 The stage is a profile setting (`[rollout] stage`). Export `og_event` and `og_client` (`mysql -B -e "SELECT ..."`)
 and run `og rollout myserver.profile.toml --events og_event.tsv --clients og_client.tsv --advance`, then rebuild
 and deploy the server config. The Studio tab *Rollout* does the same.
 
 ## 9. Day-to-day
 
-- In game: `@oginfo <name>` (guard version, machine, exe hash), `@ogflags [name]` (open flags), `@ogbanwave dry`
-  (who the next ban wave would ban), `@ogban <name>, <reason>`, `@ogunban <account id>`.
+- In game: `@oginfo <name>` (guard version, machine, exe hash), `@ogflags [name]` (open flags), `@ogflagclear
+  <name|account id> [rule]` (clear false alarms), `@ogbanwave dry` (who the next ban wave would ban), `@ogban <name>,
+  <reason>`, `@ogunban <account id>`, `@oglock <name>[, add|remove|clear|list]` (lock an account to machines).
+- Players: `@pf on|off|<c i g>` (alias `@packetfilter`): on WoE and battleground maps, no public chat (c), item use (i)
+  or emotions (g) of other players are sent to them (fewer packets in a mass WoE; own packets always arrive);
+  `@spb`: support buffs of every party member with the seconds left (the 2018 client has no buff icons in the party
+  window, so the list goes to the chat).
+- Idle players are not kicked by OdinGuard. `og_alive_timeout` (default 120 s) only disconnects a client whose guard
+  stopped reporting (killed or suspended guard); battleground AFK is rAthena's `bg_idle_autokick`.
 - New signatures: edit your signature TOML, raise `signatures.version`, rebuild, replace
   `conf/odinguard/odinguard.sigpack`, restart the map-server. No client update needed.
 - New OdinGuard version: rebuild with the same profile and keys, deploy server and client together (the Studio
@@ -201,7 +211,8 @@ and deploy the server config. The Studio tab *Rollout* does the same.
 
 ## 9a. Web panel (MidgardCP, optional)
 
-The tables `og_client`, `og_component`, `og_ban`, `og_event`, `og_flag` and `og_command` are the interface for web panels; the
+The tables `og_client`, `og_component`, `og_ban`, `og_event`, `og_flag`, `og_command`, `og_account_lock` and
+`og_crash_token` are the interface for web panels; the
 reference copy is `server/sql/odinguard.sql`. A panel such as MidgardCP (planned, `kxdrsrt/MidgardCP`) reads them with a
 read-only database user and writes only:
 
@@ -212,9 +223,21 @@ read-only database user and writes only:
   rows nobody takes become `expired` after `og_command_expire_s` (default 600). Only these fixed commands exist, no
   free @commands. Typical use: machine ban in the panel, then `kick` so the ban takes effect immediately.
 
-Keep the column names stable; a change to these tables is a breaking change for panels. Planned on the OdinGuard
-side for panels (no HTTP API in the game server): an account HWID lock table, an opt-in crash-dump upload to the panel, and a published GRF manifest (see
-MidgardCP `docs/07-ecosystem.md`).
+- `INSERT` / `DELETE` on `og_account_lock` (`account_id`, `unique_id`, `note`): account lock. An account with rows logs
+  in only from those machines (login refused with code 3, event `account-lock`); without the guard a locked account
+  is refused as well. Let the player confirm by e-mail before you write a row; `og_client` lists the machines an
+  account used.
+- Crash reports: set the module parameter `crash-report.upload_url` (`og_crash_upload_url`) to your endpoint. After the
+  map login the guard gets the URL and a token (row in `og_crash_token`). Reports of the client's `odinguard-crash`
+  folder are sent only after the player agreed once (dialog; answer stored in `odinguard.ini`, `[crash] upload`):
+  `POST <url>`, body = the text report (max. 512 KB), headers `X-OdinGuard-Token`, `X-OdinGuard-File`,
+  `X-OdinGuard-Version`. Accept a report only for a token that exists and is younger than 7 days; set `used`.
+- GRF manifest: `og grf-manifest <profile> -o grf-manifest.json` (also `grf-manifest.json` in every release folder):
+  the accepted GRF versions (name, size, tail and full SHA-256), hashes only. OpenThor Patcher's Patch Maker writes it
+  into the patch site on every publish.
+
+Keep the column names stable; a change to these tables is a breaking change for panels. There is no HTTP API in the
+game server.
 
 ## 10. Troubleshooting
 

@@ -67,6 +67,7 @@ void og_mark_plain(int32 fd);
 bool og_send_ping(int32 fd);
 bool og_send_control(int32 fd, const std::vector<uint8>& msg);
 bool og_send_command(int32 fd, const char* command);
+bool og_send_crash_endpoint(int32 fd, const std::string& url, std::string& token);
 
 // callbacks set by the servers
 typedef void (*og_event_handler)(int32 fd, const char* type, const char* detail, e_og_action action, int32 score);

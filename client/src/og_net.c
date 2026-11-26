@@ -315,6 +315,17 @@ static void handle_control(og_sock *k, const uint8_t *p, size_t n)
         control(k, r, sizeof r);
         break;
     }
+    case OG_S_CRASH: {
+        /* url NUL token[64] */
+        const char *url = (const char *)p + 1;
+        size_t ul = strnlen(url, n - 1);
+        char token[65];
+        if (ul == 0 || ul >= 400 || n < 1 + ul + 1 + 64) return;
+        memcpy(token, p + 2 + ul, 64);
+        token[64] = 0;
+        og_crash_endpoint(url, token);
+        break;
+    }
     case OG_S_COMMAND: {
         char cmd[64], reply[256];
         uint8_t m[257];

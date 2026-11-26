@@ -46,6 +46,20 @@ static void print_messages(const char *what, const unsigned char *buf, int n)
     if (!any && what[0] != '(') printf("MAP: %-12s -> (no answer)\n", what);
 }
 
+/* map change on the same map server (0091 <map>.16B <x>.W <y>.W): confirm it like the game does (007D), otherwise the
+   server keeps the character "warping" (invisible, commands ignored) */
+static void ack_map_change(SOCKET m, const unsigned char *buf, int n)
+{
+    int k;
+    for (k = 0; k + 22 <= n; k++)
+        if (buf[k] == 0x91 && buf[k + 1] == 0x00 && memchr(buf + k + 2, '.', 16) && strstr((const char *)buf + k + 2, ".gat")) {
+            unsigned char ack[2] = { 0x7D, 0x00 };
+            send(m, (const char *)ack, 2, 0);
+            printf("MAP: map change to %.16s confirmed\n", buf + k + 2);
+            return;
+        }
+}
+
 static SOCKET dial(const char *ip, int port)
 {
     SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
@@ -183,6 +197,14 @@ int main(int argc, char **argv)
                     int c, ncmd = 0;
                     char envbuf[1024], *tok, *ctx = NULL;
                     /* OG_CHAT="cmd1;cmd2;..." replaces the default commands, OG_HOLD = seconds to stay afterwards */
+                    /* OG_DELAY=s: wait (reading, confirming map changes, e.g. a GM @recall) before the commands */
+                    if (GetEnvironmentVariableA("OG_DELAY", envbuf, sizeof envbuf)) {
+                        ULONGLONG until = wall_ms() + (ULONGLONG)atoi(envbuf) * 1000;
+                        while (wall_ms() < until) {
+                            n = recv_some(m, buf, sizeof buf, 500);
+                            if (n > 0) ack_map_change(m, buf, n);
+                        }
+                    }
                     if (GetEnvironmentVariableA("OG_CHAT", envbuf, sizeof envbuf)) {
                         for (tok = strtok_r(envbuf, ";", &ctx); tok && ncmd < 16; tok = strtok_r(NULL, ";", &ctx)) cmds[ncmd++] = tok;
                     } else {
@@ -195,6 +217,7 @@ int main(int argc, char **argv)
                         send(m, chat, len, 0);
                         n = recv_some(m, buf, sizeof buf, 2500);
                         print_messages(cmds[c], buf, n);
+                        ack_map_change(m, buf, n);
                     }
                     /* OG_SKILLSPAM=n: n First Aid requests on yourself without waiting (no-delay pattern);
                        OG_SKILLID / OG_SKILLLV: another self skill (e.g. 369 Gospel) */
@@ -264,6 +287,7 @@ int main(int argc, char **argv)
                     while (wall_ms() < end) {
                         n = recv_some(m, buf, sizeof buf, 500);
                         if (n > 0) print_messages("(hold)", buf, n);
+                        if (n > 0) ack_map_change(m, buf, n);
                         for (c = 0; c < nw; c++)
                             for (int i = 0; i + wlen[c] <= n; i++)
                                 if (!memcmp(buf + i, wpat[c], wlen[c])) wcount[c]++;

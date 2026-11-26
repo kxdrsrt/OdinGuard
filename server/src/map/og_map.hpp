@@ -2,9 +2,13 @@
 #ifndef OG_MAP_HPP
 #define OG_MAP_HPP
 
+#include <string>
+#include <vector>
+
 #include <common/cbasetypes.hpp>
 
 class map_session_data;
+struct block_list;
 
 void og_map_init();
 /// @return true when the message was an OdinGuard command and must not be sent as chat
@@ -15,6 +19,13 @@ bool og_map_machine_limit(map_session_data* sd);
 bool og_map_ban(map_session_data* target, const char* by, const char* reason);
 /// @return number of lifted bans of the machines the account used
 int32 og_map_unban_account(uint32 account_id);
+/// account lock (og_account_lock) of the character's account: add/remove its machine, clear, list
+bool og_map_lock(map_session_data* target, const char* op, const char* by, std::vector<std::string>& out);
+/// @pf: true when the viewer filters this packet of another player (GvG/battleground maps only)
+bool og_map_pf_filtered(map_session_data* sd, const block_list* src, const uint8* buf);
+void og_map_pf_command(map_session_data* sd, const char* message);
+/// @spb: support buffs of the party members
+void og_map_spb(map_session_data* sd);
 /// writes a short status of the character's guard into out
 void og_map_info(map_session_data* target, char* out, size_t size);
 
@@ -54,6 +65,7 @@ void og_map_guard_quit(map_session_data* sd);
 void og_map_flag(map_session_data* sd, const char* uid, const char* rule, int32 score, bool ban, const char* detail);
 int32 og_map_banwave(bool dry, std::vector<std::string>* report);
 void og_map_flags_text(uint32 account_id, std::vector<std::string>& out);
+int32 og_map_flags_clear(uint32 account_id, const char* rule);
 void og_map_packet(int32 fd, map_session_data* sd, uint16 cmd);
 void og_map_skill_refused(map_session_data* sd);
 void og_map_skill_used(map_session_data* sd);

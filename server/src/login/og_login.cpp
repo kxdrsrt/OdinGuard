@@ -67,6 +67,13 @@ static void og_log_event(const s_og_info* info, uint32 account_id, const char* t
 		Sql_ShowDebug(og_sql);
 }
 
+/// the account has machine lock entries (og_account_lock), with og_account_lock on
+static bool og_account_locked(uint32 account_id) {
+	if (!og_module_on("og_account_lock", true))
+		return false;
+	return og_count("SELECT 1 FROM `og_account_lock` WHERE `account_id` = " + std::to_string(account_id) + " LIMIT 1");
+}
+
 int32 og_login_check(int32 fd, uint32 account_id, const char* userid) {
 	if (!og_enabled())
 		return 0;
@@ -75,6 +82,11 @@ int32 og_login_check(int32 fd, uint32 account_id, const char* userid) {
 		if (og_required()) {
 			ShowStatus("OdinGuard: login of '%s' refused, client without OdinGuard.\n", userid);
 			return 5;
+		}
+		// a locked account needs the guard: without it the machine cannot be told
+		if (og_sql != nullptr && og_account_locked(account_id)) {
+			ShowStatus("OdinGuard: login of '%s' refused, account is locked to its machines and the client has no OdinGuard.\n", userid);
+			return 3;
 		}
 		return 0;
 	}
@@ -130,8 +142,15 @@ int32 og_login_check(int32 fd, uint32 account_id, const char* userid) {
 			Sql_ShowDebug(og_sql);
 	}
 
-	if (!banned)
+	if (!banned) {
+		if (og_account_locked(account_id) &&
+			!og_count("SELECT 1 FROM `og_account_lock` WHERE `account_id` = " + std::to_string(account_id) + " AND `unique_id` = '" + uid + "' LIMIT 1")) {
+			og_log_event(info, account_id, "account-lock", "machine not in the account lock", "refuse");
+			ShowStatus("OdinGuard: login of '%s' refused, machine %.16s... is not in the account lock.\n", userid, uid.c_str());
+			return 3;
+		}
 		return 0;
+	}
 	if (!linked.empty()) {
 		// the new id of a banned machine is banned as well
 		q = "INSERT INTO `og_ban` (`unique_id`,`reason`,`banned_by`) VALUES ('" + uid + "','linked to " + og_escape(linked) + "','OdinGuard')";
