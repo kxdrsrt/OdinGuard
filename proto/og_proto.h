@@ -31,6 +31,9 @@
 #define OG_HELLO_MAX       2048
 #define OG_COMPONENT_NAME  16
 #define OG_MAX_COMPONENTS  24
+/* pseudo component in the client hello (1.0.3+): the guard release, hash bytes = u8 major, minor, patch, zeros.
+ * Not hardware: servers do not store it with the machine components. Clients before 1.0.3 do not send it. */
+#define OG_RELEASE_COMPONENT "og-release"
 #define OG_RECORD_MAX      60000  /* plaintext payload per record */
 #define OG_RECORD_OVERHEAD (2 + 16 + 1)
 #define OG_REKEY_RECORDS   4096

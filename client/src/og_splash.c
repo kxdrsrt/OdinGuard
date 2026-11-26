@@ -139,7 +139,7 @@ static BOOL CALLBACK title_enum(HWND w, LPARAM lp)
     GetWindowThreadProcessId(w, &pid);
     if (pid != GetCurrentProcessId() || !IsWindowVisible(w) || GetWindow(w, GW_OWNER)) return TRUE;
     GetClassNameA(w, cls, sizeof cls);
-    if (!_stricmp(cls, "OdinGuardSplash")) return TRUE;
+    if (!_stricmp(cls, "OdinGuardSplash") || !strcmp(cls, "#32770")) return TRUE; /* not the splash or a message box */
     cur[0] = 0;
     GetWindowTextA(w, cur, sizeof cur);
     if (!cur[0]) return TRUE;

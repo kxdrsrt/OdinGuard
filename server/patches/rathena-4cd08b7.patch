@@ -3564,10 +3564,10 @@ index ce4d0b18d..4e349ab05 100644
        can_trade: true
 diff --git a/conf/odinguard_athena.conf b/conf/odinguard_athena.conf
 new file mode 100644
-index 000000000..e5136841a
+index 000000000..0fdbcc038
 --- /dev/null
 +++ b/conf/odinguard_athena.conf
-@@ -0,0 +1,371 @@
+@@ -0,0 +1,379 @@
 +// OdinGuard Anti Cheat settings. Local overrides: conf/import/odinguard_conf.txt (created at the first start).
 +// The OdinGuard Studio generates the profile values (key, proto salt, build secret, signature package, module
 +// switches, commands, auras) into conf/import/odinguard_conf.txt; the environment variables ODINGUARD_KEY,
@@ -3589,6 +3589,14 @@ index 000000000..e5136841a
 +
 +// Oldest accepted client protocol version (2 = OdinGuard Anti Cheat 1.x; lower values are raised to 2).
 +og_min_version: 2
++
++// Oldest accepted guard release (major.minor.patch). An older guard is refused at the handshake: the player sees
++// og_outdated_message in a message box and cannot log in, nothing is logged as a cheat. Clients before 1.0.3 do not
++// report their release and count as older than 1.0.3. 0 = every release (soft rollout, see og_guard_previous_file).
++// The Studio writes the release it built (or 0 while [rollout] previous_releases is set).
++og_min_release: 0
++// {have} = release of the player's guard, {need} = og_min_release. At most 400 characters.
++og_outdated_message: Your client is outdated (OdinGuard {have}). This server needs OdinGuard {need} or newer. Please start the patcher, then log in again.
 +
 +// Profile values of the client build (Studio): protocol salt (32 hex) and build secret (64 hex). A client built
 +// for another profile is refused with a message. Empty salt = the development profile.
@@ -4070,10 +4078,10 @@ index 62b42598f..d6b0cf785 100644
      </ClCompile>
 diff --git a/src/common/odinguard.cpp b/src/common/odinguard.cpp
 new file mode 100644
-index 000000000..449820bae
+index 000000000..29b2704a6
 --- /dev/null
 +++ b/src/common/odinguard.cpp
-@@ -0,0 +1,1358 @@
+@@ -0,0 +1,1388 @@
 +// OdinGuard Anti Cheat – server side. See odinguard.hpp, og_proto.h and og_wire.h.
 +
 +#include "odinguard.hpp"
@@ -4152,6 +4160,8 @@ index 000000000..449820bae
 +	int32 alive_interval = 30;
 +	int32 alive_timeout = 120;
 +	int32 min_version = OG_PROTO_MIN;
++	uint32 min_release = 0;   // og_min_release: older guards are refused at the handshake (0 = off)
++	std::string outdated_message = "Your client is outdated (OdinGuard {have}). This server needs OdinGuard {need} or newer. Please start the patcher, then log in again.";
 +	int32 ban_match = 2;
 +	int32 time_drift = 6;
 +	e_og_action integrity_action = OG_ACTION_KICK;
@@ -4280,6 +4290,20 @@ index 000000000..449820bae
 +	return a <= OG_ACTION_FLAGBAN ? names[a] : "log";
 +}
 +
++/// "1.0.3" -> 0x010003; "0", "off" or "" -> 0
++static uint32 og_parse_release(const char* v) {
++	int32 a = 0, b = 0, c = 0;
++	if (v == nullptr || sscanf(v, "%d.%d.%d", &a, &b, &c) < 1)
++		return 0;
++	return (uint32)(std::clamp(a, 0, 255) << 16 | std::clamp(b, 0, 255) << 8 | std::clamp(c, 0, 255));
++}
++
++std::string og_release_str(uint32 r) {
++	if (r == 0)
++		return "older than 1.0.3";
++	return std::to_string(r >> 16) + "." + std::to_string((r >> 8) & 0xff) + "." + std::to_string(r & 0xff);
++}
++
 +static e_og_action og_parse_action(const char* v) {
 +	if (!strcmpi(v, "ban")) return OG_ACTION_BAN;
 +	if (!strcmpi(v, "kick")) return OG_ACTION_KICK;
@@ -4347,6 +4371,8 @@ index 000000000..449820bae
 +		else if (!strcmpi(w1, "og_alive_interval")) og_cfg.alive_interval = std::max(5, atoi(w2));
 +		else if (!strcmpi(w1, "og_alive_timeout")) og_cfg.alive_timeout = std::max(15, atoi(w2));
 +		else if (!strcmpi(w1, "og_min_version")) og_cfg.min_version = std::max(OG_PROTO_MIN, atoi(w2));
++		else if (!strcmpi(w1, "og_min_release")) og_cfg.min_release = og_parse_release(w2);
++		else if (!strcmpi(w1, "og_outdated_message")) og_cfg.outdated_message = w2;
 +		else if (!strcmpi(w1, "og_ban_match")) og_cfg.ban_match = std::max(1, atoi(w2));
 +		else if (!strcmpi(w1, "og_integrity_action")) og_cfg.integrity_action = og_parse_action(w2);
 +		else if (!strcmpi(w1, "og_tamper_action")) og_cfg.tamper_action = og_parse_action(w2);
@@ -5099,13 +5125,25 @@ index 000000000..449820bae
 +	for (int32 i = 0; i < h.ncomp; i++) {
 +		const uint8* c = h.comp + i * (OG_COMPONENT_NAME + 32);
 +		std::string name((const char*)c, strnlen((const char*)c, OG_COMPONENT_NAME));
++		if (name == OG_RELEASE_COMPONENT) { // not hardware: the guard release (u8 major, minor, patch)
++			o->info.release = (uint32)c[OG_COMPONENT_NAME] << 16 | (uint32)c[OG_COMPONENT_NAME + 1] << 8 | c[OG_COMPONENT_NAME + 2];
++			continue;
++		}
 +		o->info.components.emplace_back(name, to_hex(c + OG_COMPONENT_NAME, 32));
 +	}
 +
 +	uint8 status = OG_STATUS_OK;
-+	const char* message = "";
++	std::string message;
 +	if (h.version < og_cfg.min_version) { status = OG_STATUS_OUTDATED; message = "Please update your client (the anti cheat is outdated)."; }
 +	else if (crypto_verify16(h.tag, og_cfg.tag) != 0) { status = OG_STATUS_PROFILE; message = "This client was built for another server. Please use this server's client."; }
++	else if (o->info.release < og_cfg.min_release) {
++		status = OG_STATUS_OUTDATED;
++		message = og_cfg.outdated_message;
++		for (auto [key, val] : { std::pair<std::string, std::string>{ "{have}", og_release_str(o->info.release) }, { "{need}", og_release_str(og_cfg.min_release) } })
++			for (size_t at; (at = message.find(key)) != std::string::npos;)
++				message.replace(at, key.size(), val);
++		message.resize(std::min(message.size(), (size_t)400));
++	}
 +
 +	uint8 e_sec[32], e_pub[32], nonce_s[32], shared[32];
 +	if (!og_random(e_sec, sizeof(e_sec)) || !og_random(nonce_s, sizeof(nonce_s))) {
@@ -5119,14 +5157,14 @@ index 000000000..449820bae
 +	static const uint8 zero[32] = {};
 +	if (crypto_verify32(shared, zero) == 0) { set_eof(fd); return false; }
 +
-+	std::vector<uint8> sh(OG_SERVER_HELLO_FIXED + strlen(message));
++	std::vector<uint8> sh(OG_SERVER_HELLO_FIXED + message.size());
 +	og_wr16(&sh[0], OG_HELLO_ID);
 +	og_wr16(&sh[2], (uint16)sh.size());
 +	sh[4] = OG_PROTO_VERSION;
 +	sh[5] = status;
 +	memcpy(&sh[6], e_pub, 32);
 +	memcpy(&sh[38], nonce_s, 32);
-+	memcpy(&sh[OG_SERVER_HELLO_FIXED], message, strlen(message));
++	memcpy(&sh[OG_SERVER_HELLO_FIXED], message.data(), message.size());
 +
 +	uint8 transcript[64];
 +	crypto_blake2b_ctx bc;
@@ -5158,7 +5196,7 @@ index 000000000..449820bae
 +	send_shortlist_add_fd(fd);
 +#endif
 +	if (status != OG_STATUS_OK) {
-+		ShowInfo("OdinGuard: handshake refused (%s), fd %d\n", message, fd);
++		ShowInfo("OdinGuard: handshake refused (%s), fd %d\n", message.c_str(), fd);
 +		set_eof(fd);
 +		return false;
 +	}
@@ -5421,8 +5459,8 @@ index 000000000..449820bae
 +	og_load_references();
 +	add_timer_func_list(og_alive_check, "og_alive_check");
 +	add_timer_interval(gettick() + 5000, og_alive_check, 0, 0, 5000);
-+	ShowStatus("OdinGuard Anti Cheat: enabled (required: %s, log only: %s, %d signatures, challenges%s%s%s%s), server key %s, profile tag %s\n",
-+		og_cfg.required ? "yes" : "no", og_cfg.log_only ? "yes" : "no", (int32)og_cfg.signatures.size(),
++	ShowStatus("OdinGuard Anti Cheat: enabled (required: %s, log only: %s, min release: %s, %d signatures, challenges%s%s%s%s), server key %s, profile tag %s\n",
++		og_cfg.required ? "yes" : "no", og_cfg.log_only ? "yes" : "no", og_cfg.min_release ? og_release_str(og_cfg.min_release).c_str() : "any", (int32)og_cfg.signatures.size(),
 +		og_cfg.ch[OG_CH_NONCE].enable ? " nonce" : "", og_cfg.ch[OG_CH_CODE_RANGE].enable ? " code" : "",
 +		og_cfg.ch[OG_CH_TIME].enable ? " time" : "", og_cfg.ch[OG_CH_FILE_RANGE].enable ? " file" : "",
 +		to_hex(og_cfg.pk, 32).c_str(), to_hex(og_cfg.tag, OG_TAG_LEN).c_str());
@@ -5434,10 +5472,10 @@ index 000000000..449820bae
 +}
 diff --git a/src/common/odinguard.hpp b/src/common/odinguard.hpp
 new file mode 100644
-index 000000000..7e3111c74
+index 000000000..09e03428f
 --- /dev/null
 +++ b/src/common/odinguard.hpp
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,96 @@
 +// OdinGuard server side: handshake, encrypted record layer and policy for client connections.
 +// Wire format: og_proto.h (shared with the OdinGuard client DLL).
 +
@@ -5466,6 +5504,7 @@ index 000000000..7e3111c74
 +	std::string build;
 +	uint8 flags = 0;
 +	uint8 version = 0;
++	uint32 release = 0;       // guard release (major << 16 | minor << 8 | patch) from the og-release component; 0 = before 1.0.3
 +	bool darkpack = false;    // odin-dark.grf is loaded and accepted (OG_ALIVE_DARKPACK)
 +	bool alive_seen = false;  // the first heartbeat has arrived (darkpack is only known from then on)
 +	bool lgp_palette = false; // the client draws the LGP colour units (OG_ALIVE_LGP_PALETTE)
@@ -5479,6 +5518,7 @@ index 000000000..7e3111c74
 +bool og_log_only();
 +int32 og_ban_match();
 +int32 og_max_per_machine();
++std::string og_release_str(uint32 release); // "1.0.3"; 0 = "older than 1.0.3"
 +uint32 og_sigpack_version();
 +
 +// values of conf/odinguard_athena.conf read by the server modules (og_rate_*, og_bh_*, og_banwave_*, og_cmd_* ...)
@@ -5542,10 +5582,10 @@ index 000000000..6fd3e1559
 +#include "../../3rdparty/monocypher/monocypher.c"
 diff --git a/src/common/og_proto.h b/src/common/og_proto.h
 new file mode 100644
-index 000000000..03dc7a526
+index 000000000..f2d2395f1
 --- /dev/null
 +++ b/src/common/og_proto.h
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,148 @@
 +/* OdinGuard Anti Cheat – wire protocol v2. Shared by the client DLL (C) and the server module (C++).
 + * All integers little-endian. The parsers for every message live in og_wire.c (pure C, fuzzed natively).
 + *
@@ -5579,6 +5619,9 @@ index 000000000..03dc7a526
 +#define OG_HELLO_MAX       2048
 +#define OG_COMPONENT_NAME  16
 +#define OG_MAX_COMPONENTS  24
++/* pseudo component in the client hello (1.0.3+): the guard release, hash bytes = u8 major, minor, patch, zeros.
++ * Not hardware: servers do not store it with the machine components. Clients before 1.0.3 do not send it. */
++#define OG_RELEASE_COMPONENT "og-release"
 +#define OG_RECORD_MAX      60000  /* plaintext payload per record */
 +#define OG_RECORD_OVERHEAD (2 + 16 + 1)
 +#define OG_REKEY_RECORDS   4096
@@ -7160,7 +7203,7 @@ index 4130361aa..ae2e6779e 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 000000000..a95d6b0bf
+index 000000000..1a5e3cb9d
 --- /dev/null
 +++ b/src/map/og_map.cpp
 @@ -0,0 +1,1000 @@
@@ -7423,8 +7466,8 @@ index 000000000..a95d6b0bf
 +		safesnprintf(out, size, "%s: no OdinGuard session.", target->status.name);
 +		return;
 +	}
-+	safesnprintf(out, size, "%s: protocol v%d, build '%s', machine %.16s, exe %.16s, guard %.16s, flags %d, signatures v%u", target->status.name,
-+		info->version, info->build.c_str(), info->unique_id.c_str(), info->exe_code.c_str(), info->guard_code.c_str(), info->flags, og_sigpack_version());
++	safesnprintf(out, size, "%s: OdinGuard %s, protocol v%d, build '%s', machine %.16s, exe %.16s, guard %.16s, flags %d, signatures v%u", target->status.name,
++		og_release_str(info->release).c_str(), info->version, info->build.c_str(), info->unique_id.c_str(), info->exe_code.c_str(), info->guard_code.c_str(), info->flags, og_sigpack_version());
 +}
 +
 +// ---------------------------------------------------------------- display features

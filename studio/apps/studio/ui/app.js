@@ -256,6 +256,15 @@ async function renderPack() {
   t.appendChild(body);
 }
 
+// Oldest guard release that may log in (og_min_release); older guards see a message and cannot log in.
+function renderRelease() {
+  const box = $("#ro-release");
+  box.innerHTML = "";
+  box.appendChild(field("Oldest release that may log in", profile.rollout.min_release || "", (v) => { profile.rollout.min_release = v.trim(); }, "text",
+    "Empty: the release this Studio builds (older guards are refused with a message to update). 0: every release. Or a release like 1.0.3."));
+  box.querySelector("input").placeholder = profile.rollout.previous_releases?.length ? "0 (previous releases are kept)" : "this build";
+}
+
 function renderStages() {
   const names = ["Warn mode", "Kick", "Patcher", "Mandatory"];
   $("#stages").innerHTML = names.map((n, i) => {
@@ -292,6 +301,7 @@ function render() {
   renderCommands();
   renderGrf();
   renderStages();
+  renderRelease();
   renderSignatures();
   renderPack();
 }

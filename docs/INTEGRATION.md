@@ -193,27 +193,51 @@ The stage is a profile setting (`[rollout] stage`). Export `og_event` and `og_cl
 and run `og rollout myserver.profile.toml --events og_event.tsv --clients og_client.tsv --advance`, then rebuild
 and deploy the server config. The Studio tab *Rollout* does the same.
 
-## 8a. Roll out a new release without kicking players
+## 8a. A new release: only the current guard may log in
 
-Every new guard build has a new guard code, and a new `odin.grf` has new contents (the version string in
-`data\odinguard\profile.txt`). If the server only knows the new release, every player who has not patched yet is
-kicked (`guard-code`, failed file challenges, `grf:modified (content)`). So the server accepts the previous release
-until everyone has patched:
+By default the server lets only the guard release the Studio built log in (`og_min_release`, written by `og build`).
+An older guard is refused at the handshake, before the login: the player sees a message box and cannot log in.
+
+![Message for an outdated guard](images/outdated-release-message.png)
+
+> Your client is outdated (OdinGuard 1.0.2). This server needs OdinGuard 1.0.3 or newer. Please start the patcher,
+> then log in again.
+
+The text is `og_outdated_message` in `conf/odinguard_athena.conf` (`{have}` = the player's release, `{need}` = the
+required one). Nothing is logged as a cheat; the login-server log shows `handshake refused (...)`. Guards before 1.0.3
+do not report their release and count as "older than 1.0.3"; they show the message too (the status message box exists
+since 1.0.0). `@oginfo` shows the release of a player's guard.
+
+Order: **publish the client files in the patcher first, then deploy the server.** A player who starts the client
+before patching gets the message and patches.
+
+Other settings (`[rollout] min_release` in the profile, *Rollout* tab in the Studio):
+
+| `min_release` | Server | Use |
+|---|---|---|
+| empty (default) | the release the Studio built | strict: everyone has to patch |
+| `0` | every release | no release check |
+| `1.0.3` | that release and newer | let several recent releases in |
+
+### Soft rollout (optional): keep the previous release for a while
+
+If players should be able to play on with the old client for a few days, the server must also accept the old guard
+and the old `odin.grf` (otherwise they are kicked: `guard-code`, failed file challenges, `grf:modified (content)`):
 
 1. Before building the new release, keep the current one: `og keep-previous myserver.profile.toml` (or
    `--from <client dir>` with the files the players have). It copies `odinguard.dll`, `odin.grf` and `odin-dark.grf`
    into `previous-releases/<sha12>/` and adds the folder to `[rollout] previous_releases`.
-2. `og build myserver.profile.toml`. The server config gets `og_guard_previous_file` (the old guard passes the
-   guard-code check; the code challenge only asks about the client exe) and `og_protected_previous` (the file challenge
-   accepts the old GRFs); the old GRFs are listed in the GRF manifest after the current ones. The server package
-   carries them in `conf/odinguard/previous/`.
+2. `og build myserver.profile.toml`. While `previous_releases` is set, an empty `min_release` means `0`. The server
+   config gets `og_guard_previous_file` (the old guard passes the guard-code check; the code challenge only asks about
+   the client exe) and `og_protected_previous` (the file challenge accepts the old GRFs); the old GRFs are listed in the
+   GRF manifest after the current ones. The server package carries them in `conf/odinguard/previous/`.
 3. Deploy the server, then publish the client files with the patcher.
-4. When the old version no longer shows up in `og_client`, remove the entry from `previous_releases`, rebuild and
-   deploy the server again.
+4. When the old version no longer shows up in `og_client` (or `@oginfo`), remove the entry from `previous_releases`,
+   rebuild and deploy the server again: from then on only the current release logs in.
 
 ## 9. Day-to-day
 
-- In game: `@oginfo <name>` (guard version, machine, exe hash), `@ogflags [name]` (open flags), `@ogflagclear
+- In game: `@oginfo <name>` (guard release, protocol, machine, exe hash), `@ogflags [name]` (open flags), `@ogflagclear
   <name|account id> [rule]` (clear false alarms), `@ogbanwave dry` (who the next ban wave would ban), `@ogban <name>,
   <reason>`, `@ogunban <account id>`, `@oglock <name>[, add|remove|clear|list]` (lock an account to machines).
 - Players: `@pf on|off|<c i g>` (alias `@packetfilter`): on WoE and battleground maps, no public chat (c), item use (i)
@@ -224,7 +248,8 @@ until everyone has patched:
   stopped reporting (killed or suspended guard); battleground AFK is rAthena's `bg_idle_autokick`.
 - New signatures: edit your signature TOML, raise `signatures.version`, rebuild, replace
   `conf/odinguard/odinguard.sigpack`, restart the map-server. No client update needed.
-- New OdinGuard version: see 8a. Rebuild with the same profile and keys (the Studio warns about protocol changes).
+- New OdinGuard version: see 8a (only the new release logs in). Rebuild with the same profile and keys (the Studio warns
+  about protocol changes).
 
 ## 9a. Web panel (MidgardCP, optional)
 

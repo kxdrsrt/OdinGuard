@@ -377,6 +377,13 @@ fn handbook(p: &Profile, reg: &Registry, rep: &BuildReport, d: &Derived) -> Stri
     s.push_str("3. Optional `odinguard.ini` (splash time, ports). Protection switches cannot be changed there.\n4. Deliver everything with the patcher (`patcher/filelist.txt`). Do not change the files: the server checks the guard's own code and the protected files.\n\n");
     s.push_str("## 3. Server integration\n\n1. Copy `server/src/*` into the emulator (see `server/README.md` of the OdinGuard repository for the hook lines) and build.\n2. Copy `server/conf/odinguard_athena.conf`, `server/conf/import/odinguard_conf.txt` and `server/conf/odinguard/` into the server's `conf/`.\n3. Put the three values of `secrets/odinguard.env` into the server environment (Docker/Easypanel) or into `conf/import/odinguard_conf.txt` as `og_key`, `og_proto_salt`, `og_build_secret` (not in git).\n4. The tables are created at the first start.\n\n");
     s.push_str("## 4. Rollout\n\n| Stage | Config | Leave it when |\n|---|---|---|\n| 1 warn | `og_log_only: yes` | a week of logs, `og rollout status` shows no rule above the false-alarm threshold |\n| 2 kick | `og_log_only: no` | kicks are only real cheats (check `og_event`, `@ogflags`) |\n| 3 patcher | stage 2 + every player gets the guard by the patcher | `og rollout status` reports >= 98 % guarded sessions |\n| 4 required | `og_required: yes` | – |\n\nAdvance with `og rollout advance <profile> --events og_event.csv --clients og_client.csv`; the Studio refuses stage 4 when the gate fails.\n\n");
+    let min = crate::generate::min_release(p);
+    if min == "0" {
+        s.push_str("**Release check off** (`og_min_release: 0`): every guard release may log in");
+        s.push_str(if p.rollout.previous_releases.is_empty() { ".\n\n" } else { " while the previous release is kept (`[rollout] previous_releases`). Remove it once everyone has patched: then only this release logs in.\n\n" });
+    } else {
+        let _ = writeln!(s, "**Only OdinGuard {min} or newer may log in** (`og_min_release`). Older guards see a message to start the patcher and cannot log in. Publish the client files with the patcher first, then deploy the server.\n");
+    }
     s.push_str("## 5. Modules\n\n| Module | Side | What it does |\n|---|---|---|\n");
     for m in reg.modules.iter().filter(|m| p.modules.contains(&m.id)) {
         let _ = writeln!(s, "| {} | {} | {} |", m.id, m.side, m.summary);

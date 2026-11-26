@@ -93,6 +93,7 @@ Rust-Tests: `registry::repository_registry_is_consistent`, `registry::closure_pu
 | 64–68 | **Crash-Upload:** Bericht mit Zustimmung (`odinguard.ini`) per POST an die Panel-URL, Token steht in `og_crash_token` für den Account, `sent.txt`, kein zweiter Upload, abgelehnt → nichts gesendet | grün |
 | 69–74 | **Rollout eines neuen Release** (`og_guard_previous_file`, `og_protected_previous`): beide werden beim Start geladen; Client mit dem vorigen Guard → kein `guard-code`, kein Code-Challenge-Fehlschlag; mit der vorigen `odin.grf` → keine File-Challenge-Fehlschläge; ohne die Einträge → `guard-code` bzw. File-Challenge schlägt fehl | grün |
 | 75 | zwei erlaubte Versionen einer GRF mit gleicher Größe und Dateitabelle (nur Inhalt anders): die Version des Clients steht nicht als letzte in der Liste und wird trotzdem akzeptiert | grün |
+| 76–81 | **Mindest-Release** (`og_min_release: 9.9.9`): Guard wird schon beim Handshake abgewiesen (Status 1), Meldung nennt die eigene und die nötige Version, Login-Server protokolliert es, kein `og_event`; mit der normalen Konfig wieder Login; Map-Server meldet `min release` beim Start | grün |
 
 Replay-Schutz: Records mit falschem Zähler werden verworfen (`record-mac`, E2E 45–47), Antworten auf unbekannte
 Challenge-IDs ebenfalls (`challenge:replay`, Server-Logik und Fuzzing).
@@ -181,6 +182,13 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
 
 Die Ergebnisse von v0.1–v0.3 (Handshake, Hardware-Bans, Rechner-Limit, Alive-Timeout, Farb-Nicks, Auren-IDs,
 Release-Paket) gelten weiter für den unveränderten Code; Details im Git-Verlauf dieser Datei (Commit `4ad6498`).
+
+**2026-11-26 (1.0.3, Mindest-Release, Sichttest in der VM):** Standard ist jetzt: nur das gebaute Release darf rein
+(`og_min_release`, Studio schreibt es). Gemessen gegen einen Server mit `og_min_release: 1.0.3`: echter Client mit
+1.0.2 → Meldungsfenster „Your client is outdated (OdinGuard older than 1.0.3) …“, kein Login, kein Ereignis
+(`docs/images/outdated-release-message.png`); echter Client mit 1.0.3 → Login, über 2 min im Spiel, kein Ereignis.
+Dabei gefunden: Das Meldungsfenster bekam den OdinGuard-Titel (der Titel-Thread hielt es für das Spielfenster);
+ab 1.0.3 werden Dialogfenster übergangen.
 
 **2026-11-26 (Rollout 1.0.0 → 1.0.2, Sichttest in der VM):** Ein neuer Guard ändert den Guard-Code, eine neue
 `odin.grf` den Inhalt (Versions-String in `data\odinguard\profile.txt`). Ohne Vorkehrung wären alle Spieler mit 1.0.0

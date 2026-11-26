@@ -76,6 +76,8 @@ static struct {
 	int32 alive_interval = 30;
 	int32 alive_timeout = 120;
 	int32 min_version = OG_PROTO_MIN;
+	uint32 min_release = 0;   // og_min_release: older guards are refused at the handshake (0 = off)
+	std::string outdated_message = "Your client is outdated (OdinGuard {have}). This server needs OdinGuard {need} or newer. Please start the patcher, then log in again.";
 	int32 ban_match = 2;
 	int32 time_drift = 6;
 	e_og_action integrity_action = OG_ACTION_KICK;
@@ -204,6 +206,20 @@ const char* og_action_name(e_og_action a) {
 	return a <= OG_ACTION_FLAGBAN ? names[a] : "log";
 }
 
+/// "1.0.3" -> 0x010003; "0", "off" or "" -> 0
+static uint32 og_parse_release(const char* v) {
+	int32 a = 0, b = 0, c = 0;
+	if (v == nullptr || sscanf(v, "%d.%d.%d", &a, &b, &c) < 1)
+		return 0;
+	return (uint32)(std::clamp(a, 0, 255) << 16 | std::clamp(b, 0, 255) << 8 | std::clamp(c, 0, 255));
+}
+
+std::string og_release_str(uint32 r) {
+	if (r == 0)
+		return "older than 1.0.3";
+	return std::to_string(r >> 16) + "." + std::to_string((r >> 8) & 0xff) + "." + std::to_string(r & 0xff);
+}
+
 static e_og_action og_parse_action(const char* v) {
 	if (!strcmpi(v, "ban")) return OG_ACTION_BAN;
 	if (!strcmpi(v, "kick")) return OG_ACTION_KICK;
@@ -271,6 +287,8 @@ static bool og_config_read(const char* file) {
 		else if (!strcmpi(w1, "og_alive_interval")) og_cfg.alive_interval = std::max(5, atoi(w2));
 		else if (!strcmpi(w1, "og_alive_timeout")) og_cfg.alive_timeout = std::max(15, atoi(w2));
 		else if (!strcmpi(w1, "og_min_version")) og_cfg.min_version = std::max(OG_PROTO_MIN, atoi(w2));
+		else if (!strcmpi(w1, "og_min_release")) og_cfg.min_release = og_parse_release(w2);
+		else if (!strcmpi(w1, "og_outdated_message")) og_cfg.outdated_message = w2;
 		else if (!strcmpi(w1, "og_ban_match")) og_cfg.ban_match = std::max(1, atoi(w2));
 		else if (!strcmpi(w1, "og_integrity_action")) og_cfg.integrity_action = og_parse_action(w2);
 		else if (!strcmpi(w1, "og_tamper_action")) og_cfg.tamper_action = og_parse_action(w2);
@@ -1023,13 +1041,25 @@ static bool og_handle_hello(int32 fd, s_og_state* o) {
 	for (int32 i = 0; i < h.ncomp; i++) {
 		const uint8* c = h.comp + i * (OG_COMPONENT_NAME + 32);
 		std::string name((const char*)c, strnlen((const char*)c, OG_COMPONENT_NAME));
+		if (name == OG_RELEASE_COMPONENT) { // not hardware: the guard release (u8 major, minor, patch)
+			o->info.release = (uint32)c[OG_COMPONENT_NAME] << 16 | (uint32)c[OG_COMPONENT_NAME + 1] << 8 | c[OG_COMPONENT_NAME + 2];
+			continue;
+		}
 		o->info.components.emplace_back(name, to_hex(c + OG_COMPONENT_NAME, 32));
 	}
 
 	uint8 status = OG_STATUS_OK;
-	const char* message = "";
+	std::string message;
 	if (h.version < og_cfg.min_version) { status = OG_STATUS_OUTDATED; message = "Please update your client (the anti cheat is outdated)."; }
 	else if (crypto_verify16(h.tag, og_cfg.tag) != 0) { status = OG_STATUS_PROFILE; message = "This client was built for another server. Please use this server's client."; }
+	else if (o->info.release < og_cfg.min_release) {
+		status = OG_STATUS_OUTDATED;
+		message = og_cfg.outdated_message;
+		for (auto [key, val] : { std::pair<std::string, std::string>{ "{have}", og_release_str(o->info.release) }, { "{need}", og_release_str(og_cfg.min_release) } })
+			for (size_t at; (at = message.find(key)) != std::string::npos;)
+				message.replace(at, key.size(), val);
+		message.resize(std::min(message.size(), (size_t)400));
+	}
 
 	uint8 e_sec[32], e_pub[32], nonce_s[32], shared[32];
 	if (!og_random(e_sec, sizeof(e_sec)) || !og_random(nonce_s, sizeof(nonce_s))) {
@@ -1043,14 +1073,14 @@ static bool og_handle_hello(int32 fd, s_og_state* o) {
 	static const uint8 zero[32] = {};
 	if (crypto_verify32(shared, zero) == 0) { set_eof(fd); return false; }
 
-	std::vector<uint8> sh(OG_SERVER_HELLO_FIXED + strlen(message));
+	std::vector<uint8> sh(OG_SERVER_HELLO_FIXED + message.size());
 	og_wr16(&sh[0], OG_HELLO_ID);
 	og_wr16(&sh[2], (uint16)sh.size());
 	sh[4] = OG_PROTO_VERSION;
 	sh[5] = status;
 	memcpy(&sh[6], e_pub, 32);
 	memcpy(&sh[38], nonce_s, 32);
-	memcpy(&sh[OG_SERVER_HELLO_FIXED], message, strlen(message));
+	memcpy(&sh[OG_SERVER_HELLO_FIXED], message.data(), message.size());
 
 	uint8 transcript[64];
 	crypto_blake2b_ctx bc;
@@ -1082,7 +1112,7 @@ static bool og_handle_hello(int32 fd, s_og_state* o) {
 	send_shortlist_add_fd(fd);
 #endif
 	if (status != OG_STATUS_OK) {
-		ShowInfo("OdinGuard: handshake refused (%s), fd %d\n", message, fd);
+		ShowInfo("OdinGuard: handshake refused (%s), fd %d\n", message.c_str(), fd);
 		set_eof(fd);
 		return false;
 	}
@@ -1345,8 +1375,8 @@ void og_init() {
 	og_load_references();
 	add_timer_func_list(og_alive_check, "og_alive_check");
 	add_timer_interval(gettick() + 5000, og_alive_check, 0, 0, 5000);
-	ShowStatus("OdinGuard Anti Cheat: enabled (required: %s, log only: %s, %d signatures, challenges%s%s%s%s), server key %s, profile tag %s\n",
-		og_cfg.required ? "yes" : "no", og_cfg.log_only ? "yes" : "no", (int32)og_cfg.signatures.size(),
+	ShowStatus("OdinGuard Anti Cheat: enabled (required: %s, log only: %s, min release: %s, %d signatures, challenges%s%s%s%s), server key %s, profile tag %s\n",
+		og_cfg.required ? "yes" : "no", og_cfg.log_only ? "yes" : "no", og_cfg.min_release ? og_release_str(og_cfg.min_release).c_str() : "any", (int32)og_cfg.signatures.size(),
 		og_cfg.ch[OG_CH_NONCE].enable ? " nonce" : "", og_cfg.ch[OG_CH_CODE_RANGE].enable ? " code" : "",
 		og_cfg.ch[OG_CH_TIME].enable ? " time" : "", og_cfg.ch[OG_CH_FILE_RANGE].enable ? " file" : "",
 		to_hex(og_cfg.pk, 32).c_str(), to_hex(og_cfg.tag, OG_TAG_LEN).c_str());

@@ -2,6 +2,7 @@
  * alpha.exe resolves send/recv with GetProcAddress and calls them through pointers; inline hooks in ws2_32
  * catch these calls without changing the pointers the client checks. */
 #include "og.h"
+#include "og_version.h"
 #include "../../third_party/monocypher.h"
 #include "../../third_party/minhook/include/MinHook.h"
 #include <stdio.h>
@@ -423,6 +424,14 @@ static int handshake(og_sock *k)
             sscanf(comp[i].hex + j * 2, "%2x", &v);
             c[OG_COMPONENT_NAME + j] = (uint8_t)v;
         }
+    }
+    if (ncomp < OG_MAX_COMPONENTS) { /* the guard release: the server refuses releases below og_min_release */
+        uint8_t *c = hello + OG_CLIENT_HELLO_FIXED + ncomp * (OG_COMPONENT_NAME + 32);
+        strncpy((char *)c, OG_RELEASE_COMPONENT, OG_COMPONENT_NAME);
+        c[OG_COMPONENT_NAME] = OG_VER_MAJOR;
+        c[OG_COMPONENT_NAME + 1] = OG_VER_MINOR;
+        c[OG_COMPONENT_NAME + 2] = OG_VER_PATCH;
+        hello[OG_CLIENT_HELLO_FIXED - 1] = (uint8_t)++ncomp;
     }
     len = OG_CLIENT_HELLO_FIXED + ncomp * (OG_COMPONENT_NAME + 32);
     wr16(hello + 2, (uint16_t)len);

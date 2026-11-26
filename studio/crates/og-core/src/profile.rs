@@ -155,6 +155,11 @@ pub struct Rollout {
     /// server still accepts while players patch (`og keep-previous`); remove an entry once everyone has patched
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub previous_releases: Vec<String>,
+    /// oldest guard release the server lets in (`og_min_release`): empty = the release this Studio builds (players
+    /// with an older guard see a message and cannot log in until they patched), or 0 while previous_releases is set;
+    /// "0" = every release; or a release like "1.0.3"
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub min_release: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -217,7 +222,7 @@ impl Profile {
                 competitive_enforce: vec![],
             },
             grf: GrfPolicy::default(),
-            rollout: Rollout { stage: 1, reviewed_rules: vec![], previous_releases: vec![] },
+            rollout: Rollout { stage: 1, reviewed_rules: vec![], previous_releases: vec![], min_release: String::new() },
             output: format!("dist/{id}"),
         })
     }

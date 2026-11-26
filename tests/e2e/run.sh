@@ -27,6 +27,13 @@ nettest() {
 	done
 	printf '%s\n' "$o"
 }
+restart_login() {
+	pid=$(docker exec ogt-srv sh -c 'pidof login-server' | tr -d '\r')
+	docker exec ogt-srv kill "$pid"; sleep 2
+	docker exec -d ogt-srv sh -c './login-server > /tmp/login.log 2>&1'
+	for i in $(seq 1 30); do sleep 2; docker exec ogt-srv sh -c 'grep -a -q "Server is listening on the port" /tmp/login.log' 2>/dev/null && break; done
+	sleep 12 # the char-server reconnects to the login-server
+}
 restart_map() {
 	docker exec ogt-srv sh -c "true"
 	pid=$(docker exec ogt-srv sh -c 'pidof map-server' | tr -d '\r')
@@ -405,11 +412,27 @@ if [ -n "$OTHER" ]; then
 	echo "== 5 a client built for another profile"
 	stage_client "$OTHER"
 	# the refused guard shows a message box: run nettest detached, read the log, close it
-	out=$(vm "cd /d $WIN_E2E & del odinguard.log 2>nul & start \"\" /b nettest.exe $HOST_IP 6900 ogtest2 ogtest & ping -n 9 127.0.0.1 >nul & type odinguard.log & taskkill /f /im nettest.exe")
+	out=$(vm "cd /d $WIN_E2E & del odinguard.log 2>nul & start \"\" /b nettest.exe $HOST_IP 6900 ogtest2 ogtest & ping -n 14 127.0.0.1 >nul & type odinguard.log & taskkill /f /im nettest.exe")
 	printf '%s\n' "$out" | sed 's/^/   /' | tail -5
 	check "foreign profile is refused with a message (status 3)" 'printf '%s\n' "$out" | grep -q "refused (3)"'
 	stage_client "$R"
 fi
+
+echo "== 5b an older guard release is refused with a message (og_min_release)"
+sql "DELETE FROM og_event"
+echo "og_min_release: 9.9.9" >> "$X/conf/import/odinguard_conf.txt"
+restart_login
+out=$(vm "cd /d $WIN_E2E & del odinguard.log 2>nul & start \"\" /b nettest.exe $HOST_IP 6900 ogtest2 ogtest & ping -n 14 127.0.0.1 >nul & type odinguard.log & taskkill /f /im nettest.exe")
+printf '%s\n' "$out" | grep "refused" | sed 's/^/   /'
+check "older release is refused at the handshake (status 1)" 'printf "%s\n" "$out" | grep -q "refused (1)"'
+check "the message names the player's and the needed release" 'printf "%s\n" "$out" | grep -q "outdated (OdinGuard $(sed -n "s/.*OG_VERSION_STR \"\(.*\)\"/\1/p" "$ROOT/client/src/og_version.h")). This server needs OdinGuard 9.9.9 or newer"'
+check "the login server logs the refusal" 'docker exec ogt-srv sh -c "grep -a -q \"handshake refused (Your client is outdated\" /tmp/login.log"'
+check "an outdated client is not logged as a cheat" '[ "$(events "1=1")" = 0 ]'
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+restart_login
+out=$(nettest ogtest2 OgPlayer '!ping' 3)
+check "with the current release the login works again" 'printf "%s\n" "$out" | grep -q "Ping: [0-9]* ms"'
+check "the server reports min release at start" 'maplog | grep -q "min release: $(sed -n "s/.*OG_VERSION_STR \"\(.*\)\"/\1/p" "$ROOT/client/src/og_version.h")"'
 
 echo "== $FAIL failure(s)"
 exit $FAIL

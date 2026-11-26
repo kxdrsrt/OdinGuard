@@ -36,3 +36,12 @@ pub fn repo_root() -> std::path::PathBuf {
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.."))
 }
+
+/// Release of the guard the Studio builds (`OG_VERSION_STR` in client/src/og_version.h of the checkout it builds from).
+pub fn guard_release() -> String {
+    let text = std::fs::read_to_string(repo_root().join("client/src/og_version.h"))
+        .unwrap_or_else(|_| include_str!("../../../../client/src/og_version.h").to_string());
+    text.lines()
+        .find_map(|l| l.strip_prefix("#define OG_VERSION_STR").map(|v| v.trim().trim_matches('"').to_string()))
+        .unwrap_or_default()
+}

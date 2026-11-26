@@ -257,8 +257,8 @@ void og_map_info(map_session_data* target, char* out, size_t size) {
 		safesnprintf(out, size, "%s: no OdinGuard session.", target->status.name);
 		return;
 	}
-	safesnprintf(out, size, "%s: protocol v%d, build '%s', machine %.16s, exe %.16s, guard %.16s, flags %d, signatures v%u", target->status.name,
-		info->version, info->build.c_str(), info->unique_id.c_str(), info->exe_code.c_str(), info->guard_code.c_str(), info->flags, og_sigpack_version());
+	safesnprintf(out, size, "%s: OdinGuard %s, protocol v%d, build '%s', machine %.16s, exe %.16s, guard %.16s, flags %d, signatures v%u", target->status.name,
+		og_release_str(info->release).c_str(), info->version, info->build.c_str(), info->unique_id.c_str(), info->exe_code.c_str(), info->guard_code.c_str(), info->flags, og_sigpack_version());
 }
 
 // ---------------------------------------------------------------- display features

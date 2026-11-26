@@ -6,7 +6,7 @@
 
 > _Open-source, modular anti-cheat for Ragnarok Online servers, with its own Studio to configure and build it._
 
-**Windows client (C11) · rAthena module (C++) · OdinGuard Studio (Rust + Tauri 2)** · **MIT or Apache-2.0** · **v1.0.2**
+**Windows client (C11) · rAthena module (C++) · OdinGuard Studio (Rust + Tauri 2)** · **MIT or Apache-2.0** · **v1.0.3**
 
 <p align="center">
   <a href="#licence"><img src="https://img.shields.io/badge/license-MIT%20%7C%20Apache--2.0-blue?style=flat-square" alt="License"></a>
@@ -70,7 +70,7 @@ tie every server to one vendor. OdinGuard is:
 | Area | |
 |---|---|
 | Network | X25519 handshake with a pinned server key, XChaCha20-Poly1305 for the whole game stream, replay protection, key rotation, per-server profile tag, downgrade protection, fuzzed parsers |
-| Integrity | exe and guard code hashes in every heartbeat, canonical code image, anti-debug, hardware breakpoints, API-hook checks (speed hacks), GRF check with patch-rollout support |
+| Integrity | exe and guard code hashes in every heartbeat, canonical code image, anti-debug, hardware breakpoints, API-hook checks (speed hacks), GRF check with patch-rollout support; outdated guards are refused at login with a message to update |
 | Detection | signed, updatable signature package (300 signatures: processes, modules, windows, files, drivers, mutexes, registry, GRF hashes), allowlist, per-group actions |
 | Server rules | packet rate limit (WPE/RPE loops), no-delay detection, autopot/macro timing, honeypot unit, captcha, multi-client limit, hardware bans (exact and fuzzy), account lock to machines, flags and ban waves (warn-mode flags never ban) |
 | Challenges | nonce (build secret), random code ranges, clock rate, random file ranges, captcha, honeypot |
@@ -129,7 +129,7 @@ staged rollout).
 
 ## Status
 
-1.0.2. Tested end to end with a 2018-06-20 client and an rAthena fork (PACKETVER 20180620): see
+1.0.3. Tested end to end with a 2018-06-20 client and an rAthena fork (PACKETVER 20180620): see
 [docs/05-tests.md](docs/05-tests.md). Not yet tested on real hardware: input filter, RCX, Warsaw (Brazilian
 banking module), VM detection on VMware/VirtualBox/Hyper-V.
 

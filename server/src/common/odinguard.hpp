@@ -26,6 +26,7 @@ struct s_og_info {
 	std::string build;
 	uint8 flags = 0;
 	uint8 version = 0;
+	uint32 release = 0;       // guard release (major << 16 | minor << 8 | patch) from the og-release component; 0 = before 1.0.3
 	bool darkpack = false;    // odin-dark.grf is loaded and accepted (OG_ALIVE_DARKPACK)
 	bool alive_seen = false;  // the first heartbeat has arrived (darkpack is only known from then on)
 	bool lgp_palette = false; // the client draws the LGP colour units (OG_ALIVE_LGP_PALETTE)
@@ -39,6 +40,7 @@ bool og_required();
 bool og_log_only();
 int32 og_ban_match();
 int32 og_max_per_machine();
+std::string og_release_str(uint32 release); // "1.0.3"; 0 = "older than 1.0.3"
 uint32 og_sigpack_version();
 
 // values of conf/odinguard_athena.conf read by the server modules (og_rate_*, og_bh_*, og_banwave_*, og_cmd_* ...)
