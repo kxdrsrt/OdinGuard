@@ -166,8 +166,9 @@ modules = [ …, "launcher" ]
 "launcher.message" = "Please start the game with the patcher ({exe}). It keeps your client up to date.\n\nStart the patcher now?"
 ```
 
-* **Off by default.** Turn it on only when every player has a patcher that writes tickets (OpenThor 0.4.0 or newer, or
-  your own patcher with the same protocol); otherwise nobody can start the game.
+* **Off by default.** Turn it on only when every player has a patcher that writes tickets (OpenThor **0.4.2** or newer,
+  or your own patcher with the same protocol); otherwise nobody can start the game. Clients whose exe asks for
+  administrator rights (most RO clients) need 0.4.2: Windows drops the variable at the UAC prompt, and 0.4.0/0.4.1 lost it.
 * **Not a security boundary.** A player can write a ticket by hand. The module prevents accidental starts without an
   update; the hard rules stay on the server (`og_min_release` refuses old guards, `og_max_windows` limits game windows).
 * OdinGuard does not need OpenThor and OpenThor does not need OdinGuard; they share only the documented ticket.
