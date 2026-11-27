@@ -45,7 +45,7 @@ OG="$ROOT/studio/target/debug/og"
 
 rm -f "$DIR/$CHANNEL.json.sig"
 if [ -n "$KEY_FILE" ]; then
-  (cd "$APP" && npx tauri signer sign -f "$KEY_FILE" -p "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" "$DIR/$CHANNEL.json" >/dev/null)
+  (cd "$APP" && env -u TAURI_SIGNING_PRIVATE_KEY npx tauri signer sign -f "$KEY_FILE" -p "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" "$DIR/$CHANNEL.json" >/dev/null)
 else
   (cd "$APP" && npx tauri signer sign "$DIR/$CHANNEL.json" >/dev/null)
 fi
