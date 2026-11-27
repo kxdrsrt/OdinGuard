@@ -230,6 +230,8 @@ messages (`@lgp`, `@circle`, `@pf`, `@spb`, `!ping`, command limits). English an
 * **Launcher message:** module parameters `launcher.message` (English) and `launcher.message_de` (German).
 <img src="images/german-chat.png" width="560" alt="Chat replies in German: Competitive-Pack ist beim nächsten Start AUS, Paketfilter, Du bist in keiner Gruppe, Kreis 1 an, Ping">
 
+<img src="images/lang-switch.png" width="560" alt="!lang en: Language set to en, Packet filter in English; !lang de: Sprache auf de gestellt, Paketfilter auf Deutsch">
+
 * **Umlauts:** the 2018 client shows chat in the Windows code page; the server converts its UTF-8 texts to Windows-1252
   (`og_client_charset: cp1252`, default; `utf8` for a client that shows UTF-8). Message boxes are Unicode.
 
