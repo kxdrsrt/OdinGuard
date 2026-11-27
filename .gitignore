@@ -15,3 +15,5 @@ keys/
 studio/apps/studio/src-tauri/target/
 studio/apps/studio/src-tauri/gen/
 profiles/keys/
+tests/studio-ui/node_modules/
+tests/studio-ui/package-lock.json
