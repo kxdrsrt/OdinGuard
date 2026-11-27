@@ -180,6 +180,13 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
 
 ## 8. Historie
 
+**2026-11-27 (1.0.7, Update-Hinweis im Studio):** Das Studio fragt beim Start einmal im Hintergrund nach dem signierten
+`stable.json` (abschaltbar), zeigt ein Banner mit den Release-Notizen und dem Hinweis, dass Spieler und Server nicht
+angefasst werden, und der Tab „Updates“ nennt die sieben Schritte für einen sicheren Roll-out. Neu: Knopf „Keep the built
+release“ (Rollout-Tab, wie `og keep-previous`), vorher nur per Kommandozeile. `tools/release_studio.sh` veröffentlicht
+auf Wunsch (`OG_PUBLISH_TAG`). Vorher gefunden: `releases/latest/download/stable.json` gab 404, die Update-Prüfung fand für
+niemanden etwas. DOM-Test `tests/studio-ui` (14 Prüfungen: Banner, Später, abgeschaltet, kein Netz bleibt still).
+
 **2026-11-27 (1.0.6, `!lang`):** Sprache im Spiel umschalten (`!lang`, `!lang de|en|auto`), sofort für Guard-Texte, Titel
 und Server-Meldungen (neuer Steuer-Record `OG_C_LANG`), gespeichert in `odinguard.ini`. E2E 5c um 7 Prüfungen erweitert
 (Status, de, en, unbekannte Sprache, Speichern, Server-Meldungen wechseln ohne Neustart). Dabei gefunden: ein Leerzeichen am

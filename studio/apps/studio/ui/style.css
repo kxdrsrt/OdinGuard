@@ -198,6 +198,17 @@ pre.out { background: var(--surface); border: 1px solid var(--line); border-radi
 .stages div.done { border-color: var(--ok); } .stages div.done small { color: var(--ok); }
 .stages div.now { border-color: var(--accent); background: var(--accent-soft); } .stages div.now small { color: var(--accent); }
 
+/* update banner and the dot on the Updates tab */
+.banner { display: flex; align-items: center; gap: 10px; padding: 8px 18px; background: var(--accent-soft); border-bottom: 1px solid var(--accent); font-size: 13px; }
+.banner[hidden] { display: none; }
+.banner .ic { color: var(--accent); flex: none; }
+.banner span { flex: 1; min-width: 0; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-left: auto; flex: none; }
+.dot[hidden] { display: none; }
+.steps { margin: 0 0 18px; padding-left: 22px; max-width: 760px; line-height: 1.6; color: var(--muted); }
+.steps li { margin: 4px 0; }
+.steps b { color: var(--text); font-weight: 600; }
+
 /* scrollbars */
 ::-webkit-scrollbar { width: 12px; height: 12px; }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 6px; border: 3px solid transparent; background-clip: content-box; }

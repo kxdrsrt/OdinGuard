@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # Builds and signs an OdinGuard Studio release for the current platform into dist/studio/<version>/<channel>/.
-# Never publishes: upload the folder to the update host yourself after checking it.
+# Publishes only when you ask for it (OG_PUBLISH_TAG); without it you upload the folder yourself after checking it.
 #
 #   tools/release_studio.sh <stable|beta> <https base url> [notes file]
+#   OG_PUBLISH_TAG=v1.0.7 tools/release_studio.sh stable https://github.com/kxdrsrt/OdinGuard/releases/latest/download
+#
+# OG_PUBLISH_TAG: after the checks, upload the folder (manifest, its signature, the signed artifact) to that GitHub
+# release with `gh` (the release must exist; files are replaced). Without a notes file the release's text is used as
+# the notes that Studio shows. Every release needs its stable.json: "latest/download/stable.json" is what every
+# Studio asks for, and a release without it is invisible to them.
 #
 # Signing key: keys/studio-updater.key (minisign, created with `npx tauri signer generate`, never committed);
 # override with OG_UPDATER_KEY / OG_UPDATER_KEY_PASSWORD. OG_SKIP_BUILD=1 reuses an existing bundle.
@@ -22,6 +28,10 @@ PW=${OG_UPDATER_KEY_PASSWORD:-}
 VERSION=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$APP/src-tauri/tauri.conf.json")
 NOTES=""
 [ -n "$NOTES_FILE" ] && NOTES=$(cat "$NOTES_FILE")
+PUBLISH_TAG=${OG_PUBLISH_TAG:-}
+if [ -z "$NOTES" ] && [ -n "$PUBLISH_TAG" ]; then
+  NOTES=$(gh release view "$PUBLISH_TAG" --json body -q .body)
+fi
 
 case "$(uname -s)-$(uname -m)" in
   Darwin-arm64) TARGET=darwin-aarch64; BUNDLES=app ;;
@@ -63,4 +73,9 @@ rm -f "$OUT/$CHANNEL.json.sig"
 "$OG" update-verify "$OUT/$CHANNEL.json" --pubkey "$KEY.pub"
 ( cd "$OUT" && shasum -a 256 ./* > SHA256SUMS )
 
-echo "release $VERSION ($CHANNEL, $TARGET) ready in $OUT - not published"
+if [ -n "$PUBLISH_TAG" ]; then
+  gh release upload "$PUBLISH_TAG" "$OUT/$NAME" "$OUT/$NAME.sig" "$OUT/$CHANNEL.json" "$OUT/$CHANNEL.json.sig" --clobber
+  echo "release $VERSION ($CHANNEL, $TARGET) published to $PUBLISH_TAG"
+else
+  echo "release $VERSION ($CHANNEL, $TARGET) ready in $OUT - not published"
+fi

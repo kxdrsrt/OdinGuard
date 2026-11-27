@@ -404,16 +404,69 @@ $("#btn-ro-advance").addEventListener("click", async () => {
   try { const st = await invoke("rollout_advance", roArgs()); await openProfile(path); status(`Stage ${st} set. Rebuild the release and roll out the server config.`); }
   catch (e) { status(String(e), false); }
 });
+/* ---- updates: a quiet check when Studio starts, a banner, and the manual check ---- */
+const store = {
+  get: (k, d) => { try { const v = localStorage.getItem("og." + k); return v === null ? d : v; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem("og." + k, v); } catch { /* storage not available */ } },
+};
+let pendingUpdate = null;
+
+function showUpdate(u) {
+  pendingUpdate = u;
+  const hidden = store.get("upd.hidden", "") === u.version;
+  $("#upd-dot").hidden = false;
+  $("#upd-banner").hidden = hidden;
+  $("#upd-banner-text").textContent = `OdinGuard ${u.version} is available (you use ${currentVersion}). Nothing changes for players or servers until you roll it out.`;
+  output("#upd-notes", `What's new in ${u.version} (channel ${u.channel}, signature valid):\n${u.notes || "(no notes)"}`);
+}
+
+function clearUpdate() {
+  pendingUpdate = null;
+  $("#upd-dot").hidden = true;
+  $("#upd-banner").hidden = true;
+  output("#upd-notes", "");
+}
+
+let currentVersion = "";
+
+/* One request for the signed version file at start; any failure (offline, no release file) stays silent. */
+async function quietUpdateCheck() {
+  if (store.get("upd.auto", "1") === "0") return;
+  try {
+    const u = await invoke("studio_update", { channel: store.get("upd.channel", "stable"), install: false });
+    if (u) showUpdate(u);
+  } catch (e) { console.info("update check skipped:", String(e)); }
+}
+
+$("#upd-auto").checked = store.get("upd.auto", "1") !== "0";
+$("#upd-auto").addEventListener("change", () => store.set("upd.auto", $("#upd-auto").checked ? "1" : "0"));
+$("#upd-channel").value = store.get("upd.channel", "stable");
+$("#upd-channel").addEventListener("change", () => store.set("upd.channel", $("#upd-channel").value));
+$("#upd-banner-open").addEventListener("click", () => setTab("updates"));
+$("#upd-banner-hide").addEventListener("click", () => { if (pendingUpdate) store.set("upd.hidden", pendingUpdate.version); $("#upd-banner").hidden = true; });
+
 $("#btn-upd").addEventListener("click", () => busy($("#btn-upd"), "Checking…", async () => {
   const channel = $("#upd-channel").value;
   try {
     const u = await invoke("studio_update", { channel, install: false });
-    if (!u) { output("#upd-out", `Up to date (channel ${channel}).`); return; }
-    output("#upd-out", `Version ${u.version} (${u.channel}) is available, manifest signature valid:\n${u.notes || ""}`);
-    if (!confirm(`Install Studio ${u.version}?`)) return;
+    if (!u) { clearUpdate(); output("#upd-out", `Up to date (channel ${channel}).`); return; }
+    store.set("upd.hidden", "");
+    showUpdate(u);
+    output("#upd-out", `Version ${u.version} (${u.channel}) is available. The notes are below, with the steps to roll it out.`);
+    if (!confirm(`Install Studio ${u.version}?\n\nThis only updates Studio. Your players and servers stay as they are until you roll the release out (see the steps below).`)) return;
     await invoke("studio_update", { channel, install: true });
-    output("#upd-out", $("#upd-out").textContent + "\nInstalled. Restart Studio.");
-  } catch (e) { output("#upd-out", "Update refused or failed: " + e); }
+    output("#upd-out", $("#upd-out").textContent + "\nInstalled. Restart Studio, then follow the steps below.");
+  } catch (e) { output("#upd-out", "Update refused or failed: " + e + "\nAll releases: https://github.com/kxdrsrt/OdinGuard/releases"); }
+}));
+
+$("#btn-keep-prev").addEventListener("click", () => busy($("#btn-keep-prev"), "Keeping…", async () => {
+  if (!path) { status("Open a profile first.", false); return; }
+  try {
+    await invoke("save_profile", { path, profile });
+    const k = await invoke("keep_previous_release", { path });
+    await openProfile(path);
+    status(`Kept ${k.folder} (${k.files.join(", ")}). ${k.previous_releases} previous release(s) are accepted. Now build, deploy the server config, then patch the players.`);
+  } catch (e) { status("Not kept: " + e + " (build a release first)", false); }
 }));
 
 (async () => {
@@ -421,6 +474,8 @@ $("#btn-upd").addEventListener("click", () => busy($("#btn-upd"), "Checking…",
   setTab("profile");
   try {
     reg = await invoke("get_registry");
-    $("#ver").textContent = "v" + (await invoke("studio_version"));
+    currentVersion = await invoke("studio_version");
+    $("#ver").textContent = "v" + currentVersion;
+    setTimeout(quietUpdateCheck, 2500);
   } catch (e) { status("Registry not found: " + e, false); }
 })();

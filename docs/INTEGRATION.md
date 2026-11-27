@@ -235,6 +235,21 @@ messages (`@lgp`, `@circle`, `@pf`, `@spb`, `!ping`, command limits). English an
 * **Umlauts:** the 2018 client shows chat in the Windows code page; the server converts its UTF-8 texts to Windows-1252
   (`og_client_charset: cp1252`, default; `utf8` for a client that shows UTF-8). Message boxes are Unicode.
 
+### Updates: how you hear about a new release, and what it does (1.0.7)
+
+* **You are told, nothing is forced.** The Studio asks GitHub once when it starts for the signed version file
+  (`releases/latest/download/stable.json`) and shows a banner "OdinGuard X is available" with the release notes
+  (*What's new*) and *Later*. Switch the check off under *Updates*; *Check for updates* does it by hand. The request
+  carries nothing about you or your server.
+* **Installing it changes nothing for players or servers.** The Studio is the guard release: a new Studio builds a new
+  guard. Players only get it when you put it into your client and patch it to them; the server only when you deploy
+  the build's config. The notes have a *Roll-out* block that says whether the server module or the protocol changed.
+* **Order, so nobody is kicked:** install and restart Studio → *Rollout → Keep the built release* (keeps what your
+  players have now as an accepted release; the same as `og keep-previous`) → *Build* → deploy the server config (and the
+  new server module if the notes say so) → patch the clients → later remove the kept releases or set the oldest release
+  that may log in. The *Updates* tab lists these steps.
+* Not using the Studio? Watch the repository's releases on GitHub. Maintainers: [RELEASING.md](RELEASING.md).
+
 ## 8. Roll out in stages
 
 | Stage | Server | Effect | Move on when |

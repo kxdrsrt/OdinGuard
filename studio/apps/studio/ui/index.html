@@ -53,7 +53,7 @@
       <div class="nav-group">Release</div>
       <button data-tab="build"><svg class="ic"><use href="#i-build"/></svg>Build</button>
       <button data-tab="rollout"><svg class="ic"><use href="#i-rollout"/></svg>Rollout</button>
-      <button data-tab="updates"><svg class="ic"><use href="#i-updates"/></svg>Updates</button>
+      <button data-tab="updates"><svg class="ic"><use href="#i-updates"/></svg>Updates<i id="upd-dot" class="dot" hidden aria-label="Update available"></i></button>
     </nav>
   </aside>
 
@@ -69,6 +69,13 @@
       <button id="btn-open" class="btn"><svg class="ic"><use href="#i-open"/></svg>Open</button>
       <button id="btn-save" class="btn primary" disabled><svg class="ic"><use href="#i-save"/></svg>Save</button>
     </header>
+
+    <div id="upd-banner" class="banner" role="status" hidden>
+      <svg class="ic" aria-hidden="true"><use href="#i-updates"/></svg>
+      <span id="upd-banner-text"></span>
+      <button id="upd-banner-open" class="btn small">What's new</button>
+      <button id="upd-banner-hide" class="btn small" title="Hide until the next version">Later</button>
+    </div>
 
     <main id="main">
       <div id="welcome" class="empty" hidden>
@@ -154,6 +161,10 @@
           <label class="fld"><span>Active accounts</span><input id="ro-active" type="number" min="1"></label>
           <label class="fld"><span>False-positive limit (%)</span><input id="ro-fp" type="number" value="2" step="0.5"></label>
         </div>
+        <div class="card form">
+          <p class="lead" style="margin:0">After an update, <b>before you build the new release</b>: keep the release your players use now. Players who have not patched yet are then still accepted by the server.</p>
+          <div class="row"><button id="btn-keep-prev" class="btn"><svg class="ic"><use href="#i-pack"/></svg>Keep the built release</button></div>
+        </div>
         <div class="row">
           <button id="btn-ro-status" class="btn"><svg class="ic"><use href="#i-gauge"/></svg>Evaluate</button>
           <button id="btn-ro-advance" class="btn primary"><svg class="ic"><use href="#i-arrow"/></svg>Next stage</button>
@@ -166,8 +177,23 @@
         <div class="card form">
           <label class="fld"><span>Channel</span><select id="upd-channel"><option value="stable">stable</option><option value="beta">beta</option></select></label>
         </div>
+        <div class="card form">
+          <label class="switch-row"><span>Look for a new version when Studio starts<small>one request to GitHub for the signed version file; nothing about you or your server is sent</small></span><span class="switch"><input type="checkbox" id="upd-auto" checked><i></i></span></label>
+        </div>
         <div class="row"><button id="btn-upd" class="btn primary"><svg class="ic"><use href="#i-updates"/></svg>Check for updates</button></div>
         <pre id="upd-out" class="out" hidden></pre>
+        <h3>Rolling out a new release</h3>
+        <p class="lead">A new Studio version is a new OdinGuard release: guard, <code>odin.grf</code> and server module. Installing it changes <b>nothing</b> for your players or your servers by itself. Nobody is updated without you; players only get it when you patch it to them. In this order, so nobody is kicked:</p>
+        <ol class="steps">
+          <li><b>Read the notes</b> above. They say whether the server module or the protocol changed.</li>
+          <li><b>Install the update</b> and restart Studio. Open your profile.</li>
+          <li><b>Rollout tab → Keep the built release.</b> This keeps the release your players have now as an accepted one, so they pass the server checks until they have patched.</li>
+          <li><b>Build</b> the new release.</li>
+          <li><b>Server:</b> copy the new <code>conf</code> and references of the build to the server (and the new server module, if the notes say so) and deploy.</li>
+          <li><b>Players:</b> put the new client files into your master client and publish them with your patcher.</li>
+          <li><b>Later,</b> when (almost) everybody has patched: remove the kept releases, or set the oldest release that may log in.</li>
+        </ol>
+        <pre id="upd-notes" class="out" hidden></pre>
       </section>
     </main>
 

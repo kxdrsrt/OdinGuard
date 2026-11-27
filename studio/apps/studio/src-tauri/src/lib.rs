@@ -106,6 +106,13 @@ fn rollout_advance(path: String, events: String, clients: String, active: Option
     Ok(stage)
 }
 
+/// Keeps the release that is built now (guard, odin.grf, odin-dark.grf) as an accepted previous release, so players who
+/// have not patched yet still pass the guard and file checks after the next build (`og keep-previous`).
+#[tauri::command]
+fn keep_previous_release(path: String) -> Res<og_core::pipeline::KeptRelease> {
+    og_core::pipeline::keep_previous(Path::new(&path), None).map_err(err)
+}
+
 /// Update endpoint base; `<base>/<channel>.json` plus `<channel>.json.sig`. Default: GitHub Releases of the
 /// OdinGuard repository (stable = the latest release, beta = the release tagged "beta"). Overridable for
 /// staging/tests and self-hosting.
@@ -204,6 +211,7 @@ pub fn run() {
             commands_md,
             rollout_status,
             rollout_advance,
+            keep_previous_release,
             studio_version,
             studio_update,
             signature_groups,
