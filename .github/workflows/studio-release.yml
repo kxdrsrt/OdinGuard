@@ -1,0 +1,126 @@
+name: studio-release
+
+# Builds the signed Studio for macOS, Windows and Linux and publishes ONE stable.json that lists all three, so that the
+# Studio of every operator (whatever the platform) is told about a new release. Needs the repository secret
+# TAURI_SIGNING_PRIVATE_KEY (the content of keys/studio-updater.key; the same key as the public key in tauri.conf.json).
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and publish for (e.g. v1.0.7)
+        required: true
+      publish:
+        description: Upload to the release (off = only keep the builds as workflow artifacts for a check)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macos, os: macos-latest, bundle: app }
+          - { name: windows, os: windows-latest, bundle: nsis }
+          - { name: linux, os: ubuntu-22.04, bundle: appimage }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: studio/apps/studio/src-tauri
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Linux libraries
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf xdg-utils
+      - name: build and sign
+        shell: bash
+        working-directory: studio/apps/studio
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          npm ci
+          npx tauri build --bundles ${{ matrix.bundle }} --ci
+      - name: collect the signed updater artifact
+        shell: bash
+        run: |
+          mkdir out
+          version=$(python3 -c 'import json; print(json.load(open("studio/apps/studio/src-tauri/tauri.conf.json"))["version"])')
+          found=0
+          while IFS= read -r sig; do
+            f=${sig%.sig}
+            case "$f" in *"_$version"*|*.app.tar.gz) ;; *) continue ;; esac
+            n=$(basename "$f" | tr ' ' '_')
+            cp "$f" "out/$n"; cp "$sig" "out/$n.sig"; found=1
+          done < <(find studio/apps/studio/src-tauri/target/release/bundle -name '*.sig' -type f)
+          [ "$found" = 1 ] || { echo "no signed updater artifact" >&2; exit 1; }
+          ls -l out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-${{ matrix.name }}
+          path: out/*
+
+  manifest:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - name: manifest script (a tag from before it existed gets it from the workflow's own commit)
+        run: |
+          if [ ! -f tools/studio_manifest.sh ]; then
+            git fetch -q --depth=1 origin "$GITHUB_SHA"
+            git checkout "$GITHUB_SHA" -- tools/studio_manifest.sh
+          fi
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: studio
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: studio-*
+          path: dist-studio
+          merge-multiple: true
+      - name: signed manifest listing every platform
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          (cd studio/apps/studio && npm ci)
+          # what operators read in the Studio banner is the text of the GitHub release
+          gh release view "$TAG" --json body -q .body > notes.md || : > notes.md
+          printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" > "$RUNNER_TEMP/studio.key"
+          tools/studio_manifest.sh stable "https://github.com/${{ github.repository }}/releases/download/$TAG" dist-studio notes.md "$RUNNER_TEMP/studio.key"
+          rm -f "$RUNNER_TEMP/studio.key"
+          cat dist-studio/stable.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-release-files
+          path: dist-studio/*
+      - name: upload to the release
+        if: github.event_name == 'release' || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" dist-studio/* --clobber
