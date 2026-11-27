@@ -11,7 +11,7 @@ set -euo pipefail
 
 CHANNEL=${1:?channel}
 BASE_URL=${2:?base url}
-DIR=${3:?folder}
+DIR=$(cd "${3:?folder}" && pwd)
 NOTES_FILE=${4:-}
 KEY_FILE=${5:-}
 case "$CHANNEL" in stable|beta) ;; *) echo "channel must be stable or beta" >&2; exit 2 ;; esac

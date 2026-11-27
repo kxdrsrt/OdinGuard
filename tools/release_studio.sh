@@ -2,6 +2,9 @@
 # Builds and signs an OdinGuard Studio release for the current platform into dist/studio/<version>/<channel>/.
 # Publishes only when you ask for it (OG_PUBLISH_TAG); without it you upload the folder yourself after checking it.
 #
+# Publishing is normally done by CI (.github/workflows/studio-release.yml: all platforms, one stable.json). Publishing
+# from here would replace that stable.json with one that lists only this platform - use it for a one-platform test.
+#
 #   tools/release_studio.sh <stable|beta> <https base url> [notes file]
 #   OG_PUBLISH_TAG=v1.0.7 tools/release_studio.sh stable https://github.com/kxdrsrt/OdinGuard/releases/latest/download
 #

@@ -9,12 +9,18 @@ that file is invisible to them.
 | 1. Version | `client/src/og_version.h`, `studio/Cargo.toml`, `studio/apps/studio/src-tauri/Cargo.toml`, `tauri.conf.json` | the same number everywhere; the Studio **is** the guard release (it builds the guard) |
 | 2. Tag and CI | `git tag vX.Y.Z && git push origin vX.Y.Z` | CI must be green (Studio tests, client, GCC and Visual Studio build of the server patch) |
 | 3. GitHub release | server patch `odinguard-X.Y.Z-rathena-<commit>.patch` and `SHA256SUMS.txt`, plus the notes | `gh release create` (see the notes template) |
-| 4. Studio update file | signed `stable.json` + `.sig` + the signed Studio build | `OG_PUBLISH_TAG=vX.Y.Z tools/release_studio.sh stable https://github.com/kxdrsrt/OdinGuard/releases/latest/download` |
+| 4. Studio update file | signed `stable.json` + `.sig` + the signed Studio builds for macOS, Windows and Linux | automatic: publishing the GitHub release starts `.github/workflows/studio-release.yml` (about 8 minutes) |
 
-Part 4 uses the signing key `keys/studio-updater.key` (minisign; `OG_UPDATER_KEY_PASSWORD` if it has a password). **Keep
-that key private and backed up**: Studios only accept updates signed with it. The script builds for the platform it runs
-on (macOS arm64 so far); Studios on other platforms still see the banner and the notes, and install from source or from
-a build of that platform.
+Part 4 builds the Studio on all three platforms and uploads **one** `stable.json` that lists them, signed with the Studio
+update key. The key is the repository secret `TAURI_SIGNING_PRIVATE_KEY` (the content of `keys/studio-updater.key`; add
+`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` if the key gets a password). **Keep that key private and backed up**: Studios only
+accept updates signed with it.
+
+- Re-run or check by hand: Actions → studio-release → *Run workflow* with the tag; leave *publish* off to only build and
+  keep the files as workflow artifacts (`studio-release-files` holds the manifest and signatures).
+- Without CI (one platform, e.g. for a test): `OG_PUBLISH_TAG=vX.Y.Z tools/release_studio.sh stable <base url>` builds on the
+  current platform. Do **not** publish that over a release that CI already filled: its `stable.json` would list only the
+  one platform. `tools/studio_manifest.sh` merges a folder of builds from several platforms into one manifest.
 
 ## The notes are what operators read
 
