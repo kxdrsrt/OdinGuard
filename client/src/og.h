@@ -43,10 +43,14 @@ int  og_message(const char *text, UINT type); /* text in UTF-8 (or the ANSI code
 enum {
     OG_T_ON, OG_T_OFF, OG_T_DARK_STATUS, OG_T_DARK_MISSING, OG_T_DARK_ALREADY_ON, OG_T_DARK_ALREADY_OFF, OG_T_DARK_USAGE,
     OG_T_DARK_CHANGED, OG_T_VSYNC_OFF, OG_T_VSYNC_ON, OG_T_CRASH_WRITTEN, OG_T_CRASH_TITLE, OG_T_CRASH_ASK, OG_T_MAX_WINDOWS,
-    OG_T_VM, OG_T_REFUSED, OG_T_TITLE_WAITING, OG_T_TITLE_FAILED, OG_T_TITLE_DARK, OG_T_LAUNCHER, OG_T_COUNT
+    OG_T_VM, OG_T_REFUSED, OG_T_TITLE_WAITING, OG_T_TITLE_FAILED, OG_T_TITLE_DARK, OG_T_LAUNCHER,
+    OG_T_LANG_STATUS, OG_T_LANG_SET, OG_T_LANG_UNKNOWN, OG_T_LANG_AUTO, OG_T_COUNT
 };
 void og_lang_init(const char *dir);
 const char *og_lang(void);   /* "de", "en", ... */
+int  og_lang_set(const char *code);  /* "auto" or a language; saved in odinguard.ini; 0 = unknown language */
+int  og_lang_take_changed(void);     /* 1 once after a change: the net layer tells the server */
+void og_lang_command(const char *arg, char *reply, size_t cap);
 const char *og_tr(int id);
 void og_trf(char *out, size_t cap, int id, const char *a1, const char *a2);
 int  og_message_titled(const char *text, const char *caption, UINT type);

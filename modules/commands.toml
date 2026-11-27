@@ -52,6 +52,17 @@ help_en = "Switches the competitive pack (flat WoE / battleground maps, dark flo
 help_de = "Schaltet das Competitive-Pack (flache WoE-/BG-Maps, dunkler Boden) für den nächsten Spielstart ein oder aus"
 
 [[command]]
+id = "lang"
+kind = "client"
+name = "lang"
+module = "client-commands"
+group = 0
+rate_ms = 2000
+params = "[de|en|auto]"
+help_en = "Shows or changes the language of OdinGuard's texts (and, later, of the translated game). auto = the Windows language."
+help_de = "Zeigt oder ändert die Sprache der OdinGuard-Texte (später auch des übersetzten Spiels). auto = Sprache von Windows"
+
+[[command]]
 id = "lgp"
 kind = "server"
 name = "lgp"

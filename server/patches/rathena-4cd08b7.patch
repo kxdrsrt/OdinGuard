@@ -4088,10 +4088,10 @@ index 62b42598f..d6b0cf785 100644
      </ClCompile>
 diff --git a/src/common/odinguard.cpp b/src/common/odinguard.cpp
 new file mode 100644
-index 000000000..ee0c05374
+index 000000000..779261a40
 --- /dev/null
 +++ b/src/common/odinguard.cpp
-@@ -0,0 +1,1505 @@
+@@ -0,0 +1,1515 @@
 +// OdinGuard Anti Cheat – server side. See odinguard.hpp, og_proto.h and og_wire.h.
 +
 +#include "odinguard.hpp"
@@ -5207,6 +5207,16 @@ index 000000000..ee0c05374
 +		og_handle_response(fd, o, r);
 +		break;
 +	}
++	case OG_C_LANG: { // !lang: from now on the server's messages follow it
++		std::string l;
++		for (size_t i = 1; i < n && i <= 8; i++) {
++			char ch = (char)TOLOWER(p[i]);
++			if ((ch >= 'a' && ch <= 'z') || ch == '-')
++				l += ch;
++		}
++		o->info.lang = l;
++		break;
++	}
 +	case OG_C_PONG:
 +		if (n >= 5 && og_on_pong != nullptr)
 +			og_on_pong(fd, (int64)((uint32)gettick() - og_rd32(p + 1)));
@@ -5719,10 +5729,10 @@ index 000000000..6fd3e1559
 +#include "../../3rdparty/monocypher/monocypher.c"
 diff --git a/src/common/og_proto.h b/src/common/og_proto.h
 new file mode 100644
-index 000000000..834590744
+index 000000000..8381d1351
 --- /dev/null
 +++ b/src/common/og_proto.h
-@@ -0,0 +1,150 @@
+@@ -0,0 +1,151 @@
 +/* OdinGuard Anti Cheat – wire protocol v2. Shared by the client DLL (C) and the server module (C++).
 + * All integers little-endian. The parsers for every message live in og_wire.c (pure C, fuzzed natively).
 + *
@@ -5792,6 +5802,7 @@ index 000000000..834590744
 +#define OG_C_PONG     0x03 /* u32 server_tick */
 +#define OG_C_REPORT   0x04 /* char text[]: answer to a command, shown to the player */
 +#define OG_C_RESPONSE 0x05 /* u32 challenge_id, u8 type, u8 status (OG_CH_ST_*), u8 digest[32], u32 a, u32 b */
++#define OG_C_LANG     0x06 /* char lang[]: the player changed the language (!lang); same value as the og-lang hello component */
 +
 +#define OG_ALIVE_LEN            (1 + 4 + 32 + 2 + 1 + 32)
 +#define OG_ALIVE_HOOKS_TAMPERED 0x01
@@ -7342,10 +7353,10 @@ index 4130361aa..ae2e6779e 100644
  	do_init_chrif();
 diff --git a/src/map/og_map.cpp b/src/map/og_map.cpp
 new file mode 100644
-index 000000000..0a48ec8f7
+index 000000000..7270e97cd
 --- /dev/null
 +++ b/src/map/og_map.cpp
-@@ -0,0 +1,992 @@
+@@ -0,0 +1,1003 @@
 +// OdinGuard on the map-server. See og_map.hpp.
 +
 +#include "og_map.hpp"
@@ -7489,7 +7500,8 @@ index 000000000..0a48ec8f7
 +		*arg++ = '\0';
 +	// client commands can be renamed in the profile (og_cmdname_<id>)
 +	const char* id = !strcmpi(cmd, og_map_command_name("ping")) ? "ping" : !strcmpi(cmd, og_map_command_name("vsync")) ? "vsync"
-+		: !strcmpi(cmd, og_map_command_name("crash")) ? "crash" : !strcmpi(cmd, og_map_command_name("dark")) ? "dark" : nullptr;
++		: !strcmpi(cmd, og_map_command_name("crash")) ? "crash" : !strcmpi(cmd, og_map_command_name("dark")) ? "dark"
++		: !strcmpi(cmd, og_map_command_name("lang")) ? "lang" : nullptr;
 +	if (id == nullptr || !og_module_on("og_client_commands", true))
 +		return false;
 +	if (!og_map_command_allowed(sd, id, !strcmp(id, "crash") ? 60000 : !strcmp(id, "ping") ? 2000 : 1000))
@@ -7507,6 +7519,16 @@ index 000000000..0a48ec8f7
 +		og_send_ping(sd->fd);
 +	else if (!strcmpi(cmd, "crash"))
 +		og_send_command(sd->fd, "crash");
++	else if (!strcmpi(cmd, "lang")) {
++		char c[32] = "lang";
++		trim(argbuf); // "!lang de " with a trailing space is fine
++		bool ok = *arg != '\0';
++		for (const char* a = arg; *a; a++)
++			ok = ok && (ISALPHA(*a) || *a == '-');
++		if (ok && strlen(arg) <= 8)
++			safesnprintf(c, sizeof(c), "lang %s", arg);
++		og_send_command(sd->fd, c);
++	}
 +	else if (!strcmpi(cmd, "dark")) {
 +		char c[32] = "dark";
 +		if (!strcmpi(arg, "on") || !strcmpi(arg, "off"))

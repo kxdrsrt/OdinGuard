@@ -1113,6 +1113,16 @@ static void og_handle_control(int32 fd, s_og_state* o, const uint8* p, size_t n)
 		og_handle_response(fd, o, r);
 		break;
 	}
+	case OG_C_LANG: { // !lang: from now on the server's messages follow it
+		std::string l;
+		for (size_t i = 1; i < n && i <= 8; i++) {
+			char ch = (char)TOLOWER(p[i]);
+			if ((ch >= 'a' && ch <= 'z') || ch == '-')
+				l += ch;
+		}
+		o->info.lang = l;
+		break;
+	}
 	case OG_C_PONG:
 		if (n >= 5 && og_on_pong != nullptr)
 			og_on_pong(fd, (int64)((uint32)gettick() - og_rd32(p + 1)));

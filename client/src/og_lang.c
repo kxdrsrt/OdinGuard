@@ -7,6 +7,7 @@
  * hello (og-lang), so the server's messages follow it. */
 #include "og.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct { const char *key, *en, *de; } og_text_def;
@@ -49,6 +50,11 @@ static const og_text_def g_texts[OG_T_COUNT] = {
     [OG_T_TITLE_FAILED] = { "title.failed", " - NOT CONNECTED ({1})", " - NICHT VERBUNDEN ({1})" },
     [OG_T_TITLE_DARK] = { "title.dark", " | Darkworld / Competitive Mode ON", " | Darkworld / Competitive-Modus AN" },
     [OG_T_LAUNCHER] = { "launcher", OG_PROFILE_LAUNCHER_MSG, OG_PROFILE_LAUNCHER_MSG_DE },
+    [OG_T_LANG_STATUS] = { "lang.status", "Language: {1} (set: {2}). !lang de | en | auto changes it.",
+                           "Sprache: {1} (eingestellt: {2}). !lang de | en | auto ändert sie." },
+    [OG_T_LANG_SET] = { "lang.set", "Language set to {1}.", "Sprache auf {1} gestellt." },
+    [OG_T_LANG_UNKNOWN] = { "lang.unknown", "Unknown language {1}. Available: {2}, auto.", "Unbekannte Sprache {1}. Verfügbar: {2}, auto." },
+    [OG_T_LANG_AUTO] = { "lang.auto", "auto (Windows)", "auto (Windows)" },
 };
 
 static char g_lang[9] = "en";
@@ -65,19 +71,31 @@ static void lower_code(char *s)
     *w = 0;
 }
 
-void og_lang_init(const char *dir)
+static int g_changed;
+
+/* [OdinGuard] Language= (default "auto"); the part after "text." names the language sections */
+static void lang_pref(char *out, size_t cap)
+{
+    char ini[MAX_PATH];
+    snprintf(ini, sizeof ini, "%s\\odinguard.ini", og_client_dir);
+    GetPrivateProfileStringA("OdinGuard", "Language", "auto", out, (DWORD)cap, ini);
+    lower_code(out);
+    if (!out[0]) snprintf(out, cap, "auto");
+}
+
+static void lang_load(const char *pref)
 {
     char ini[MAX_PATH], want[16], sect[32], val[1024];
     int i;
-    snprintf(ini, sizeof ini, "%s\\odinguard.ini", dir);
-    GetPrivateProfileStringA("OdinGuard", "Language", "auto", want, sizeof want, ini);
-    lower_code(want);
-    if (!want[0] || !strcmp(want, "auto")) {
+    snprintf(ini, sizeof ini, "%s\\odinguard.ini", og_client_dir);
+    snprintf(want, sizeof want, "%s", pref);
+    if (!strcmp(want, "auto")) {
         want[0] = 0;
         GetLocaleInfoA(MAKELCID(GetUserDefaultUILanguage(), SORT_DEFAULT), LOCALE_SISO639LANGNAME, want, sizeof want);
         lower_code(want);
     }
-    if (want[0] && strlen(want) < sizeof g_lang) snprintf(g_lang, sizeof g_lang, "%s", want);
+    snprintf(g_lang, sizeof g_lang, "%s", want[0] && strlen(want) < sizeof g_lang ? want : "en");
+    for (i = 0; i < OG_T_COUNT; i++) { free(g_custom[i]); g_custom[i] = NULL; }
     snprintf(sect, sizeof sect, "text.%s", g_lang);
     for (i = 0; i < OG_T_COUNT; i++) {
         if (!g_texts[i].key) continue;
@@ -93,6 +111,66 @@ void og_lang_init(const char *dir)
             *w = 0;
             g_custom[i] = _strdup(val);
         }
+    }
+}
+
+void og_lang_init(const char *dir)
+{
+    char pref[16];
+    (void)dir;
+    lang_pref(pref, sizeof pref);
+    lang_load(pref);
+}
+
+/* a language the player can choose: built in, or with a [text.<code>] section in odinguard.ini */
+static int lang_known(const char *code)
+{
+    char ini[MAX_PATH], sec[32], buf[8];
+    if (!strcmp(code, "de") || !strcmp(code, "en")) return 1;
+    snprintf(ini, sizeof ini, "%s\\odinguard.ini", og_client_dir);
+    snprintf(sec, sizeof sec, "text.%s", code);
+    return GetPrivateProfileSectionA(sec, buf, sizeof buf, ini) > 0;
+}
+
+int og_lang_set(const char *code)
+{
+    char c[16], ini[MAX_PATH];
+    snprintf(c, sizeof c, "%s", code);
+    lower_code(c);
+    if (!c[0] || strlen(c) > 8) return 0;
+    if (strcmp(c, "auto") && !lang_known(c)) return 0;
+    snprintf(ini, sizeof ini, "%s\\odinguard.ini", og_client_dir);
+    WritePrivateProfileStringA("OdinGuard", "Language", c, ini);
+    lang_load(c);
+    g_changed = 1;
+    return 1;
+}
+
+int og_lang_take_changed(void)
+{
+    int c = g_changed;
+    g_changed = 0;
+    return c;
+}
+
+/* "!lang": status; "!lang de|en|auto|<code>": change */
+void og_lang_command(const char *arg, char *reply, size_t cap)
+{
+    char pref[16];
+    while (*arg == ' ') arg++;
+    if (!*arg) {
+        lang_pref(pref, sizeof pref);
+        og_trf(reply, cap, OG_T_LANG_STATUS, g_lang, strcmp(pref, "auto") ? pref : og_tr(OG_T_LANG_AUTO));
+        return;
+    }
+    if (og_lang_set(arg)) {
+        lang_pref(pref, sizeof pref);
+        og_trf(reply, cap, OG_T_LANG_SET, strcmp(pref, "auto") ? g_lang : og_tr(OG_T_LANG_AUTO), NULL);
+    } else {
+        char shown[16];
+        snprintf(shown, sizeof shown, "%s", arg);
+        lower_code(shown);
+        og_trf(reply, cap, OG_T_LANG_UNKNOWN, shown, "de, en");
     }
 }
 

@@ -172,9 +172,9 @@ static int dark_loaded(void)
 static DWORD WINAPI title_thread(LPVOID unused)
 {
     char tag[128], orig[160];
+    int dark = dark_loaded(); /* what the game loaded at start; the text is rebuilt every round so !lang shows at once */
     (void)unused;
     orig[0] = 0;
-    snprintf(tag, sizeof tag, "%s%s%s", TITLE_MARK, OG_VERSION_STR, dark_loaded() ? og_tr(OG_T_TITLE_DARK) : "");
     /* For the life of the process: the client sets its own title again at times (window mode switch, map change), and the
        first window can appear long after the guard started. One enumeration every 1.5 s costs nothing.
        The title always says what the guard is doing, so a player (or you) can see at a glance whether it is active. */
@@ -184,6 +184,7 @@ static DWORD WINAPI title_thread(LPVOID unused)
         if (w) {
             char cur[256], want[400];
             LONG st = g_title_state;
+            snprintf(tag, sizeof tag, "%s%s%s", TITLE_MARK, OG_VERSION_STR, dark ? og_tr(OG_T_TITLE_DARK) : "");
             cur[0] = 0;
             GetWindowTextA(w, cur, sizeof cur);
             /* whatever is not our own text is the client's title: keep it as the base */

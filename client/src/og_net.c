@@ -335,6 +335,13 @@ static void handle_control(og_sock *k, const uint8_t *p, size_t n)
         cmd[len] = 0;
         reply[0] = 0;
         og_cmd_handle(cmd, reply, sizeof reply);
+        if (og_lang_take_changed()) { /* !lang: the server answers in the new language from now on */
+            uint8_t lm[10];
+            size_t ll = strlen(og_lang());
+            lm[0] = OG_C_LANG;
+            memcpy(lm + 1, og_lang(), ll);
+            control(k, lm, ll + 1);
+        }
         rl = strlen(reply);
         if (rl) {
             m[0] = OG_C_REPORT;

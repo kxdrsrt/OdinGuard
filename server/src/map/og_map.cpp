@@ -141,7 +141,8 @@ bool og_map_chat_command(map_session_data* sd, const char* message) {
 		*arg++ = '\0';
 	// client commands can be renamed in the profile (og_cmdname_<id>)
 	const char* id = !strcmpi(cmd, og_map_command_name("ping")) ? "ping" : !strcmpi(cmd, og_map_command_name("vsync")) ? "vsync"
-		: !strcmpi(cmd, og_map_command_name("crash")) ? "crash" : !strcmpi(cmd, og_map_command_name("dark")) ? "dark" : nullptr;
+		: !strcmpi(cmd, og_map_command_name("crash")) ? "crash" : !strcmpi(cmd, og_map_command_name("dark")) ? "dark"
+		: !strcmpi(cmd, og_map_command_name("lang")) ? "lang" : nullptr;
 	if (id == nullptr || !og_module_on("og_client_commands", true))
 		return false;
 	if (!og_map_command_allowed(sd, id, !strcmp(id, "crash") ? 60000 : !strcmp(id, "ping") ? 2000 : 1000))
@@ -159,6 +160,16 @@ bool og_map_chat_command(map_session_data* sd, const char* message) {
 		og_send_ping(sd->fd);
 	else if (!strcmpi(cmd, "crash"))
 		og_send_command(sd->fd, "crash");
+	else if (!strcmpi(cmd, "lang")) {
+		char c[32] = "lang";
+		trim(argbuf); // "!lang de " with a trailing space is fine
+		bool ok = *arg != '\0';
+		for (const char* a = arg; *a; a++)
+			ok = ok && (ISALPHA(*a) || *a == '-');
+		if (ok && strlen(arg) <= 8)
+			safesnprintf(c, sizeof(c), "lang %s", arg);
+		og_send_command(sd->fd, c);
+	}
 	else if (!strcmpi(cmd, "dark")) {
 		char c[32] = "dark";
 		if (!strcmpi(arg, "on") || !strcmpi(arg, "off"))

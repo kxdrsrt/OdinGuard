@@ -211,6 +211,11 @@ messages (`@lgp`, `@circle`, `@pf`, `@spb`, `!ping`, command limits). English an
 
 * **Which language:** the Windows display language, or `Language=de` / `Language=en` in `odinguard.ini` (section
   `[OdinGuard]`). The guard sends it to the server in the hello (`og-lang`), so the server answers in it too.
+* **Changing it in the game (1.0.6):** `!lang` shows the language, `!lang de`, `!lang en` or `!lang auto` (= Windows)
+  changes it at once for the guard's texts, the window title and the server's messages (`@pf`, `@lgp` …), no restart. The
+  choice is saved in `odinguard.ini`. Any language with a `[text.<code>]` section in `odinguard.ini` works too. `!lang` is
+  an ordinary command (`og_cmd_lang`, group, rate limit, renameable) and is meant to become the one language switch of a
+  player when the game itself is translated later (RO client texts, NPC dialogs).
 * **More languages or other wording, client side:** in `odinguard.ini` (ship it with your patcher), UTF-8, `{1}` and `{2}`
   are filled in:
   ```ini

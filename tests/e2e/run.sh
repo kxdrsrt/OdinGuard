@@ -447,17 +447,27 @@ check "a German guard gets the refusal in German" 'printf "%s\n" "$out" | grep -
 check "the login server logs the German refusal" 'docker exec ogt-srv sh -c "grep -a -q \"handshake refused (Dein Client ist veraltet\" /tmp/login.log"'
 sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
 restart_login
-printf 'og_cmdrate_ping: 10000\nog_text_fr_cmd_wait: Patientez un instant.\n' >> "$X/conf/import/odinguard_conf.txt"
+printf 'og_cmdrate_ping: 10000\nog_cmdrate_lang: 0\nog_text_fr_cmd_wait: Patientez un instant.\n' >> "$X/conf/import/odinguard_conf.txt"
 restart_map
 out=$(nettest ogtest2 OgPlayer '!ping;!ping;!dark' 4)
 check "German: the rate limit answers in German" 'printf "%s\n" "$out" | grep -q "Bitte warte einen Moment, bevor du den Befehl erneut benutzt"'
 check "German: the guard's own reply (!dark) is German" 'printf "%s\n" "$out" | LC_ALL=C grep -q "Competitive-Pack ist beim n.chsten Start"'
 check "German: umlauts reach the client as Windows-1252" 'printf "%s\n" "$out" | LC_ALL=C grep -q "n$(printf "\344")chsten"'
+lang_ini en
+out=$(nettest ogtest2 OgPlayer '!lang;!lang de ;!lang en;!lang xx ' 6)
+check "!lang shows the current language" 'printf "%s\n" "$out" | grep -q "Language: en (set: en)"'
+check "!lang de answers in German (a trailing space is fine)" 'printf "%s\n" "$out" | grep -q "Sprache auf de gestellt"'
+check "!lang en switches back" 'printf "%s\n" "$out" | grep -q "Language set to en"'
+check "an unknown language is refused" 'printf "%s\n" "$out" | grep -q "Unknown language xx"'
+check "!lang is saved in odinguard.ini" 'vm "type $WIN_E2E\\odinguard.ini" | grep -qi "Language=en"'
+out=$(nettest Mave OgTester '!lang de;+pf;!lang en;+pf' 8)
+check "after !lang de the server's own messages are German (no restart)" 'printf "%s\n" "$out" | grep -q "Paketfilter (WoE/BG-Karten)"'
+check "after !lang en they are English again" 'printf "%s\n" "$out" | grep -q "Packet filter (WoE/BG maps)"'
 lang_ini fr
 out=$(nettest ogtest2 OgPlayer '!ping;!ping;!dark' 4)
 check "a language from the conf (og_text_fr_cmd_wait)" 'printf "%s\n" "$out" | grep -q "Patientez un instant."'
 check "texts the conf does not translate stay English" 'printf "%s\n" "$out" | grep -q "Competitive pack is"'
-sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"; sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
+sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"; sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"; sed -i '' '$d' "$X/conf/import/odinguard_conf.txt"
 restart_map
 lang_ini en
 

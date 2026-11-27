@@ -1,7 +1,7 @@
 [package]
 name = "odinguard-studio"
 description = "OdinGuard Anti Cheat Studio (Tauri 2)"
-version = "1.0.5"
+version = "1.0.6"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 authors = ["The OdinGuard Authors"]

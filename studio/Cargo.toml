@@ -4,7 +4,7 @@ members = ["crates/og-core", "crates/og-cli", "crates/og-mcp"]
 exclude = ["apps/studio", "vendor/rgrf-core", "vendor/rgrf-audio"]
 
 [workspace.package]
-version = "1.0.5"
+version = "1.0.6"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 authors = ["The OdinGuard Authors"]

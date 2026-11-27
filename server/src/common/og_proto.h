@@ -67,6 +67,7 @@
 #define OG_C_PONG     0x03 /* u32 server_tick */
 #define OG_C_REPORT   0x04 /* char text[]: answer to a command, shown to the player */
 #define OG_C_RESPONSE 0x05 /* u32 challenge_id, u8 type, u8 status (OG_CH_ST_*), u8 digest[32], u32 a, u32 b */
+#define OG_C_LANG     0x06 /* char lang[]: the player changed the language (!lang); same value as the og-lang hello component */
 
 #define OG_ALIVE_LEN            (1 + 4 + 32 + 2 + 1 + 32)
 #define OG_ALIVE_HOOKS_TAMPERED 0x01

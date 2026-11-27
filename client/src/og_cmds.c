@@ -75,6 +75,10 @@ void og_cmd_handle(const char *cmd, char *reply, size_t cap)
         dark_command(cmd[4] ? cmd + 5 : cmd + 4, reply, cap);
         return;
     }
+    if (!_strnicmp(cmd, "lang", 4) && (cmd[4] == 0 || cmd[4] == ' ')) {
+        og_lang_command(cmd + 4, reply, cap);
+        return;
+    }
     if (!_strnicmp(cmd, "vsync", 5)) {
         /* "vsync" toggles, "vsync off" removes the frame cap, "vsync on" restores it */
         LONG want = !_stricmp(cmd, "vsync off") ? 1 : !_stricmp(cmd, "vsync on") ? 0 : !g_unlocked;

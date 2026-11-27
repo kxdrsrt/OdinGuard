@@ -180,6 +180,11 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
 
 ## 8. Historie
 
+**2026-11-27 (1.0.6, `!lang`):** Sprache im Spiel umschalten (`!lang`, `!lang de|en|auto`), sofort für Guard-Texte, Titel
+und Server-Meldungen (neuer Steuer-Record `OG_C_LANG`), gespeichert in `odinguard.ini`. E2E 5c um 7 Prüfungen erweitert
+(Status, de, en, unbekannte Sprache, Speichern, Server-Meldungen wechseln ohne Neustart). Dabei gefunden: ein Leerzeichen am
+Ende der Eingabe (`!lang de `) lehnte der Server ab (jetzt getrimmt); der Test selbst nutzte erst `!pf`/`@pf` statt `+pf`.
+
 **2026-11-26 (1.0.5, Sprachen DE/EN):** Alle Spielertexte auf Englisch und Deutsch (Client: Meldungsfenster, Titel,
 `!`-Antworten; Server: Chat-Meldungen, Ablehnung beim Login), Sprache vom Guard im Hello (`og-lang`). E2E 97/97, neu 5c:
 deutsche Ablehnung (Client und Login-Log), deutsches Ratenlimit, deutsche `!dark`-Antwort, Umlaut als Windows-1252-Byte
