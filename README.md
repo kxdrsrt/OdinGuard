@@ -127,6 +127,34 @@ staged rollout).
 | `tests/e2e/` | end-to-end suite (rAthena in Docker + Windows VM) |
 | `docs/` | integration guide, [LGP guide](docs/08-lgp-guide.md), [competitive pack](docs/09-competitive-pack.md), [MCP server for AI assistants](docs/10-mcp.md) (English); architecture, tests, analyses (German) |
 
+## Your client exe: diff first, then OdinGuard
+
+OdinGuard never changes the exe **file**: it ships `ijl15.dll` (loader), `odinguard.dll` and `odin.grf` next to it
+(`exe → ijl15.dll → ijl15r.dll [→ dxwrapper/ROExt]`). But **at run time it does hook code inside the exe**, so the
+bytes of your exe matter:
+
+| Feature | What it touches |
+|---|---|
+| LGP colours and shapes | patches the exe's code in memory at fixed places (checked against bytes first) |
+| Coloured nicks | hooks `UIWindow::TextOutWithOutline` |
+| Window title | `SetWindowText` from outside; a title set by your diff stays, OdinGuard appends its name |
+| `!ping`, `!lang`, `@pf`, network, handshake | `kernel32`/`ws2_32`, not the exe: independent of the exe's bytes |
+
+* **Every exe hook is bound to a byte signature.** If the bytes differ (another client build, or a diff that changes
+  these functions) the hook is skipped and logged (`odinguard.log`: `ui hook …: signature not found`). OdinGuard never
+  patches unknown code; the rest of the guard keeps working, but LGP colours and coloured nicks silently do not.
+  The signatures match the **2018-06-20** client.
+* **Order: diff the exe first (NEMO, WARP, …), then ship OdinGuard.** Technically the order does not matter (the guard
+  hooks in memory, after the diff), but this way you test exactly the exe your players get. After every new diff set:
+  start the client, look into `odinguard.log` for "signature not found", and try an LGP skill.
+* An exe that is already diffed **and** patched earlier is fine; a later diff does not break OdinGuard unless it
+  replaces or renames `ijl15.dll` (the loader sits there).
+* **Updating OdinGuard needs no clean client and no new exe.** The patcher only replaces the changed guard files
+  (`odinguard.dll`, `odin.grf`, ...); `ijl15r.dll` and the player's settings (`!dark`, `!lang`) stay. Only if you diff
+  the exe again do its bytes change, and then the signatures have to match again.
+* If you turn on `og_exe_reference` (server-side check of random code ranges of the exe), create the reference dump from
+  the **final** exe and renew it whenever the exe changes.
+
 ## Status
 
 1.0.8. Tested end to end with a 2018-06-20 client and an rAthena fork (PACKETVER 20180620): see

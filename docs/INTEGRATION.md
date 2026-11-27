@@ -137,6 +137,8 @@ step 5. Base commit, conflict resolution on newer rAthena and PACKETVER notes: [
 
 1. In the client folder rename the existing `ijl15.dll` (e.g. ROExt's proxy) to `ijl15r.dll`. A plain client has
    Intel's `ijl15.dll`: rename that to `ijl15r.dll` too.
+   Diff the exe first (NEMO, WARP, ...), then add OdinGuard: the guard hooks code inside the exe in memory, bound to byte
+   signatures of the 2018-06-20 client; see "Your client exe" in the README.
 2. Ship `client/ijl15.dll` and `client/odinguard.dll` next to the exe. Load chain:
    `exe → ijl15.dll (OdinGuard loader) → ijl15r.dll (ROExt or Intel) [→ ijl15x.dll]`; the loader also starts the
    guard.

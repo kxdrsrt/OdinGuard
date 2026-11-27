@@ -76,6 +76,28 @@ flache, farbige Kacheln: **Quadrat = schützend, Dreieck = schädlich**, ein kle
 Vollständiger Leitfaden mit allen Optionen, Flags und `!`-Befehlen: [docs/08-lgp-guide.md](docs/08-lgp-guide.md).
 Vorerst nur Pre-Renewal; der Rest von OdinGuard läuft auch mit Renewal-Clients.
 
+## Client-EXE: erst diffen, dann OdinGuard
+
+OdinGuard ändert die EXE-**Datei** nie: Es liefert `ijl15.dll` (Loader), `odinguard.dll` und `odin.grf` daneben
+(`exe → ijl15.dll → ijl15r.dll [→ dxwrapper/ROExt]`). **Zur Laufzeit hängt es aber Code in der EXE im Speicher ein**,
+darum zählen die Bytes deiner EXE:
+
+* **LGP-Farben und -Formen** überschreiben EXE-Code im Speicher an festen Stellen, **bunte Nicks** hängen an
+  `UIWindow::TextOutWithOutline`. Der **Fenstertitel** wird von außen gesetzt (ein Diff-Titel bleibt, OdinGuard hängt
+  seinen Namen an). `!ping`, `!lang`, `@pf`, Netzwerk und Handshake hängen an `kernel32`/`ws2_32`, nicht an der EXE.
+* **Jeder EXE-Hook ist an eine Byte-Signatur gebunden.** Passt sie nicht (andere Client-Version oder ein Diff, der diese
+  Funktionen ändert), wird der Hook übersprungen und im `odinguard.log` vermerkt (`signature not found`). Fremden Code
+  patcht OdinGuard nie; der Rest läuft weiter, aber LGP-Farben und bunte Nicks fallen still aus. Die Signaturen passen
+  auf den Client vom **2018-06-20**.
+* **Reihenfolge: erst die EXE diffen (NEMO, WARP, …), dann OdinGuard ausliefern.** Technisch ist es egal (der Guard hängt
+  nach dem Diff im Speicher ein), aber so testest du genau die EXE, die die Spieler bekommen. Nach jedem neuen Diff-Satz:
+  Client starten, `odinguard.log` auf „signature not found“ prüfen, einen LGP-Skill ausprobieren.
+* Ein späterer Diff bricht OdinGuard nicht, solange er `ijl15.dll` (dort sitzt der Loader) nicht ersetzt oder umbenennt.
+* **Ein OdinGuard-Update braucht weder einen sauberen Client noch eine neue EXE.** Der Patcher ersetzt nur die geänderten
+  Guard-Dateien; `ijl15r.dll` und die Einstellungen des Spielers (`!dark`, `!lang`) bleiben.
+* Schaltest du `og_exe_reference` ein (serverseitige Prüfung zufälliger Code-Bereiche der EXE), muss der Referenz-Dump
+  von der **endgültigen** EXE stammen und bei jeder EXE-Änderung neu erzeugt werden.
+
 ## Inhalt
 
 | Pfad | Inhalt |
