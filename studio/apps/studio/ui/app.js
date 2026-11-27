@@ -469,13 +469,32 @@ $("#btn-keep-prev").addEventListener("click", () => busy($("#btn-keep-prev"), "K
   } catch (e) { status("Not kept: " + e + " (build a release first)", false); }
 }));
 
+async function loadRegistry() {
+  reg = await invoke("get_registry");
+  currentVersion = await invoke("studio_version");
+  $("#ver").textContent = "v" + currentVersion;
+}
+
+// A downloaded Studio is not built inside a checkout: ask once for the OdinGuard folder and remember it.
+$("#repo-banner-pick").addEventListener("click", async () => {
+  const d = await T.dialog.open({ directory: true, title: "Choose the OdinGuard folder" });
+  if (!d) return;
+  try {
+    await invoke("set_repo", { path: d });
+    await loadRegistry();
+    $("#repo-banner").hidden = true;
+    status("OdinGuard folder set: " + d);
+    setTimeout(quietUpdateCheck, 500);
+  } catch (e) { status(String(e), false); }
+});
+
 (async () => {
   document.body.classList.add("no-profile");
   setTab("profile");
   try {
-    reg = await invoke("get_registry");
-    currentVersion = await invoke("studio_version");
-    $("#ver").textContent = "v" + currentVersion;
+    const r = await invoke("repo_status");
+    if (!r.ok) { $("#repo-banner").hidden = false; return; }
+    await loadRegistry();
     setTimeout(quietUpdateCheck, 2500);
   } catch (e) { status("Registry not found: " + e, false); }
 })();

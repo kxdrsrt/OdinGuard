@@ -6,7 +6,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
 const ok = (c, m) => { console.log((c ? "PASS " : "FAIL ") + m); if (!c) failed = 1; };
 
-async function mk({ update, fail, storage = {} }) {
+async function mk({ update, fail, storage = {}, noRepo = false, wait = 2900 }) {
   const html = fs.readFileSync(dir + "index.html", "utf8").replace('<script src="app.js"></script>', "");
   const dom = new JSDOM(html, { runScripts: "outside-only", pretendToBeVisual: true, url: "https://studio.test/" });
   const w = dom.window;
@@ -19,15 +19,17 @@ async function mk({ update, fail, storage = {} }) {
     core: { invoke: async (c, a) => {
       w.calls.push([c, a]);
       switch (c) {
+        case "repo_status": return { root: "/x", ok: !noRepo };
+        case "set_repo": if (a.path === "/bad") throw new Error("not an OdinGuard folder"); return { root: a.path, ok: true };
         case "get_registry": return { modules: [], commands: [] };
         case "studio_version": return "1.0.6";
         case "studio_update": if (fail) throw new Error("offline"); return a.install ? update : update || null;
         default: return null;
       } } },
-    dialog: { open: async () => null },
+    dialog: { open: async () => w.picked ?? null },
   };
   w.eval(fs.readFileSync(dir + "app.js", "utf8"));
-  await sleep(2900); // the check runs 2.5 s after the registry is loaded
+  await sleep(wait); // the check runs 2.5 s after the registry is loaded
   return w;
 }
 
@@ -62,5 +64,15 @@ async function mk({ update, fail, storage = {} }) {
   d.getElementById("btn-keep-prev").click(); await sleep(50);
   ok(d.getElementById("toast").textContent.includes("Open a profile first"), "Keep the built release without a profile says so");
   ok(w.errors.length === 0, "no script errors " + w.errors.join(";"));
+
+  // a downloaded Studio has no repository next to it: it asks for the folder, remembers it, then works
+  w = await mk({ update: null, noRepo: true, wait: 300 });
+  d = w.document;
+  ok(!d.getElementById("repo-banner").hidden && !w.calls.some((c) => c[0] === "get_registry"), "no OdinGuard folder: banner, nothing loaded");
+  w.picked = "/bad"; d.getElementById("repo-banner-pick").click(); await sleep(100);
+  ok(!d.getElementById("repo-banner").hidden && d.getElementById("toast").textContent.includes("not an OdinGuard folder"), "a wrong folder is refused with the reason");
+  w.picked = "/good"; d.getElementById("repo-banner-pick").click(); await sleep(100);
+  ok(d.getElementById("repo-banner").hidden && w.calls.some((c) => c[0] === "get_registry") && d.getElementById("ver").textContent === "v1.0.6", "the right folder: banner gone, registry loaded");
+  ok(w.errors.length === 0, "no script errors (folder) " + w.errors.join(";"));
   process.exit(failed);
 })();

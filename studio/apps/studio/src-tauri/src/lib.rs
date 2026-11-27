@@ -190,6 +190,44 @@ fn competitive_recipe() -> Res<Vec<og_core::pack::PackOption>> {
     og_core::pack::options(&og_core::repo_root().join("assets/competitive/recipe.toml")).map_err(err)
 }
 
+#[derive(Serialize)]
+struct RepoStatus {
+    root: String,
+    ok: bool,
+}
+
+fn repo_status_now() -> RepoStatus {
+    let root = og_core::repo_root();
+    RepoStatus { ok: og_core::is_repo_root(&root), root: root.to_string_lossy().into_owned() }
+}
+
+/// Whether Studio found the OdinGuard repository (registry, client sources) that builds need.
+#[tauri::command]
+fn repo_status() -> RepoStatus {
+    repo_status_now()
+}
+
+/// Remembers the repository folder the operator picked (a downloaded Studio is not built inside a checkout).
+#[tauri::command]
+fn set_repo(app: tauri::AppHandle, path: String) -> Res<RepoStatus> {
+    let p = PathBuf::from(&path);
+    if !og_core::is_repo_root(&p) {
+        return Err(format!("{path} is not an OdinGuard folder (modules/modules.toml and client/src/og_version.h are missing). Download it from https://github.com/kxdrsrt/OdinGuard"));
+    }
+    og_core::set_repo_root(Some(p));
+    let file = repo_choice_file(&app)?;
+    if let Some(dir) = file.parent() {
+        std::fs::create_dir_all(dir).map_err(err)?;
+    }
+    std::fs::write(&file, &path).map_err(err)?;
+    Ok(repo_status_now())
+}
+
+fn repo_choice_file(app: &tauri::AppHandle) -> Res<PathBuf> {
+    use tauri::Manager;
+    Ok(app.path().app_config_dir().map_err(err)?.join("odinguard-folder.txt"))
+}
+
 #[tauri::command]
 fn studio_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
@@ -199,6 +237,18 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .setup(|app| {
+            // an explicit ODINGUARD_ROOT wins over the remembered folder
+            if std::env::var_os("ODINGUARD_ROOT").is_none() {
+                if let Some(saved) = repo_choice_file(app.handle()).ok().and_then(|f| std::fs::read_to_string(f).ok()) {
+                    let p = PathBuf::from(saved.trim());
+                    if og_core::is_repo_root(&p) {
+                        og_core::set_repo_root(Some(p));
+                    }
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_registry,
             load_profile,
@@ -213,6 +263,8 @@ pub fn run() {
             rollout_advance,
             keep_previous_release,
             studio_version,
+            repo_status,
+            set_repo,
             studio_update,
             signature_groups,
             grf_scan,

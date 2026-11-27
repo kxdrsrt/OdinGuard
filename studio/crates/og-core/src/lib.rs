@@ -30,8 +30,24 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Root of the OdinGuard repository (client sources, registry, assets) used by builds.
+static ROOT_CHOICE: std::sync::Mutex<Option<std::path::PathBuf>> = std::sync::Mutex::new(None);
+
+/// The folder an operator picked in Studio (a downloaded Studio has no checkout next to it); `None` forgets it.
+pub fn set_repo_root(p: Option<std::path::PathBuf>) {
+    *ROOT_CHOICE.lock().unwrap_or_else(|e| e.into_inner()) = p;
+}
+
+/// A folder is an OdinGuard repository when it holds the module registry and the client sources.
+pub fn is_repo_root(p: &std::path::Path) -> bool {
+    p.join("modules/modules.toml").is_file() && p.join("client/src/og_version.h").is_file()
+}
+
+/// Root of the OdinGuard repository (client sources, registry, assets) used by builds: the folder chosen in Studio,
+/// else `ODINGUARD_ROOT`, else the checkout this binary was built from.
 pub fn repo_root() -> std::path::PathBuf {
+    if let Some(p) = ROOT_CHOICE.lock().unwrap_or_else(|e| e.into_inner()).clone() {
+        return p;
+    }
     std::env::var_os("ODINGUARD_ROOT")
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.."))
@@ -44,4 +60,20 @@ pub fn guard_release() -> String {
     text.lines()
         .find_map(|l| l.strip_prefix("#define OG_VERSION_STR").map(|v| v.trim().trim_matches('"').to_string()))
         .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod root_tests {
+    use super::*;
+
+    #[test]
+    fn chosen_folder_wins_and_only_a_repository_counts() {
+        let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
+        assert!(is_repo_root(&repo));
+        assert!(!is_repo_root(&std::env::temp_dir()));
+        set_repo_root(Some(std::env::temp_dir()));
+        assert_eq!(repo_root(), std::env::temp_dir());
+        set_repo_root(None);
+        assert!(is_repo_root(&repo_root()));
+    }
 }

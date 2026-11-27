@@ -180,6 +180,13 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
 
 ## 8. Historie
 
+**2026-11-27 (1.0.8, Studio für Windows und Linux):** Ein GitHub-Workflow (`studio-release.yml`) baut das signierte Studio
+auf macOS, Windows und Linux und veröffentlicht EIN `stable.json` mit allen drei (vorher nur macOS, lokal gebaut). Gemessen:
+Aktualisierung mit Signaturprüfung für alle drei Ziele gegen das echte Release, das Windows-Setup in der VM still
+installiert und gestartet. Dabei gefunden: ein heruntergeladenes Studio suchte das Repository unter dem Pfad der
+Build-Maschine („Registry not found: D:\a\…“). Jetzt fragt es einmal nach dem OdinGuard-Ordner und merkt ihn sich
+(`repo_status`, `set_repo`); DOM-Test +4 Prüfungen, Rust-Test `root_tests`.
+
 **2026-11-27 (1.0.7, Update-Hinweis im Studio):** Das Studio fragt beim Start einmal im Hintergrund nach dem signierten
 `stable.json` (abschaltbar), zeigt ein Banner mit den Release-Notizen und dem Hinweis, dass Spieler und Server nicht
 angefasst werden, und der Tab „Updates“ nennt die sieben Schritte für einen sicheren Roll-out. Neu: Knopf „Keep the built

@@ -31,6 +31,10 @@ shipped must be replaced; if you change `general.hwid_salt`, every machine ban b
 
 The GUI does the same with forms: `cd studio/apps/studio && npm install && npx tauri dev`.
 
+**Downloaded Studio (macOS, Windows, Linux):** every release has a signed Studio build. It builds from the repository's
+module list and client sources, so clone or download the repository too; on first start the Studio asks once for that
+folder ("Choose folder…") and remembers it. Building the client still needs `mingw-w64` (see above).
+
 ## 2. Choose modules, commands and signatures
 
 Open the profile in the Studio (tab *Module & Challenges*) or edit the TOML:
