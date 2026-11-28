@@ -83,6 +83,19 @@
       <button id="upd-banner-hide" class="btn small" title="Hide until the next version">Later</button>
     </div>
 
+    <dialog id="keys-dlg" class="dlg" aria-labelledby="keys-title">
+      <form method="dialog" id="keys-form" class="form">
+        <h3 id="keys-title"></h3>
+        <p id="keys-text" class="lead" style="margin:0"></p>
+        <label class="fld"><span>Password</span><input id="keys-pw" type="password" autocomplete="new-password" minlength="8"></label>
+        <label class="fld" id="keys-pw2-row"><span>Repeat the password</span><input id="keys-pw2" type="password" autocomplete="new-password"></label>
+        <label class="chk" id="keys-upd-row" hidden><input id="keys-upd" type="checkbox" checked> Also include the Studio update key (keys/studio-updater.key)</label>
+        <label class="chk" id="keys-force-row" hidden><input id="keys-force" type="checkbox"> Replace keys that already exist and differ</label>
+        <p id="keys-err" class="err" hidden></p>
+        <div class="row"><button type="button" id="keys-cancel" class="btn">Cancel</button><button type="submit" id="keys-go" class="btn primary"></button></div>
+      </form>
+    </dialog>
+
     <main id="main">
       <div id="welcome" class="empty" hidden>
         <img src="icon.png" alt="" width="72" height="72">

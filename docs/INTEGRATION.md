@@ -26,7 +26,12 @@ og new myserver.profile.toml --id myserver --operator "My Ragnarok"
 ```
 
 `og new` writes the profile and three secret files next to it (`keys/server.seed`, `keys/signing.seed`,
-`keys/build.secret`). **Back them up and never commit or ship them.** If you lose `server.seed`, every client you
+`keys/build.secret`). **Back them up and never commit or ship them.** One click does it: Studio → Profile → *Key backup*
+→ **Back up keys…** asks for a password and writes ONE encrypted file (`.ogkeys`, Argon2id + XChaCha20-Poly1305, read back
+before it counts); **Restore keys…** puts them back on a new computer. On the command line:
+`og keys-backup myserver.profile.toml --out keys.ogkeys [--also keys/studio-updater.key]` and
+`og keys-restore keys.ogkeys --profile myserver.profile.toml` (password asked, not echoed; `OG_KEYS_PASSWORD` for scripts).
+Keep the file in two places (not on the server, not in git). If you lose `server.seed`, every client you
 shipped must be replaced; if you change `general.hwid_salt`, every machine ban becomes useless.
 
 The GUI does the same with forms: `cd studio/apps/studio && npm install && npx tauri dev`.

@@ -1,0 +1,68 @@
+{
+ "schema_version": 3,
+ "modules": [
+  "core",
+  "hwid",
+  "multi-client",
+  "heartbeat",
+  "integrity",
+  "cheat-signatures",
+  "grf-rules",
+  "input-filter",
+  "crash-report",
+  "client-commands",
+  "colors",
+  "branding",
+  "lgp",
+  "ban-system"
+ ],
+ "output": "dist/demo",
+ "general": {
+  "id": "demo",
+  "operator": "Demo",
+  "client_build": "2018-06-20",
+  "ports": [
+   6900,
+   6121,
+   5121
+  ],
+  "splash_ms": 1800,
+  "variation_seed": "4d46536135f4941c12e8ccdcd4b92eb2",
+  "hwid_salt": "b08c853f0549c108bc2ff252"
+ },
+ "keys": {
+  "server_seed": "keys/server.seed",
+  "signing_seed": "keys/signing.seed",
+  "build_secret": "keys/build.secret"
+ },
+ "params": {},
+ "commands": {},
+ "signatures": {
+  "sources": [
+   "signatures/signatures.toml"
+  ],
+  "allowlist": [
+   "signatures/allowlist.toml"
+  ],
+  "max_action": "flagban",
+  "version": 1
+ },
+ "assets": {
+  "competitive_pack": "",
+  "odin_grf": {
+   "lgp": "assets/odin-grf/lgp"
+  }
+ },
+ "grf": {
+  "modified_action": "kick",
+  "unknown_action": "log",
+  "missing_action": "log",
+  "overlays": [],
+  "file": [],
+  "mod": []
+ },
+ "rollout": {
+  "stage": 1,
+  "reviewed_rules": []
+ }
+}

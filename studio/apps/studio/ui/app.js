@@ -82,6 +82,74 @@ function group(title, ...children) {
   return wrap;
 }
 
+// One password-protected file with all keys of the profile (the keys never leave the machine unencrypted).
+const keyStamp = () => store.get("keys.backed." + (profile?.general.id || ""));
+function keyBackupGroup() {
+  const when = keyStamp();
+  const g = group("Key backup",
+    el("p", "lead", when
+      ? `Last backed up: ${esc(new Date(+when).toLocaleString())}. Back up again whenever keys were added.`
+      : "<b>Not backed up yet.</b> If these key files are lost, the clients you shipped have to be replaced and you cannot build matching releases any more. One file, one password: keep the file in two places (not on the server, not in git)."),
+    (() => {
+      const r = el("div", "row");
+      const b = el("button", "btn primary", icon("save") + "Back up keys…");
+      const x = el("button", "btn", icon("open") + "Restore keys…");
+      b.addEventListener("click", () => keysDialog("backup"));
+      x.addEventListener("click", () => keysDialog("restore"));
+      r.append(b, x);
+      return r;
+    })());
+  if (!when) g.querySelector(".card").classList.add("warn-card");
+  return g;
+}
+
+async function keysDialog(mode) {
+  if (!path) { status("Open a profile first.", false); return; }
+  const d = $("#keys-dlg"), backup = mode === "backup";
+  const extra = backup ? await invoke("keys_extra") : null;
+  $("#keys-title").textContent = backup ? "Back up the keys" : "Restore the keys";
+  $("#keys-text").textContent = backup
+    ? "Choose a password (at least 8 characters). Write it down or keep it in your password manager: without it the file cannot be opened."
+    : "Choose the backup file, then enter its password. Keys that already exist and are the same stay as they are.";
+  $("#keys-go").textContent = backup ? "Choose file and back up" : "Choose file and restore";
+  $("#keys-pw2-row").hidden = !backup;
+  $("#keys-upd-row").hidden = !extra;
+  $("#keys-force-row").hidden = backup;
+  $("#keys-pw").value = $("#keys-pw2").value = ""; $("#keys-force").checked = false;
+  $("#keys-err").hidden = true;
+  d.dataset.mode = mode;
+  d.showModal();
+  $("#keys-pw").focus();
+}
+
+$("#keys-cancel").addEventListener("click", () => $("#keys-dlg").close());
+$("#keys-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const d = $("#keys-dlg"), backup = d.dataset.mode === "backup", pw = $("#keys-pw").value;
+  const fail = (m) => { $("#keys-err").textContent = m; $("#keys-err").hidden = false; };
+  if (pw.length < 8) return fail("The password needs at least 8 characters.");
+  if (backup && pw !== $("#keys-pw2").value) return fail("The two passwords differ.");
+  try {
+    if (backup) {
+      const out = await T.dialog.save({ defaultPath: `${profile.general.id}-keys.ogkeys`, filters: [{ name: "OdinGuard key backup", extensions: ["ogkeys"] }] });
+      if (!out) return;
+      await invoke("save_profile", { path, profile });
+      const n = await invoke("keys_backup", { path, out, password: pw, withUpdater: !$("#keys-upd-row").hidden && $("#keys-upd").checked });
+      store.set("keys.backed." + profile.general.id, String(Date.now()));
+      d.close(); render();
+      status(`${n} key file(s) saved encrypted and read back successfully. Keep the file in two places and remember the password.`);
+    } else {
+      const file = await T.dialog.open({ filters: [{ name: "OdinGuard key backup", extensions: ["ogkeys"] }] });
+      if (!file) return;
+      const res = await invoke("keys_restore", { path, file, password: pw, force: $("#keys-force").checked });
+      store.set("keys.backed." + profile.general.id, String(Date.now()));
+      d.close(); render();
+      const kept = res.filter((r) => r.action === "kept").length;
+      status(`Restored: ${res.filter((r) => r.action === "written").length} written, ${res.filter((r) => r.action === "same").length} already the same` + (kept ? `, ${kept} differ and were kept (tick "Replace" to overwrite).` : "."), kept ? "warn" : "ok");
+    }
+  } catch (e) { fail(String(e)); }
+});
+
 function renderGeneral() {
   const g = $("#general");
   g.innerHTML = "";
@@ -100,6 +168,7 @@ function renderGeneral() {
       field("Signing key (file)", profile.keys.signing_seed, (v) => (profile.keys.signing_seed = v)),
       field("Build secret (file)", profile.keys.build_secret, (v) => (profile.keys.build_secret = v)),
     ),
+    keyBackupGroup(),
     group("Signatures",
       field("Signature sources (comma separated)", sg.sources.join(","), (v) => (sg.sources = list(v))),
       field("Allowlists (comma separated)", sg.allowlist.join(","), (v) => (sg.allowlist = list(v))),

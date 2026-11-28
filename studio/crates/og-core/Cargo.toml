@@ -12,7 +12,10 @@ build = "build.rs"
 workspace = true
 
 [dependencies]
+argon2 = { version = "0.5", default-features = false, features = ["alloc"] }
+chacha20poly1305 = { version = "0.10", default-features = false, features = ["alloc"] }
 encoding_rs = "0.8.44"
+getrandom = "0.2"
 hex = "0.4"
 minisign-verify = "0.2"
 rgrf-audio = { path = "../../vendor/rgrf-audio" }

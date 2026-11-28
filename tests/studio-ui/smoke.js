@@ -2,6 +2,7 @@
 const { JSDOM } = require("jsdom");
 const fs = require("fs");
 const dir = require("path").join(__dirname, "../../studio/apps/studio/ui/");
+const PROFILE = JSON.parse(fs.readFileSync(require("path").join(__dirname, "profile.json"), "utf8"));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
 const ok = (c, m) => { console.log((c ? "PASS " : "FAIL ") + m); if (!c) failed = 1; };
@@ -11,6 +12,9 @@ async function mk({ update, fail, storage = {}, noRepo = false, wait = 2900 }) {
   const dom = new JSDOM(html, { runScripts: "outside-only", pretendToBeVisual: true, url: "https://studio.test/" });
   const w = dom.window;
   w.errors = [];
+  // jsdom has no modal dialogs
+  w.HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
+  w.HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
   w.addEventListener("error", (e) => w.errors.push(e.message));
   for (const [k, v] of Object.entries(storage)) w.localStorage.setItem("og." + k, v);
   w.calls = [];
@@ -21,12 +25,20 @@ async function mk({ update, fail, storage = {}, noRepo = false, wait = 2900 }) {
       switch (c) {
         case "repo_status": return { root: "/x", ok: !noRepo };
         case "set_repo": if (a.path === "/bad") throw new Error("not an OdinGuard folder"); return { root: a.path, ok: true };
+        case "keys_extra": return "/x/keys/studio-updater.key";
+        case "keys_backup": if (a.password === "badbadbad") throw new Error("boom"); return 4;
+        case "keys_restore": return [{ path: "/k/server.seed", action: "written" }, { path: "/k/signing.seed", action: "kept" }];
+        case "load_profile": return { path: "/p/a.toml", profile: PROFILE, warnings: [], error: null };
+        case "validate_profile": return [];
+        case "signature_groups": return [];
+        case "competitive_recipe": return [];
+        case "save_profile": return null;
         case "get_registry": return { modules: [], commands: [] };
         case "studio_version": return "1.0.6";
         case "studio_update": if (fail) throw new Error("offline"); return a.install ? update : update || null;
         default: return null;
       } } },
-    dialog: { open: async () => w.picked ?? null },
+    dialog: { open: async () => w.picked ?? null, save: async () => w.saveTo ?? null },
   };
   w.eval(fs.readFileSync(dir + "app.js", "utf8"));
   await sleep(wait); // the check runs 2.5 s after the registry is loaded
@@ -74,5 +86,29 @@ async function mk({ update, fail, storage = {}, noRepo = false, wait = 2900 }) {
   w.picked = "/good"; d.getElementById("repo-banner-pick").click(); await sleep(100);
   ok(d.getElementById("repo-banner").hidden && w.calls.some((c) => c[0] === "get_registry") && d.getElementById("ver").textContent === "v1.0.6", "the right folder: banner gone, registry loaded");
   ok(w.errors.length === 0, "no script errors (folder) " + w.errors.join(";"));
+
+  // key backup: one password-protected file, asked for with a dialog; "not backed up" until it was done
+  w = await mk({ update: null, wait: 300 });
+  d = w.document;
+  w.picked = "/p/a.toml"; d.getElementById("btn-open").click(); await sleep(300);
+  const keyCard = () => [...d.querySelectorAll("#general .group-title")].find((h) => h.textContent === "Key backup").nextElementSibling;
+  ok(keyCard().textContent.includes("Not backed up yet") && keyCard().classList.contains("warn-card"), "key backup: warns while the keys were never backed up");
+  [...keyCard().querySelectorAll("button")].find((b) => b.textContent.includes("Back up")).click(); await sleep(50);
+  const dlg = d.getElementById("keys-dlg"), go = () => d.getElementById("keys-form").dispatchEvent(new w.Event("submit", { cancelable: true }));
+  ok(dlg.open === true || dlg.hasAttribute("open"), "the password dialog opens");
+  ok(!d.getElementById("keys-upd-row").hidden, "the maintainer's update key is offered when it exists");
+  d.getElementById("keys-pw").value = "short"; go(); await sleep(50);
+  ok(!d.getElementById("keys-err").hidden && d.getElementById("keys-err").textContent.includes("8 characters"), "a short password is refused");
+  d.getElementById("keys-pw").value = "long enough pw"; d.getElementById("keys-pw2").value = "different one"; go(); await sleep(50);
+  ok(d.getElementById("keys-err").textContent.includes("differ"), "two different passwords are refused");
+  d.getElementById("keys-pw2").value = "long enough pw"; w.saveTo = "/tmp/k.ogkeys"; go(); await sleep(100);
+  const call = w.calls.filter((c) => c[0] === "keys_backup").pop();
+  ok(call && call[1].out === "/tmp/k.ogkeys" && call[1].password === "long enough pw" && call[1].withUpdater === true, "the backup is made with the chosen file and password");
+  ok(!dlg.hasAttribute("open") && keyCard().textContent.includes("Last backed up") && !keyCard().classList.contains("warn-card"), "afterwards the card shows the date, no warning");
+  [...keyCard().querySelectorAll("button")].find((b) => b.textContent.includes("Restore")).click(); await sleep(50);
+  ok(d.getElementById("keys-pw2-row").hidden && !d.getElementById("keys-force-row").hidden, "restore asks once and offers to replace differing keys");
+  d.getElementById("keys-pw").value = "long enough pw"; w.picked = "/tmp/k.ogkeys"; go(); await sleep(100);
+  ok(d.getElementById("toast").textContent.includes("1 written") && d.getElementById("toast").textContent.includes("1 differ"), "restore reports what was written and what was kept");
+  ok(w.errors.length === 0, "no script errors (keys) " + w.errors.join(";"));
   process.exit(failed);
 })();

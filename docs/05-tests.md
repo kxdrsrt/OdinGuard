@@ -180,6 +180,14 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
 
 ## 8. Historie
 
+**2026-11-28 (1.1.0, Schlüssel-Backup in einer Datei):** Studio → Profil → „Key backup“ (und `og keys-backup` /
+`og keys-restore`) sichert alle Schlüssel eines Profils in EINE passwortgeschützte Datei (Argon2id, XChaCha20-Poly1305,
+wird vor dem Speichern zurückgelesen); die Karte warnt, solange noch nie gesichert wurde. Beim Wiederherstellen wird erst
+alles geprüft und dann geschrieben (ein Test fand, dass ein Fehler mittendrin sonst halbe Ergebnisse hinterließ), ein
+abweichender vorhandener Schlüssel wird nur mit „Replace“ ersetzt. **Fehler gefunden:** `crypto::random()` las nur
+`/dev/urandom`, auf Windows konnte das Studio daher keine Schlüssel anlegen („New profile“); jetzt `getrandom`.
+Rust-Tests `keybackup` (2), DOM-Test +9 Prüfungen. Nicht gemessen: der Dialog im echten Studio-Fenster.
+
 **2026-11-28 (1.0.9, App-Icon, Patcher im Vordergrund):** Das Studio-Icon ist jetzt eine abgerundete Kachel (macOS-Stil, wie
 beim OpenThor Patcher; `tools/make_app_icon.py`, README zeigt es). Das Spiel erlaubt dem Patcher vor dem Start den
 Vordergrund (`AllowSetForegroundWindow`), damit sein Fenster bei „Patcher jetzt starten?“ nicht hinter anderen Fenstern

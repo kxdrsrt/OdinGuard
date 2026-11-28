@@ -53,12 +53,10 @@ pub fn blake2b_keyed<const N: usize>(key: &[u8], message: &[u8]) -> [u8; N] {
     out
 }
 
-/// Random bytes from the OS (macOS/Linux /dev/urandom, Windows via std's hashing seed is not enough, so read the
-/// file where it exists and fail otherwise).
+/// Random bytes from the operating system (getrandom: /dev/urandom or getrandom(2), BCryptGenRandom on Windows).
 pub fn random<const N: usize>() -> std::io::Result<[u8; N]> {
-    use std::io::Read;
     let mut out = [0u8; N];
-    std::fs::File::open("/dev/urandom")?.read_exact(&mut out)?;
+    getrandom::getrandom(&mut out).map_err(|e| std::io::Error::other(e.to_string()))?;
     Ok(out)
 }
 

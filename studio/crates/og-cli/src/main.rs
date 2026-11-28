@@ -19,6 +19,12 @@ enum Cmd {
     New { profile: PathBuf, #[arg(long)] id: String, #[arg(long)] operator: String },
     /// Create the profile's missing key files (never overwrites existing keys)
     Keys { profile: PathBuf },
+    /// Back up all keys of a profile into ONE password-protected file (keep it away from the server and from git)
+    KeysBackup { profile: PathBuf, #[arg(long)] out: PathBuf, /// more files to include, e.g. the Studio update key keys/studio-updater.key
+        #[arg(long = "also")] also: Vec<PathBuf> },
+    /// Put the keys of a backup file back (existing different keys are only replaced with --force)
+    KeysRestore { file: PathBuf, #[arg(long)] profile: PathBuf, /// where extra files of the backup go
+        #[arg(long)] extra_dir: Option<PathBuf>, #[arg(long)] force: bool },
     /// Check a profile against the module registry
     Validate { profile: PathBuf },
     /// Print the module and command registry as JSON
@@ -75,6 +81,22 @@ fn read_pubkey(arg: &str) -> String {
     std::fs::read_to_string(arg).unwrap_or_else(|_| arg.to_string())
 }
 
+/// Password for key backups: OG_KEYS_PASSWORD, otherwise asked on the terminal (not echoed).
+fn password(confirm: bool) -> Result<String> {
+    if let Ok(p) = std::env::var("OG_KEYS_PASSWORD") {
+        return Ok(p);
+    }
+    let io = |e: std::io::Error| og_core::Error::Io("password".into(), e);
+    let pw = rpassword::prompt_password("Password for the key backup: ").map_err(io)?;
+    if confirm {
+        og_core::keybackup::check_password(&pw)?;
+        if rpassword::prompt_password("Repeat the password: ").map_err(io)? != pw {
+            return Err(og_core::Error::Invalid("the passwords differ".into()));
+        }
+    }
+    Ok(pw)
+}
+
 fn reg() -> Result<Registry> {
     Registry::load(&og_core::repo_root().join("modules"))
 }
@@ -106,6 +128,18 @@ fn run(cli: Cli) -> Result<()> {
             for k in [&p.keys.server_seed, &p.keys.signing_seed, &p.keys.build_secret] {
                 let path = p.resolve(&base(&profile), k);
                 println!("{} {}", if keys::ensure(&path)? { "created" } else { "kept" }, path.display());
+            }
+        }
+        Cmd::KeysBackup { profile, out, also } => {
+            let pw = password(true)?;
+            let n = og_core::keybackup::backup(&profile, &also, &out, &pw)?;
+            println!("{n} key file(s) saved encrypted to {} and read back successfully. Keep it in two places and remember the password.", out.display());
+        }
+        Cmd::KeysRestore { file, profile, extra_dir, force } => {
+            let bytes = std::fs::read(&file).map_err(|e| og_core::Error::Io(file.display().to_string(), e))?;
+            let bundle = og_core::keybackup::open(&bytes, &password(false)?)?;
+            for r in og_core::keybackup::restore(&bundle, &profile, extra_dir.as_deref(), force)? {
+                println!("{:8} {}", r.action, r.path);
             }
         }
         Cmd::Validate { profile } => {

@@ -10,7 +10,7 @@
 
 > _Open-source, modular anti-cheat for Ragnarok Online servers, with its own Studio to configure and build it._
 
-**Windows client (C11) · rAthena module (C++) · OdinGuard Studio (Rust + Tauri 2)** · **MIT or Apache-2.0** · **v1.0.9**
+**Windows client (C11) · rAthena module (C++) · OdinGuard Studio (Rust + Tauri 2)** · **MIT or Apache-2.0** · **v1.1.0**
 
 <p align="center">
   <a href="#licence"><img src="https://img.shields.io/badge/license-MIT%20%7C%20Apache--2.0-blue?style=flat-square" alt="License"></a>
@@ -161,7 +161,7 @@ bytes of your exe matter:
 
 ## Status
 
-1.0.9. Tested end to end with a 2018-06-20 client and an rAthena fork (PACKETVER 20180620): see
+1.1.0. Tested end to end with a 2018-06-20 client and an rAthena fork (PACKETVER 20180620): see
 [docs/05-tests.md](docs/05-tests.md). Not yet tested on real hardware: input filter, RCX, Warsaw (Brazilian
 banking module), VM detection on VMware/VirtualBox/Hyper-V.
 

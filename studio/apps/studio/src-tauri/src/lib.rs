@@ -228,6 +228,40 @@ fn repo_choice_file(app: &tauri::AppHandle) -> Res<PathBuf> {
     Ok(app.path().app_config_dir().map_err(err)?.join("odinguard-folder.txt"))
 }
 
+/// The Studio update key of the maintainer, offered as an extra file when it exists in the OdinGuard folder.
+fn updater_key() -> Option<PathBuf> {
+    let k = og_core::repo_root().join("keys/studio-updater.key");
+    k.is_file().then_some(k)
+}
+
+#[tauri::command]
+fn keys_extra() -> Option<String> {
+    updater_key().map(|p| p.to_string_lossy().into_owned())
+}
+
+/// All keys of the profile in ONE password-protected file (read back before it counts).
+#[tauri::command]
+async fn keys_backup(path: String, out: String, password: String, with_updater: bool) -> Res<usize> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let extra: Vec<PathBuf> = if with_updater { updater_key().into_iter().collect() } else { vec![] };
+        og_core::keybackup::backup(Path::new(&path), &extra, Path::new(&out), &password).map_err(err)
+    })
+    .await
+    .map_err(err)?
+}
+
+#[tauri::command]
+async fn keys_restore(path: String, file: String, password: String, force: bool) -> Res<Vec<og_core::keybackup::Restored>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let bytes = std::fs::read(&file).map_err(err)?;
+        let bundle = og_core::keybackup::open(&bytes, &password).map_err(err)?;
+        let extra_dir = og_core::repo_root().join("keys");
+        og_core::keybackup::restore(&bundle, Path::new(&path), Some(&extra_dir), force).map_err(err)
+    })
+    .await
+    .map_err(err)?
+}
+
 #[tauri::command]
 fn studio_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
@@ -263,6 +297,9 @@ pub fn run() {
             rollout_advance,
             keep_previous_release,
             studio_version,
+            keys_extra,
+            keys_backup,
+            keys_restore,
             repo_status,
             set_repo,
             studio_update,
