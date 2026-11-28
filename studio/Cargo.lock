@@ -612,7 +612,7 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 
 [[package]]
 name = "og-cli"
-version = "1.0.8"
+version = "1.0.9"
 dependencies = [
  "clap",
  "hex",
@@ -623,7 +623,7 @@ dependencies = [
 
 [[package]]
 name = "og-core"
-version = "1.0.8"
+version = "1.0.9"
 dependencies = [
  "cc",
  "encoding_rs",
@@ -643,7 +643,7 @@ dependencies = [
 
 [[package]]
 name = "og-mcp"
-version = "1.0.8"
+version = "1.0.9"
 dependencies = [
  "og-core",
  "serde",

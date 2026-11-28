@@ -49,6 +49,8 @@ void og_launcher_check(void)
         snprintf(exe, sizeof exe, "%s\\%s", og_client_dir, OG_PROFILE_LAUNCHER_EXE);
         ZeroMemory(&si, sizeof si);
         si.cb = sizeof si;
+        /* the game owns the foreground now: let the patcher take it, otherwise its window opens behind the others */
+        AllowSetForegroundWindow(ASFW_ANY);
         if (CreateProcessA(exe, NULL, NULL, NULL, FALSE, 0, NULL, og_client_dir, &si, &pi)) {
             CloseHandle(pi.hThread);
             CloseHandle(pi.hProcess);

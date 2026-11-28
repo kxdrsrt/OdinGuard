@@ -180,6 +180,12 @@ Ratenlimit pro Command (`og_cmdrate_*`), Abschalten (`og_cmd_*`) und Gruppe (`og
 
 ## 8. Historie
 
+**2026-11-28 (1.0.9, App-Icon, Patcher im Vordergrund):** Das Studio-Icon ist jetzt eine abgerundete Kachel (macOS-Stil, wie
+beim OpenThor Patcher; `tools/make_app_icon.py`, README zeigt es). Das Spiel erlaubt dem Patcher vor dem Start den
+Vordergrund (`AllowSetForegroundWindow`), damit sein Fenster bei „Patcher jetzt starten?“ nicht hinter anderen Fenstern
+öffnet (Patcher 0.5.2 holt sein Fenster zusätzlich selbst nach vorn; gemessen in der VM über einem Explorer-Fenster).
+Der Guard ändert sich (Versionsstring und Launcher-Modul), der Server-Code nicht.
+
 **2026-11-27 (1.0.8, Studio für Windows und Linux):** Ein GitHub-Workflow (`studio-release.yml`) baut das signierte Studio
 auf macOS, Windows und Linux und veröffentlicht EIN `stable.json` mit allen drei (vorher nur macOS, lokal gebaut). Gemessen:
 Aktualisierung mit Signaturprüfung für alle drei Ziele gegen das echte Release, das Windows-Setup in der VM still
